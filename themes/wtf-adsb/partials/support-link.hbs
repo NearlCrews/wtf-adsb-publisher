@@ -1,0 +1,8 @@
+{{#if @custom.support_url}}
+  <div class="support-cta">
+    <a class="support-cta-link" href="{{@custom.support_url}}" rel="external noopener noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V7Zm12 1h2a3 3 0 0 1 0 6h-2M3 22h15M7 2v2m4-2v2" /></svg>
+      {{#if @custom.support_label}}{{@custom.support_label}}{{else}}Support this site{{/if}} <span aria-hidden="true">↗</span>
+    </a>
+  </div>
+{{/if}}

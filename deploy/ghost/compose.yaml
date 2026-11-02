@@ -1,0 +1,177 @@
+# Template for self-hosted Ghost: copy this directory to /opt/wtf-adsb, save
+# .env.example as .env with your DOMAIN, and create secrets/ holding
+# ghost.production.json (from ghost.production.example.json), mysql_password,
+# and mysql_root_password. See docs/hosting.md.
+name: wtf-adsb
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  mysql:
+    image: mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    secrets:
+      - mysql_root_password
+      - mysql_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - database
+    command:
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=50
+      - --performance-schema=OFF
+    mem_limit: 768m
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - MYSQL_PWD="$$(cat /run/secrets/mysql_password)" mysql --user=ghost --database=ghost --host=127.0.0.1 --execute='SELECT 1' >/dev/null
+      start_period: 90s
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+
+  ghost:
+    image: ghost:6-alpine@sha256:cd617a0901e659cda978b9063f449535d105f5f1a0340ffac415db2c42d22606
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=512
+    volumes:
+      - ghost_content:/var/lib/ghost/content
+      - type: bind
+        source: ./secrets/ghost.production.json
+        target: /var/lib/ghost/config.production.json
+        read_only: true
+        bind:
+          create_host_path: false
+    ports:
+      - "127.0.0.1:2368:2368"
+    networks:
+      - database
+      - frontend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    mem_limit: 768m
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:2368/',r=>process.exit(r.statusCode<400?0:1)).on('error',()=>process.exit(1))"
+      start_period: 120s
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?Set the public domain in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - frontend
+    mem_limit: 192m
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "http://127.0.0.1:2019/config/",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logging
+
+  # Private administration: this container joins the host to your tailnet and
+  # serves Ghost Admin there (tailscale/serve.json). The machine name gives
+  # Ghost's admin.url, such as https://admin.example.ts.net; replace both.
+  tailscale:
+    image: tailscale/tailscale:stable@sha256:b11583ad2e93e4671128538c88cf11f460444a5d7e449311dd1933a400ab849d
+    restart: unless-stopped
+    hostname: admin
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      TS_HOSTNAME: admin
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "false"
+      TS_AUTH_ONCE: "true"
+      TS_EXTRA_ARGS: --accept-dns=false
+      TS_ENABLE_HEALTH_CHECK: "true"
+      TS_LOCAL_ADDR_PORT: 127.0.0.1:9002
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+      - type: bind
+        source: ./tailscale
+        target: /config
+        read_only: true
+        bind:
+          create_host_path: false
+    mem_limit: 192m
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "http://127.0.0.1:9002/healthz",
+        ]
+      start_period: 60s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: *logging
+
+networks:
+  database:
+    internal: true
+  frontend:
+
+volumes:
+  mysql_data:
+  ghost_content:
+  caddy_data:
+  caddy_config:
+  tailscale_state:
+
+secrets:
+  mysql_root_password:
+    file: ./secrets/mysql_root_password
+  mysql_password:
+    file: ./secrets/mysql_password

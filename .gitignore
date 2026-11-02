@@ -1,0 +1,50 @@
+# Local credentials, raw account audits, and deployment recovery copies
+/.private/
+**/private/
+**/secrets/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime state belongs outside the source repository
+/data/
+/backups/
+/state/
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.log
+
+# Python and editor output
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.DS_Store
+.idea/
+.vscode/
+
+# Local asset lint dependencies
+node_modules/
+/artifacts/
+/dist/
+
+# Sync tool output, build output, caches, and agent session state
+.sync/
+*.sync-merge
+.cache/
+.mypy_cache/
+.claude/
+.remember/
+.superpowers/
+*.egg-info/
+build/
+.coverage
+htmlcov/
+.ruff_cache/

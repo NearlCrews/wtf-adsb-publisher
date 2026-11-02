@@ -1,0 +1,5 @@
+<section class="related-stories column" aria-labelledby="related-title">
+  <h2 id="related-title">Related stories</h2>
+  {{#if groups}}<div class="related-groups">{{#foreach groups}}<div class="related-group"><h3>{{title}}</h3><ul>{{#foreach stories}}<li><a href="{{url}}">{{headline}}</a> <time datetime="{{observedStart}}">{{observedLabel}}</time></li>{{/foreach}}</ul></div>{{/foreach}}</div>{{/if}}
+  {{#if hubs}}<nav class="related-hubs" aria-label="Browse related pages"><ul>{{#foreach hubs}}<li><a href="{{url}}">{{label}}</a></li>{{/foreach}}</ul></nav>{{/if}}
+</section>

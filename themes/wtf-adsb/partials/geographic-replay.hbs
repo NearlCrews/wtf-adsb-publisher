@@ -1,0 +1,25 @@
+<div class="geographic-replay-controls" data-geographic-controls hidden role="group" aria-label="Recorded track replay">
+  <div class="geographic-replay-actions">
+    <button type="button" data-geographic-play>Load replay</button>
+    <label data-geographic-speed-field hidden>Speed
+      <select data-geographic-speed>
+        <option value="1">1×</option>
+        <option value="10">10×</option>
+        <option value="30" selected>30×</option>
+        <option value="60">60×</option>
+      </select>
+    </label>
+  </div>
+  <label class="geographic-replay-scrubber" data-geographic-scrubber hidden>Timeline
+    <input type="range" min="0" max="1" value="0" step="any" data-geographic-position />
+  </label>
+  <dl class="geographic-replay-readouts" data-geographic-readouts hidden>
+    <div class="geographic-replay-clock"><dt>Replay time · UTC</dt><dd data-geographic-time>—</dd></div>
+    <div class="geographic-replay-clock"><dt>Last saved report · UTC</dt><dd data-geographic-report>—</dd></div>
+    <div><dt>Recorded path</dt><dd data-geographic-distance>—</dd></div>
+    <div><dt>Reported ground speed</dt><dd data-geographic-groundspeed>—</dd></div>
+    <div class="geographic-replay-clock"><dt data-geographic-altitude-label>Archived altitude</dt><dd data-geographic-altitude>—</dd></div>
+  </dl>
+  <p class="geographic-replay-status" data-geographic-status role="status"></p>
+  <p class="geographic-replay-note" data-geographic-note hidden>The dot moves between saved positions. Readings are from the last saved report. Recorded path is approximate and excludes gaps. Distances use nautical miles (nmi); speed uses knots (nmi per hour).</p>
+</div>

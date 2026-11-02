@@ -1,0 +1,15 @@
+# Template user unit for ~/.config/systemd/user. The paths assume the checkout
+# at ~/src/wtf-adsb-publisher; change every %h/src/wtf-adsb-publisher if yours
+# is elsewhere.
+[Unit]
+Description=Compare the ADS-B shadow deployment with retained production history
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/src/wtf-adsb-publisher
+ExecStart=%h/src/wtf-adsb-publisher/.venv/bin/python %h/src/wtf-adsb-publisher/tools/check_cutover_shadow.py --config %h/src/wtf-adsb-publisher/.private/cutover/shadow.json
+Environment=PATH=%h/src/wtf-adsb-publisher/.venv/bin:%h/src/wtf-adsb-publisher/tools/ghost-theme/node_modules/node/bin:/usr/local/bin:/usr/bin:/bin
+UMask=0077
+TimeoutStartSec=29min
+Nice=10

@@ -1,0 +1,32 @@
+# Template: copy to /etc/systemd/system with tools/site_stats.py in
+# /opt/wtf-adsb. Replace SITE_ORIGIN below and change the paths if yours differ.
+[Unit]
+Description=Summarize yesterday's public access log into private readership counts
+# Caddy writes the log into its data volume; see docs/operations.md.
+# The job fails, rather than skips, when that log is missing.
+
+[Service]
+Type=oneshot
+# The public origin (site_origin in publisher.json); its pages are not referrers.
+Environment=SITE_ORIGIN=https://example.com
+ExecStart=/usr/bin/python3 -I -B /opt/wtf-adsb/site_stats.py \
+    --logs /var/lib/docker/volumes/wtf-adsb_caddy_data/_data/access \
+    --output /opt/wtf-adsb/stats --keep-days 366
+TimeoutStartSec=15min
+Nice=10
+IOSchedulingClass=idle
+UMask=0077
+# It reads two directories and writes one; it needs no network or privilege.
+PrivateNetwork=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/wtf-adsb/stats
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+MemoryMax=256M

@@ -1,0 +1,5 @@
+<ul class="nav">
+    {{#foreach navigation}}
+    <li class="nav-{{slug}}"><a href="{{url}}"{{#if current}} aria-current="page"{{else}}{{#if section}} aria-current="true"{{/if}}{{/if}}>{{label}}</a></li>
+    {{/foreach}}
+</ul>

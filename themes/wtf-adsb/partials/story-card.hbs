@@ -1,0 +1,20 @@
+<article class="story-card {{post_class}}">
+  <a class="card-image" href="{{url}}" tabindex="-1" aria-hidden="true">
+    {{#if feature_image}}<img
+        src="{{img_url feature_image size="m"}}"
+        srcset="{{> "srcset"}}"
+        sizes="(max-width: 760px) calc(100vw - 40px), 400px"
+        alt=""
+        width="720"
+        height="480"
+        loading="lazy"
+      />{{else}}<span class="image-placeholder">A closer look</span>{{/if}}
+  </a>
+  {{> "story-meta"}}
+  {{#if archive}}<h2><a href="{{url}}">{{title}}</a></h2>{{else}}<h3><a href="{{url}}">{{title}}</a></h3>{{/if}}
+  <p>{{excerpt words="28"}}</p>
+  <a class="text-link" href="{{url}}">Take a closer look<span class="sr-only">
+      at
+      {{title}}</span>
+    <span aria-hidden="true">↗</span></a>
+</article>

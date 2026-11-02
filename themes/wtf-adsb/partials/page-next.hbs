@@ -1,0 +1,2 @@
+{{!-- The step to the older page; on the last page, a link that goes nowhere, as in page-prev. --}}
+{{#if next}}<a class="page-step page-next" href="{{next}}" rel="next" aria-label="Next page (older {{noun}})" data-event-page="next">Next <span aria-hidden="true">→</span></a>{{else}}<a class="page-step page-next" role="link" aria-disabled="true" aria-label="Next page (older {{noun}})">Next <span aria-hidden="true">→</span></a>{{/if}}

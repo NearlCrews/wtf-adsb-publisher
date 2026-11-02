@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly feature selection with daily catch-up for unfinished research
+
+[Timer]
+OnCalendar=*-*-* 06:10:00 UTC
+Persistent=true
+Unit=wtf-adsb-weekly.service
+
+[Install]
+WantedBy=timers.target

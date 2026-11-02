@@ -1,0 +1,218 @@
+{
+  "note": "Shared files were extracted from a private predecessor project; the commit ids refer to its history.",
+  "format": 1,
+  "live_commit": "24cbf84c1fdee9cb0b86796bf5927093b43ae064",
+  "modules": {
+    "curation": {
+      "dest": "src/wtf_adsb_publisher/curation.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "95aa58fb55c9ad98c96675aae33424e91f39bfde",
+      "status": "written",
+      "dest_sha256": "884155ffd78edba98e4011dc3bacb30d3032844b0fcf3c610c41d208aaf5361d"
+    },
+    "episode_evidence": {
+      "dest": "src/wtf_adsb_publisher/episode_evidence.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "written",
+      "dest_sha256": "10cbce18bdd1701054f5ec08a4b2b6d73420187ac797373a1767b5744fc2c19c"
+    },
+    "maneuvers": {
+      "dest": "src/wtf_adsb_publisher/maneuvers.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "written",
+      "dest_sha256": "d54f02ac75653e566718109c046f3c40d8db4fd42aaad07cff7a7a14117cecee"
+    },
+    "places": {
+      "dest": "src/wtf_adsb_publisher/places.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "93678cad00ce4c9537bfae987b1aa369f2fbfd79",
+      "status": "conflicts",
+      "dest_sha256": "bf7d013c2a9b1a87d1818dd7617def60b5b6980328307099a32d67f185b7f2e9"
+    },
+    "public_events": {
+      "dest": "src/wtf_adsb_publisher/public_events.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "8b6c8958b2a55cf431e96251ea301a10ad69a43c",
+      "status": "written",
+      "dest_sha256": "d1544a52c4c3b9373a743518357ca155d14b1a8411c094d23e98bcef57784cdf"
+    },
+    "reference": {
+      "dest": "src/wtf_adsb_publisher/reference.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "232373c7f16c132f982742bb5a472e29eebd02ee",
+      "status": "written",
+      "dest_sha256": "d3468628baca24ecd6f22e7abe3c8189e7241be162e938af09db053585336746"
+    },
+    "rules": {
+      "dest": "src/wtf_adsb_publisher/rules.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "8b6c8958b2a55cf431e96251ea301a10ad69a43c",
+      "status": "written",
+      "dest_sha256": "eeaa43cccdf3c6fd647fa9ff6f30355f1a85d3c266353444b425c160a5ade62a"
+    },
+    "stories": {
+      "dest": "src/wtf_adsb_publisher/stories.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "8b6c8958b2a55cf431e96251ea301a10ad69a43c",
+      "status": "written",
+      "dest_sha256": "bb5449e37ea4370af2657dbfc21fa6d8bca8dbe96e9f167ae3a352f13c21dcf8"
+    },
+    "story_urls": {
+      "dest": "src/wtf_adsb_publisher/story_urls.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "8b6c8958b2a55cf431e96251ea301a10ad69a43c",
+      "status": "written",
+      "dest_sha256": "0f0d92adffd2fecd4b6db91d559e3d5401dbabec6523569ddaf5e7ca92eddb9c"
+    },
+    "watchlists": {
+      "dest": "src/wtf_adsb_publisher/watchlists.py",
+      "mode": "merge",
+      "base": "b56f4a4",
+      "synced": "ba6d32f2db33556143491d158353b6cf080c3c84",
+      "status": "written",
+      "dest_sha256": "ff5f02d25b331446c078a313713958bdd706f5f32b1d337db831e310fb06b328"
+    },
+    "editorial": {
+      "dest": "src/wtf_adsb_publisher/editorial.py",
+      "mode": "merge",
+      "base": "6c34b84",
+      "synced": "5549fb928b22a6a1b5b617f708208af5bc05e492",
+      "status": "written",
+      "dest_sha256": "2692325c2161ae14bf458928a8ed9311bf69ad425c7980f8033bcbdda2c8556a"
+    },
+    "public_prose": {
+      "dest": "src/wtf_adsb_publisher/public_prose.py",
+      "mode": "merge",
+      "base": "6c34b84",
+      "synced": "5549fb928b22a6a1b5b617f708208af5bc05e492",
+      "status": "written",
+      "dest_sha256": "4c0efd1c5e7d7cfd91effa4dcde1ae1f1f67fc98993c4bd55e860841e3ddca8d"
+    },
+    "public_writer": {
+      "dest": "src/wtf_adsb_publisher/public_writer.py",
+      "mode": "merge",
+      "base": "6c34b84",
+      "synced": "fe0ec856b481c042cc2fa9a728219eb40ff5b7db",
+      "status": "written",
+      "dest_sha256": "d116124a921b6731399a81021c455dde0d1c97d575130f83d6910b97938de1e0"
+    },
+    "story_facts": {
+      "dest": "src/wtf_adsb_publisher/story_facts.py",
+      "mode": "merge",
+      "base": "6c34b84",
+      "synced": "8b6c8958b2a55cf431e96251ea301a10ad69a43c",
+      "status": "written",
+      "dest_sha256": "07c215fc553e422ecd12f83ab4f0020d1364e975c30af7cda6f20075e2dd8b4b"
+    },
+    "autopilot": {
+      "dest": "src/wtf_adsb_publisher/autopilot.py",
+      "mode": "hand",
+      "base": "6c34b84",
+      "synced": "7b0923510728f14eaaf5295379846665c1acf365",
+      "status": "staged",
+      "dest_sha256": "47a2197ea0aa1783a7e8d721272f3b62d56cee280ce7efafa804b47a7eb1f55c"
+    },
+    "explain": {
+      "dest": "src/wtf_adsb_publisher/explain.py",
+      "mode": "hand",
+      "base": "b56f4a4",
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "staged",
+      "dest_sha256": "1b8074ad126a9b135cb83f5acfc9e016ae3dd172357c62fe8b75f5714b674dc0"
+    },
+    "selection": {
+      "dest": "src/wtf_adsb_publisher/selection.py",
+      "mode": "hand",
+      "base": "b56f4a4",
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "staged",
+      "dest_sha256": "b29d3a08ee496057e565e05a6a52c5af85c306a081f64a1e69687e8058e8b12a"
+    },
+    "typecheck": {
+      "dest": "src/wtf_adsb_publisher/typecheck.py",
+      "mode": "hand",
+      "base": "b56f4a4",
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "staged",
+      "dest_sha256": "f71499c67ac2f8e5228517fb9d367a9a90fd30dc45cf3291dd5e1d3f08bd2832"
+    },
+    "wind": {
+      "dest": "src/wtf_adsb_publisher/wind.py",
+      "mode": "hand",
+      "base": "b56f4a4",
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "staged",
+      "dest_sha256": "37468e1350d698558f50220c770c0a5c538de9be90a7d97ca6411f68650d5485"
+    },
+    "kinds": {
+      "dest": "src/wtf_adsb_publisher/kinds.py",
+      "mode": "copy",
+      "base": null,
+      "synced": "8b6c8958b2a55cf431e96251ea301a10ad69a43c",
+      "status": "written",
+      "dest_sha256": "2b79459e4eae19bb468a683fb35c76cf26c52c07172b4cddd4b31c7834c31da3"
+    },
+    "enrichment_rules": {
+      "dest": "src/wtf_adsb_publisher/enrichment_rules.py",
+      "mode": "copy",
+      "base": null,
+      "synced": "4f7dbc89b01c44058d4b6a7fdbc5fa008d95a87a",
+      "status": "written",
+      "dest_sha256": "335c61fd7c0d8d38da613afd7e644b8ae7197252ac27586d342a43c3da1db25f"
+    },
+    "airports": {
+      "dest": "src/wtf_adsb_publisher/airports.py",
+      "mode": "copy",
+      "base": null,
+      "synced": "bef9a58154eb8cd3443a6c7c5fe4898af51d9832",
+      "status": "written",
+      "dest_sha256": "16e045051b4eb131d728df46551a066473e1639dd498d60095e58428082b049e"
+    },
+    "entity_context": {
+      "dest": "src/wtf_adsb_publisher/entity_context.py",
+      "mode": "copy",
+      "base": null,
+      "synced": "702c66ceb14805256e493c7753131fbbb22fee70",
+      "status": "written",
+      "dest_sha256": "476a4730bba65f179a82d5d5ad3c910e1ca3f93e4f1aa7847a419243f4fbfb4c"
+    },
+    "entity_rules": {
+      "dest": "src/wtf_adsb_publisher/entity_rules.py",
+      "mode": "copy",
+      "base": null,
+      "synced": "702c66ceb14805256e493c7753131fbbb22fee70",
+      "status": "written",
+      "dest_sha256": "f48852a46e8c5c1ce4e55b13e7d39cb95ce094043f42c828eaaaab061e5f0a68"
+    },
+    "registry_http": {
+      "dest": "src/wtf_adsb_publisher/registry_http.py",
+      "mode": "hand",
+      "base": null,
+      "synced": "4703b7288e174326da86cacb562c543dbebc6cb6",
+      "status": "staged",
+      "dest_sha256": null
+    }
+  },
+  "shared_digests": {
+    "src/wtf_adsb_publisher/wire.py": "1113a72ec98b42f918a10c1386d85088adf3153db456dd98cbd6cfd7b227b00a",
+    "src/wtf_adsb_publisher/kinds.py": "2b79459e4eae19bb468a683fb35c76cf26c52c07172b4cddd4b31c7834c31da3",
+    "src/wtf_adsb_publisher/enrichment_rules.py": "335c61fd7c0d8d38da613afd7e644b8ae7197252ac27586d342a43c3da1db25f",
+    "src/wtf_adsb_publisher/contracts/change-batch-v1.schema.json": "c2747586fa0ffb5621a8f6f9179c0afbdce13bbb38d57a126aefbdd55b6b919a",
+    "src/wtf_adsb_publisher/contracts/manifest-v1.schema.json": "790421775b5d5feb5ea15c4da82a691adcbeebdbba7fe8ee73a20dab1b0c7191",
+    "src/wtf_adsb_publisher/contracts/observation-v1.schema.json": "f36ff9a6787dd97a0d8ecdc3a5282405a988e307ee19b7456cdd055cac1c8018",
+    "contracts/change-batch-v1.schema.json": "c2747586fa0ffb5621a8f6f9179c0afbdce13bbb38d57a126aefbdd55b6b919a",
+    "contracts/manifest-v1.schema.json": "790421775b5d5feb5ea15c4da82a691adcbeebdbba7fe8ee73a20dab1b0c7191",
+    "contracts/observation-v1.schema.json": "f36ff9a6787dd97a0d8ecdc3a5282405a988e307ee19b7456cdd055cac1c8018"
+  }
+}

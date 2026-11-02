@@ -1,0 +1,7 @@
+<section class="type-background column" aria-labelledby="type-background-title">
+  <h2 id="type-background-title">About the {{name}}</h2>
+  {{#if facts}}<ul class="type-facts">{{#foreach facts}}<li>{{text}}{{#if number}} <a href="#type-source-{{number}}" aria-label="Source {{number}}">[{{number}}]</a>{{/if}}</li>{{/foreach}}</ul>{{/if}}
+  {{#if photo}}<figure class="type-photo"><img src="{{photo.src}}" alt="{{photo.alt}}" width="{{photo.width}}" height="{{photo.height}}" loading="lazy" decoding="async" /><figcaption>{{photo.caption}} <a href="{{photo.creditPath}}">Image source and license</a></figcaption></figure>{{/if}}
+  {{#if sources}}<ol class="type-sources" aria-label="Sources">{{#foreach sources}}<li id="type-source-{{number}}"><a href="{{url}}" rel="external noopener noreferrer">{{title}}</a>{{#if publisher}}, {{publisher}}{{/if}}</li>{{/foreach}}</ol>{{/if}}
+  {{#if hubUrl}}<p><a class="text-link" href="{{hubUrl}}">Every {{name}} story <span aria-hidden="true">↗</span></a></p>{{/if}}
+</section>

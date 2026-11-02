@@ -1,0 +1,4 @@
+<div class="event-key-group">
+  <p class="event-key-scope">{{scope}}{{#if interval}}<span>{{interval}}</span>{{/if}}</p>
+  <dl class="event-key-facts">{{#foreach rows}}<div><dt>{{label}}</dt><dd>{{value}}{{#if unit}} <small>{{unit}}</small>{{/if}}</dd></div>{{/foreach}}</dl>
+</div>

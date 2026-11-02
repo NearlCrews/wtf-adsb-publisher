@@ -1,0 +1,27 @@
+{{!< default}}
+{{#post}}
+<article class="article page {{post_class}}">
+  {{#if @page.show_title_and_feature_image}}
+  <header class="article-heading column">
+    {{> "breadcrumbs"}}
+    <p class="eyebrow">{{@site.title}} field notes</p>
+    <h1>{{title}}</h1>
+    {{#if custom_excerpt}}
+    <p class="article-deck">{{custom_excerpt}}</p>
+    {{/if}}
+  </header>
+  {{#if feature_image}}
+  <figure class="article-cover column">
+    <img src="{{img_url feature_image size="l"}}"
+      srcset="{{> "srcset"}}"
+      sizes="(max-width: 760px) calc(100vw - 40px), 680px"
+      alt="{{feature_image_alt}}" width="1200" height="800">
+    {{#if feature_image_caption}}
+    <figcaption>{{feature_image_caption}}</figcaption>
+    {{/if}}
+  </figure>
+  {{/if}}
+  {{/if}}
+  <div class="gh-content prose">{{content}}</div>
+</article>
+{{/post}}

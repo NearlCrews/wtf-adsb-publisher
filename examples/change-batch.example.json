@@ -1,0 +1,153 @@
+{
+  "schema": "wtf-adsb.observations",
+  "schema_version": "1.1.0",
+  "profile": "wtf-adsb.collection.v1",
+  "stream_id": "00000000-0000-4000-8000-000000000001",
+  "generation": "00000000-0000-4000-8000-000000000005",
+  "generated_at": "2026-10-01T12:31:00Z",
+  "producer": {
+    "name": "wtf-adsb-engine",
+    "version": "0.1.0"
+  },
+  "sequence_start": 1,
+  "sequence_end": 1,
+  "synthetic": true,
+  "changes": [
+    {
+      "sequence": 1,
+      "operation": "upsert",
+      "event_id": "00000000-0000-4000-8000-000000000002",
+      "revision": 1,
+      "updated_at": "2026-10-01T12:31:00Z",
+      "evidence_digest": "245a9567812cfb577fdd267788982c2770273d242836f771f172ea08763ee148",
+      "observation": {
+        "group": {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "first_seen": 1790856000,
+          "last_seen": 1790856060,
+          "start": 1790856000,
+          "registration": null,
+          "events": [
+            {
+              "id": "00000000-0000-4000-8000-000000000003",
+              "hex": "ABCDEF",
+              "kind": "type_speed_mismatch",
+              "category": "performance",
+              "value": 612,
+              "unit": "kn",
+              "first_seen": 1790856000,
+              "last_seen": 1790856060,
+              "hits": 2,
+              "origin": "Live receiver",
+              "verdict": null,
+              "evidence": {
+                "aircraft": {
+                  "hex": "ABCDEF",
+                  "t": "A320",
+                  "gs": 612,
+                  "tas": 460,
+                  "source": "adsb_icao",
+                  "alt_baro": 35000,
+                  "baro_rate": 0
+                },
+                "track": [
+                  {
+                    "ts": 1790856000,
+                    "lat": 48.0,
+                    "lon": -110.0,
+                    "gs": 612,
+                    "tas": 460,
+                    "alt_baro": 35000,
+                    "source": "adsb_icao"
+                  },
+                  {
+                    "ts": 1790856060,
+                    "lat": 48.1,
+                    "lon": -109.8,
+                    "gs": 611,
+                    "tas": 461,
+                    "alt_baro": 35000,
+                    "source": "adsb_icao"
+                  }
+                ],
+                "confirmation": {
+                  "sustained": false,
+                  "duration_seconds": 60,
+                  "samples": [
+                    {
+                      "ts": 1790856000,
+                      "lat": 48.0,
+                      "lon": -110.0,
+                      "gs": 612,
+                      "tas": 460,
+                      "alt_baro": 35000,
+                      "source": "adsb_icao"
+                    },
+                    {
+                      "ts": 1790856060,
+                      "lat": 48.1,
+                      "lon": -109.8,
+                      "gs": 611,
+                      "tas": 461,
+                      "alt_baro": 35000,
+                      "source": "adsb_icao"
+                    }
+                  ],
+                  "quality_flags": [],
+                  "field_freshness_known": true
+                }
+              }
+            }
+          ]
+        },
+        "context": {
+          "policy_profile": "legacy-collection-v1",
+          "novelty": {
+            "coverage_days": 0,
+            "type_days": {}
+          },
+          "type_norms": {
+            "00000000-0000-4000-8000-000000000003": {
+              "low": 440,
+              "high": 470,
+              "phase": "level",
+              "band_floor_ft": 30000,
+              "band_ceiling_ft": 40000,
+              "addresses": 24,
+              "days": 21,
+              "window_days": 30
+            }
+          }
+        },
+        "media": {
+          "by_finding": {
+            "00000000-0000-4000-8000-000000000003": {
+              "parts": [
+                [
+                  {
+                    "ts": 1790856000,
+                    "lat": 48.0,
+                    "lon": -110.0,
+                    "source": "adsb_icao",
+                    "speed": 612,
+                    "altitude": 35000,
+                    "altitude_reference": "barometric"
+                  },
+                  {
+                    "ts": 1790856060,
+                    "lat": 48.1,
+                    "lon": -109.8,
+                    "source": "adsb_icao",
+                    "speed": 611,
+                    "altitude": 35000,
+                    "altitude_reference": "barometric"
+                  }
+                ]
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

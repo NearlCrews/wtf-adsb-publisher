@@ -1,0 +1,6 @@
+<figure class="{{#if article}}article-cover column{{else}}event-visual{{/if}}{{#if replaySrc}} geographic-replay{{/if}}"{{#if kind}} data-media-kind="{{kind}}"{{/if}}{{#if replaySrc}} data-geographic-replay="{{replaySrc}}" data-replay-event-id="{{event_id}}" data-replay-evidence-version="{{evidence_version}}"{{/if}}>
+  {{#if replaySrc}}<div class="geographic-replay-map" data-geographic-stage>{{/if}}
+  <img src="{{src}}" alt="{{alt}}" width="{{#if width}}{{width}}{{else}}900{{/if}}" height="{{#if height}}{{height}}{{else}}600{{/if}}" loading="{{#if lead}}eager{{else}}lazy{{/if}}" decoding="async"{{#if lead}} fetchpriority="high"{{/if}} />
+  {{#if replaySrc}}</div>{{> "geographic-replay"}}{{/if}}
+  {{#if caption}}<figcaption>{{#if compactCaption}}{{compactCaption}}{{else}}{{caption}}{{/if}}{{#if creditPath}} <a class="event-image-credit" href="{{creditPath}}">{{#if replaySrc}}Map data sources{{else}}Image source and license{{/if}}</a>{{/if}}</figcaption>{{else}}{{#if synthetic}}<figcaption>Illustrative example</figcaption>{{else}}{{#if creditPath}}<figcaption><a class="event-image-credit" href="{{creditPath}}">Image source and license</a></figcaption>{{/if}}{{/if}}{{/if}}
+</figure>

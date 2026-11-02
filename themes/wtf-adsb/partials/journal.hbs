@@ -1,0 +1,30 @@
+<section class="wrap journal" data-journal aria-labelledby="journal-title">
+  {{> "breadcrumbs"}}
+  <header class="journal-heading"><div><h1 id="journal-title">{{#if heading}}{{heading}}{{else}}Stories{{/if}}</h1>{{#if intro}}<p>{{intro}}</p>{{/if}}</div><a href="{{@site.url}}/field-guide/" class="text-link">How to read the data ↗</a></header>
+  <div class="journal-search-bar" data-search-toolbar hidden><button class="journal-search-button" type="button" data-open-filters aria-haspopup="dialog" aria-controls="event-filter-dialog" aria-label="Search and filters"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg>Search<span class="filter-count" data-filter-count hidden></span></button><p class="active-filter-summary" data-filter-summary>Last 30 days · All event types</p><button type="button" class="clear-active-filters" data-clear-active-filters hidden>Clear filters</button></div>
+  <dialog class="event-filter-dialog" id="event-filter-dialog" data-filter-dialog aria-labelledby="event-filter-title">
+  <header class="filter-dialog-heading"><h2 id="event-filter-title" tabindex="-1">Search observations</h2><button type="button" data-close-filters aria-label="Close search">Close ×</button></header>
+  <form class="event-filters" data-event-filters role="search" aria-label="Search aircraft observations" action="/stories/" method="get" hidden>
+    <div class="filter-dialog-fields">
+    <div class="search-filter-row">
+      <div class="filter-field keyword-field"><label for="event-query">Search observations</label><input id="event-query" name="q" type="search" maxlength="200" placeholder="Tail number, callsign, or keywords" data-keyword-filter aria-describedby="event-search-help" /><p id="event-search-help" class="filter-help">Search aircraft types, titles, and reported values too. All words must match.</p></div>
+      <div class="filter-field"><label for="aircraft-type">Aircraft type</label><select id="aircraft-type" name="aircraft" data-aircraft-filter><option value="">All aircraft types</option>{{#foreach aircraftChoices}}<option value="{{value}}">{{label}}</option>{{/foreach}}</select></div>
+      <div class="filter-field"><label for="reception-source">Reception source</label><select id="reception-source" name="source" data-source-filter><option value="">All sources</option>{{#foreach sources}}<option value="{{id}}">{{label}}</option>{{/foreach}}</select></div>
+    </div>
+    <div class="type-filters" role="group" aria-label="Event type"><button type="button" data-type="" aria-pressed="true">All event types</button>{{#foreach types}}<button type="button" data-type="{{id}}" class="type-{{id}}" aria-pressed="false"><span aria-hidden="true">{{icon}}</span> {{label}}</button>{{/foreach}}</div>
+    <div class="airport-pattern-filter"><label><input id="hide-airport-patterns" name="hide_airport_patterns" type="checkbox" value="1" data-airport-pattern-filter aria-describedby="airport-pattern-help" />Hide airport-pattern candidates</label><p id="airport-pattern-help" class="filter-help">Repeated runway-aligned circuits that may be practice. Training is not confirmed. Helicopters and cases without enough track evidence stay visible. {{airportPatternCount}} candidates across all dates.</p></div>
+    <div class="date-filter">
+      <div class="filter-field"><label for="event-from">From (UTC)</label><input id="event-from" name="from" type="date" min="{{bounds.min}}" max="{{bounds.max}}" value="{{from}}" data-range-from required /></div>
+      <div class="filter-field"><label for="event-to">Through (UTC)</label><input id="event-to" name="to" type="date" min="{{bounds.min}}" max="{{bounds.max}}" value="{{to}}" data-range-to required /></div>
+    </div>
+    <div class="range-presets" role="group" aria-label="Date range presets"><span>Show</span><button type="button" data-range-preset="7">Last 7 days</button><button type="button" data-range-preset="30">Last 30 days</button><button type="button" data-range-preset="90">Last 90 days</button><button type="button" data-range-preset="all">All available history</button></div>
+    </div>
+    <footer class="filter-dialog-actions"><p class="filter-dialog-status" role="status" aria-live="polite" data-filter-status></p><div><button type="button" data-clear-filters>Reset filters</button><button type="submit" class="filter-apply">Show results</button></div></footer>
+  </form>
+  </dialog>
+  <noscript><p class="journal-notice">{{#if archive}}Search, custom date ranges, and other page sizes need JavaScript. The stories below are listed by observation date, with links to every page.{{else}}Search, custom date ranges, and other page sizes need JavaScript. You can still <a href="{{allHistory}}">browse all available history</a>.{{/if}}</p></noscript>
+  {{> "timeline"}}
+  <p class="journal-status" role="status" aria-live="polite" data-journal-status></p>
+  <div data-event-feed>{{#if archive}}{{#with archive}}{{> "archive-feed"}}{{/with}}{{else}}{{#with feed}}{{> "event-feed"}}{{/with}}{{/if}}</div>
+  <script type="application/json" data-journal-config>{{{config}}}</script>
+</section>

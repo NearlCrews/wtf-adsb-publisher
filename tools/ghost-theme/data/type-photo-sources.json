@@ -1,0 +1,557 @@
+{
+  "schema_version": 1,
+  "notes": [
+    "Input for fetch-type-photos.mjs. Type codes whose type_names.json entry carries a same_as article use that article unless articles names one for the code; the codes under articles name the English Wikipedia article for a type that has none there, or a variant or family article whose Wikidata image is usable when the type's own is not. Each was resolved through the MediaWiki API with redirects followed and checked to have a Wikidata item. A family article stands in for a variant (Boeing 747 for the 747-200).",
+    "files names a Commons file for a type whose Wikidata image is unusable; the tool skips Wikidata for that code and applies the same license, size and content checks. titles gives the photo's title for a code that the type table does not name.",
+    "classes lists the representative photo for each class of aircraft, which cards show when a type has no photo: its Commons file, title, the ICAO Doc 8643 descriptions it covers and, for jets, the type_names.json categories that tell a business jet from an airliner. A photo that lists the type's category wins over one that lists descriptions only.",
+    "skip lists codes that get no type photo, with the reason. rejected lists Commons files a visual check found unsuitable. authors gives the credit line for a file whose Commons author field is not a plain name. descriptions gives reviewed alt text and, optionally, the variant or model pictured (shown) or a full caption for files that passed the visual check."
+  ],
+  "articles": {
+    "A119": "https://en.wikipedia.org/wiki/AgustaWestland_AW119_Koala",
+    "A19N": "https://en.wikipedia.org/wiki/Airbus_A320neo_family",
+    "A20N": "https://en.wikipedia.org/wiki/Airbus_A320neo_family",
+    "A21N": "https://en.wikipedia.org/wiki/Airbus_A320neo_family",
+    "A310": "https://en.wikipedia.org/wiki/Airbus_A310_MRTT",
+    "A319": "https://en.wikipedia.org/wiki/Airbus_A319",
+    "A320": "https://en.wikipedia.org/wiki/Airbus_A320_family",
+    "A332": "https://en.wikipedia.org/wiki/Airbus_A330",
+    "A400": "https://en.wikipedia.org/wiki/Airbus_A400M_Atlas",
+    "AT3P": "https://en.wikipedia.org/wiki/Air_Tractor_AT-300",
+    "B14A": "https://en.wikipedia.org/wiki/Bellanca_Cruisair",
+    "B38M": "https://en.wikipedia.org/wiki/Boeing_737_MAX",
+    "B39M": "https://en.wikipedia.org/wiki/Boeing_737_MAX",
+    "B737": "https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
+    "B738": "https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
+    "B742": "https://en.wikipedia.org/wiki/Boeing_747",
+    "B744": "https://en.wikipedia.org/wiki/Boeing_747-400",
+    "B763": "https://en.wikipedia.org/wiki/Boeing_767",
+    "BE17": "https://en.wikipedia.org/wiki/Beechcraft_Model_17_Staggerwing",
+    "BE18": "https://en.wikipedia.org/wiki/Beechcraft_Model_18",
+    "BE20": "https://en.wikipedia.org/wiki/Beechcraft_C-12_Huron",
+    "BE30": "https://en.wikipedia.org/wiki/Beechcraft_C-12_Huron",
+    "BE9L": "https://en.wikipedia.org/wiki/Beechcraft_King_Air",
+    "C130": "https://en.wikipedia.org/wiki/Lockheed_C-130_Hercules",
+    "C182": "https://en.wikipedia.org/wiki/Cessna_182_Skylane",
+    "C310": "https://en.wikipedia.org/wiki/Cessna_310",
+    "C404": "https://en.wikipedia.org/wiki/Cessna_404_Titan",
+    "CJ6": "https://en.wikipedia.org/wiki/Nanchang_CJ-6",
+    "CL60": "https://en.wikipedia.org/wiki/Bombardier_Challenger_600_series",
+    "CRJ7": "https://en.wikipedia.org/wiki/Bombardier_CRJ700_series",
+    "DA40": "https://en.wikipedia.org/wiki/Diamond_DA40_Diamond_Star",
+    "DC4": "https://en.wikipedia.org/wiki/Douglas_C-54_Skymaster",
+    "DH8C": "https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+    "DH8D": "https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+    "E390": "https://en.wikipedia.org/wiki/Embraer_C-390_Millennium",
+    "EA50": "https://en.wikipedia.org/wiki/Eclipse_500",
+    "ERCO": "https://en.wikipedia.org/wiki/ERCO_Ercoupe",
+    "F5": "https://en.wikipedia.org/wiki/Northrop_F-5",
+    "F900": "https://en.wikipedia.org/wiki/Dassault_Falcon_900",
+    "FA24": "https://en.wikipedia.org/wiki/Fairchild_24",
+    "GA5C": "https://en.wikipedia.org/wiki/Gulfstream_G400/G500/G600",
+    "GA6C": "https://en.wikipedia.org/wiki/Gulfstream_G400/G500/G600",
+    "GA7C": "https://en.wikipedia.org/wiki/Gulfstream_G650/G700/G800",
+    "GAZL": "https://en.wikipedia.org/wiki/A%C3%A9rospatiale_Gazelle",
+    "GLEX": "https://en.wikipedia.org/wiki/Bombardier_Global_Express",
+    "GLF2": "https://en.wikipedia.org/wiki/Grumman_Gulfstream_II",
+    "GLF4": "https://en.wikipedia.org/wiki/Gulfstream_IV",
+    "GLF5": "https://en.wikipedia.org/wiki/Gulfstream_V",
+    "GLF6": "https://en.wikipedia.org/wiki/Gulfstream_G650/G700/G800",
+    "H25B": "https://en.wikipedia.org/wiki/Hawker_800",
+    "HAWK": "https://en.wikipedia.org/wiki/BAE_Systems_Hawk",
+    "J328": "https://en.wikipedia.org/wiki/Fairchild_Dornier_328JET",
+    "KR34": "https://en.wikipedia.org/wiki/Fairchild_KR-34",
+    "LJ40": "https://en.wikipedia.org/wiki/Learjet_40",
+    "LJ60": "https://en.wikipedia.org/wiki/Learjet_60",
+    "M200": "https://en.wikipedia.org/wiki/Meyers_200",
+    "MG17": "https://en.wikipedia.org/wiki/Mikoyan-Gurevich_MiG-17",
+    "P149": "https://en.wikipedia.org/wiki/Piaggio_P.149",
+    "P180": "https://en.wikipedia.org/wiki/Piaggio_P.180_Avanti",
+    "P28A": "https://en.wikipedia.org/wiki/Piper_PA-28_Cherokee",
+    "P3": "https://en.wikipedia.org/wiki/Lockheed_P-3_Orion",
+    "P32R": "https://en.wikipedia.org/wiki/Piper_PA-32R",
+    "P38": "https://en.wikipedia.org/wiki/Lockheed_P-38_Lightning",
+    "P4Y": "https://en.wikipedia.org/wiki/Consolidated_PB4Y-2_Privateer",
+    "P8": "https://en.wikipedia.org/wiki/Boeing_P-8_Poseidon",
+    "PC24": "https://en.wikipedia.org/wiki/Pilatus_PC-24",
+    "R135": "https://en.wikipedia.org/wiki/Boeing_RC-135",
+    "RV6": "https://en.wikipedia.org/wiki/Van%27s_Aircraft_RV-6",
+    "S64": "https://en.wikipedia.org/wiki/Sikorsky_S-64_Skycrane",
+    "SHIP": "https://en.wikipedia.org/wiki/Airship",
+    "T33": "https://en.wikipedia.org/wiki/Lockheed_T-33",
+    "T34P": "https://en.wikipedia.org/wiki/Beechcraft_T-34_Mentor",
+    "T38": "https://en.wikipedia.org/wiki/Northrop_T-38_Talon",
+    "TF21": "https://en.wikipedia.org/wiki/Taylorcraft_F-21",
+    "W135": "https://en.wikipedia.org/wiki/Boeing_WC-135_Constant_Phoenix"
+  },
+  "files": {
+    "AC68": "File:Aero Commander 680 ‘N1187D’ (29058886942).jpg",
+    "BE58": "File:Beech 58 Baron ‘HB-GMM’ (54524391500).jpg",
+    "C750": "File:N978QS 2002 Cessna 750 Citation X C-N 750-0187 (5427260932).jpg",
+    "EL10": "File:ELA Aviation 10 Eclipse (D-MLZW) 2024-09-14 Andre Gerwing Collection ID 022382.jpg",
+    "G164": "File:Grumman G-164A (c-n 204B, PH-APR) 2007-06-21 Andre Gerwing Collection ID 009019.jpg",
+    "HDJT": "File:Hamburg Airport Honda HA-420 HondaJet D-IVVV (DSC03385).jpg",
+    "P46T": "File:N555AU (9321079402).jpg",
+    "SLH4": "File:Sling HW (N669JP, cn 005K) (7-29-2023).jpg"
+  },
+  "titles": {
+    "AC68": "Aero Commander 680",
+    "EL10": "ELA 10 Eclipse",
+    "G164": "Grumman G-164 Ag-Cat",
+    "SLH4": "Sling High Wing"
+  },
+  "skip": {},
+  "rejected": {
+    "File:Patiententransporteinheit.JPG": "An intensive-care patient transport unit inside the cabin, not the aircraft."
+  },
+  "authors": {
+    "File:Boeing B-29 Superfortress Bockscar 2 USAF.jpg": "USAF Museum",
+    "File:Curtiss P-40 Warhawk airshow.jpg": "TMWolf",
+    "File:F-WWCB A330-203 Airbus Industrie TLS 27SEP13 (9972134676).jpg": "Ken Fielding (flickr.com/photos/kenfielding)",
+    "File:Fairchild KR-34.jpg": "San Diego Air & Space Museum Archives",
+    "File:Fairchild.argus3.g-bcbh.arp.jpg": "Adrian Pingstone",
+    "File:Northrop F-5E (Tail No. 01557) 061006-F-1234S-073.jpg": "National Museum of the U.S. Air Force",
+    "File:Piaggio-P.149D-Rimensberger.JPG": "Joe Rimensberger",
+    "File:Pilatus PC-12 aircraft in flight over the Cleveland area and the (GRC-2024-C-04018).jpg": "NASA Glenn Research Center, Quentin Schwinn",
+    "File:T-38 (050415-F-0000S-002).jpg": "U.S. Air Force",
+    "File:USAF CV-22B Osprey 11-0058 RIAT 2023 06.jpg": "Julian Herzog",
+    "File:WC-135.jpg": "U.S. Air Force"
+  },
+  "descriptions": {
+    "File:\"Beluga XL\" A330-743L (cropped).jpg": {
+      "alt": "Representative Airbus BelugaXL climbing after takeoff, seen from below."
+    },
+    "File:060610-SKP-E-3-01.jpg": {
+      "alt": "Representative Boeing E-3 Sentry with its rotating radar dome, parked with boarding stairs."
+    },
+    "File:100820 Speyer Museum (17).jpg": {
+      "alt": "Representative Junkers Ju 52 in Lufthansa markings on display inside a museum hall."
+    },
+    "File:1944D17S.jpg": {
+      "alt": "Representative Beechcraft D17S Staggerwing biplane in flight.",
+      "shown": "D17S"
+    },
+    "File:1983 Air Tractor Inc AT-301.jpg": {
+      "alt": "Representative Air Tractor AT-301 agricultural aircraft parked outside a hangar.",
+      "shown": "AT-301"
+    },
+    "File:2010-07-08 BD700 Tyrolean OE-IGS EDDF 03.jpg": {
+      "alt": "Representative Bombardier Global Express on approach with its landing gear down."
+    },
+    "File:5th Reconnaissance Squadron - U-2 Osan.jpg": {
+      "alt": "Representative Lockheed U-2 taking off, seen from below."
+    },
+    "File:A310MRTT.jpg": {
+      "alt": "Representative Airbus A310 MRTT in flight with a refueling hose trailing from its wing pod."
+    },
+    "File:Aero Commander 680 ‘N1187D’ (29058886942).jpg": {
+      "alt": "Representative Aero Commander 680, a high-wing piston twin, parked on an airport ramp and seen from behind."
+    },
+    "File:Aero L-39 Albatros Jet Trainer.jpg": {
+      "alt": "Representative Aero L-39 Albatros jet trainer in flight with its landing gear down."
+    },
+    "File:Airbus A320-214, Airbus Industrie JP7617615.jpg": {
+      "alt": "Representative Airbus A320 in Airbus colors on approach with its landing gear down.",
+      "shown": "A320"
+    },
+    "File:Airbus A320-271N NEO D-AVVA.jpg": {
+      "alt": "Representative Airbus A320neo on approach with its landing gear down.",
+      "shown": "A320neo"
+    },
+    "File:Airbus Beluga Airbus A300B4-608ST F-GSTA (28858044414).jpg": {
+      "alt": "Representative Airbus Beluga on approach with its landing gear down."
+    },
+    "File:American Airlines 767-200 N324AA.jpg": {
+      "alt": "Representative Boeing 767-200 in American Airlines colors climbing after takeoff.",
+      "shown": "767-200"
+    },
+    "File:American Airlines Boeing 757-200 N605AA SJC.jpg": {
+      "alt": "Representative Boeing 757-200 in American Airlines colors on approach.",
+      "shown": "757-200"
+    },
+    "File:An air-to-air left underside view of the 92nd Bombardment Wing's new camouflaged B-52G Stratofortress aircraft DF-ST-85-12450.jpg": {
+      "alt": "Representative Boeing B-52G Stratofortress in camouflage paint, flying over mountains.",
+      "shown": "B-52G"
+    },
+    "File:Antonov An-22 2.jpg": {
+      "alt": "Representative Antonov An-22 just above a runway with its landing gear down."
+    },
+    "File:Austrian Airlines, OE-LDB, Airbus A319-112 (44341899432).jpg": {
+      "alt": "Representative Airbus A319 in Austrian Airlines colors on approach."
+    },
+    "File:B-1B.jpg": {
+      "alt": "Representative Rockwell B-1B Lancer in flight over desert terrain."
+    },
+    "File:B-747 Iberia.jpg": {
+      "alt": "Representative Boeing 747-200 in Iberia colors in flight above clouds.",
+      "shown": "747-200"
+    },
+    "File:B17 - Chino Airshow 2014 (framed).jpg": {
+      "alt": "Representative Boeing B-17 Flying Fortress in flight, seen from below."
+    },
+    "File:Ba b747-400 g-bnle arp.jpg": {
+      "alt": "Representative Boeing 747-400 in British Airways colors climbing after takeoff."
+    },
+    "File:Bae hawk t1 xx245 inflight arp.jpg": {
+      "alt": "Representative BAE Systems Hawk T1 jet trainer in black RAF paint, in flight.",
+      "shown": "Hawk T1"
+    },
+    "File:Balair Douglas DC-6 Basle Airport - 1976.jpg": {
+      "alt": "Representative Douglas DC-6B in Balair colors about to land.",
+      "shown": "DC-6B"
+    },
+    "File:Beech 18 - Little Gransden 2019.jpg": {
+      "alt": "Representative Beechcraft Model 18 in U.S. military markings in flight."
+    },
+    "File:Beech 58 Baron ‘HB-GMM’ (54524391500).jpg": {
+      "alt": "Representative Beechcraft Baron 58 piston twin parked on a wet airport apron, in side view."
+    },
+    "File:Bell 407 -N23986.jpg": {
+      "alt": "Representative Bell 407 helicopter in flight."
+    },
+    "File:Bellanca 14-9.jpg": {
+      "alt": "Historical black-and-white photograph of a Bellanca 14-9 Junior on an airfield apron, with a man standing beside it, representative of the Bellanca Cruisair family.",
+      "shown": "historical 14-9 Junior"
+    },
+    "File:Boeing B-29 Superfortress Bockscar 2 USAF.jpg": {
+      "alt": "Representative Boeing B-29 Superfortress parked on grass, seen from the side."
+    },
+    "File:Boeing RC-135V Rivet Joint 64-14842.jpg": {
+      "alt": "Representative Boeing RC-135V Rivet Joint taking off.",
+      "shown": "RC-135V"
+    },
+    "File:Boeing Stearman N67193.jpg": {
+      "alt": "Representative Boeing-Stearman Model 75 biplane in U.S. Navy yellow, in flight."
+    },
+    "File:C-12 Huron in flight.jpg": {
+      "alt": "Representative Beechcraft C-12F Huron, a U.S. Air Force King Air 200 variant, banking in flight over farmland.",
+      "shown": "C-12F, a King Air 200 variant,"
+    },
+    "File:C-FSJJ (43123199145).jpg": {
+      "alt": "Representative Boeing 737 MAX 8 in Air Canada colors on approach.",
+      "shown": "737 MAX 8"
+    },
+    "File:C-GSYN Adlair Aviation Ltd Beechcraft King Air 100 (BE10) 03.JPG": {
+      "alt": "Representative Beechcraft King Air 100 parked on an airport apron.",
+      "shown": "King Air 100"
+    },
+    "File:C5 galaxy.jpg": {
+      "alt": "Representative Lockheed C-5A Galaxy parked with its nose raised while people walk toward it.",
+      "shown": "C-5A"
+    },
+    "File:CJ-6 Sky Wing 02 at CCAS2023 (20230724131218).jpg": {
+      "alt": "Representative Nanchang CJ-6 trainer in flight trailing display smoke."
+    },
+    "File:CRJ-900 Air Nostrum EC-JTU 01.jpg": {
+      "alt": "Representative Bombardier CRJ900 in Air Nostrum colors climbing after takeoff.",
+      "shown": "CRJ900"
+    },
+    "File:Canadair CL500 Challenger 604 (4826809923).jpg": {
+      "alt": "Representative Canadair Challenger 604 business jet on approach.",
+      "shown": "Challenger 604"
+    },
+    "File:Cessna 172S Skyhawk ‘G-JMKE’ (45077563364).jpg": {
+      "alt": "Representative Cessna 172S Skyhawk climbing after takeoff."
+    },
+    "File:Cessna 525 citationjet g-sfcj arp.jpg": {
+      "alt": "Representative Cessna 525 CitationJet on approach with its landing gear down.",
+      "shown": "original CitationJet"
+    },
+    "File:Cessna.404.titan2.arp.jpg": {
+      "alt": "Representative Cessna 404 Titan in coastguard markings parked on an apron."
+    },
+    "File:Cessna310JC-FRYZ.jpg": {
+      "alt": "Representative Cessna 310J parked on grass beside a taxiway.",
+      "shown": "310J"
+    },
+    "File:Consolidated PBY Catalina, Fantasy Of Flight Museum, Florida (1).jpg": {
+      "alt": "Representative Consolidated PBY Catalina amphibian parked on a museum apron."
+    },
+    "File:Curtiss P-40 Warhawk airshow.jpg": {
+      "alt": "Representative Curtiss P-40 Warhawk with shark-mouth nose art, landing with its gear down."
+    },
+    "File:D-ABQR Bombardier Dash 8-Q400 airberlin Eurowings opb LGW DUS 2018-07-31 (33a) (44206314192).jpg": {
+      "alt": "Representative De Havilland Canada Dash 8-400 in Air Berlin colors banking in flight.",
+      "shown": "Dash 8-400"
+    },
+    "File:D-cnik (1850232066).jpg": {
+      "alt": "Representative Learjet 40 in black paint taking off past an airport terminal."
+    },
+    "File:Dassault.falcon900.cs-dfh.arp.jpg": {
+      "alt": "Representative Dassault Falcon 900 climbing after takeoff."
+    },
+    "File:Delta Air Lines Airbus A320 N320US on final approach to Boston Oct 2024.jpg": {
+      "alt": "Representative airliner, not the aircraft in this story: a Delta Air Lines Airbus A320 on final approach, seen from below.",
+      "shown": "Airbus A320"
+    },
+    "File:DiamondDA40C-GSPB.jpg": {
+      "alt": "Representative Diamond DA40 Diamond Star parked on grass."
+    },
+    "File:Discus 296.jpg": {
+      "alt": "Representative glider, not the aircraft in this story: a Schempp-Hirth Discus sailplane resting on one wingtip on a grass airfield.",
+      "shown": "Schempp-Hirth Discus"
+    },
+    "File:Douglas C-54 Skymaster USAF.JPG": {
+      "alt": "Representative Douglas C-54G Skymaster, the military DC-4, in flight above clouds in a black-and-white U.S. Air Force photo.",
+      "shown": "C-54G, the military DC-4,"
+    },
+    "File:E-6B Mercury - RIAT 2018 (43308247084).jpg": {
+      "alt": "Representative Boeing E-6B Mercury in flight with its landing gear down."
+    },
+    "File:EC-402 - A400M - Airbus industrie - TLS - En finale sur 32L - 04550-2.jpg": {
+      "alt": "Representative Airbus A400M Atlas on approach, seen from below."
+    },
+    "File:EGLF - Embraer KC-390 - Força Aérea Brasileira - PT-ZNJ (42759650754).jpg": {
+      "alt": "Representative Embraer KC-390 taking off past an exhibition hall.",
+      "shown": "KC-390"
+    },
+    "File:ELA Aviation 10 Eclipse (D-MLZW) 2024-09-14 Andre Gerwing Collection ID 022382.jpg": {
+      "alt": "Representative ELA 10 Eclipse gyroplane, painted yellow, parked on a grass airfield beside straw bales."
+    },
+    "File:Eclipse-N503EA-060825-23-16.jpg": {
+      "alt": "Representative Eclipse 500 light jet in flight with its landing gear down."
+    },
+    "File:Erco F-1 Ercoupe CF-NLX 02.JPG": {
+      "alt": "Representative Forney F-1 Ercoupe with a polished metal finish, parked at a fly-in.",
+      "shown": "Forney F-1"
+    },
+    "File:F-WWCB A330-203 Airbus Industrie TLS 27SEP13 (9972134676).jpg": {
+      "alt": "Representative Airbus A330-200 in Airbus colors on approach with its landing gear down.",
+      "shown": "A330-200"
+    },
+    "File:Fairchild KR-34.jpg": {
+      "alt": "Representative Fairchild KR-34 biplane on a grass field in a 1930s black-and-white photo."
+    },
+    "File:Fairchild.argus3.g-bcbh.arp.jpg": {
+      "alt": "Representative Fairchild Argus III parked on grass, with a man standing beside it.",
+      "shown": "Argus III"
+    },
+    "File:Flight.rob.arp.750pix.jpg": {
+      "alt": "Representative Robinson R22 helicopter in pink paint hovering just above grass."
+    },
+    "File:Flying Colors Precision Flight Team.jpg": {
+      "alt": "Representative Diamond DA20 Katana aircraft flying in a four-ship formation."
+    },
+    "File:G5-N551GA-070919-04cr-16.jpg": {
+      "alt": "Representative Gulfstream V taking off from a desert airfield."
+    },
+    "File:Gazelle SA341F2.jpg": {
+      "alt": "Representative French Army Aérospatiale Gazelle helicopter parked on a desert airstrip.",
+      "shown": "SA 341F2"
+    },
+    "File:Grumman G-164A (c-n 204B, PH-APR) 2007-06-21 Andre Gerwing Collection ID 009019.jpg": {
+      "alt": "Representative Grumman G-164 Ag-Cat crop-spraying biplane parked on grass, with spray booms under its lower wing.",
+      "caption": "Representative Grumman G-164 Ag-Cat photo, the type that the G164 designator names."
+    },
+    "File:Gulfstream G-400.jpg": {
+      "alt": "Representative Gulfstream IV-SP (G400) climbing after takeoff with its landing gear retracting.",
+      "shown": "G400"
+    },
+    "File:Hamburg Airport Honda HA-420 HondaJet D-IVVV (DSC03385).jpg": {
+      "alt": "Representative HondaJet taxiing, with its two engines mounted on pylons above the wings."
+    },
+    "File:Learjet 60 D-CKKK.jpg": {
+      "alt": "Representative Learjet 60 on approach with its landing gear down."
+    },
+    "File:Lockheed C-130 Hercules.jpg": {
+      "alt": "Representative Lockheed C-130E Hercules flying over the ocean.",
+      "shown": "C-130E"
+    },
+    "File:Lockheed P-38J Lightning, Chino, California.jpg": {
+      "alt": "Representative Lockheed P-38J Lightning with invasion stripes, in flight.",
+      "shown": "P-38J"
+    },
+    "File:Luscombe8E, G-BSHH.jpg": {
+      "alt": "Representative Luscombe 8E parked on grass.",
+      "shown": "8E"
+    },
+    "File:Mauritania Government G-1159 Gulfstream II at Basle Aiprort March 1987.jpg": {
+      "alt": "Representative Grumman Gulfstream II parked in front of an airport control tower."
+    },
+    "File:Meyers 200 N2987T.jpg": {
+      "alt": "Representative Meyers 200D parked on an airport apron.",
+      "shown": "200D"
+    },
+    "File:Mooney.m20j.g-muni.arp.jpg": {
+      "alt": "Representative Mooney M20J in flight with its landing gear down.",
+      "shown": "M20J"
+    },
+    "File:N179AC-Elvis-739.jpg": {
+      "alt": "Representative Sikorsky S-64 Skycrane firefighting helicopter in flight with its water hose hanging below."
+    },
+    "File:N504GS-Gulfstream7-G500-farnborough2016-A1377.jpg": {
+      "alt": "Representative Gulfstream G500 on static display at an air show.",
+      "shown": "G500"
+    },
+    "File:N555AU (9321079402).jpg": {
+      "alt": "Representative Piper PA-46 Meridian single-engine turboprop taxiing beside a grass field."
+    },
+    "File:N9643C (7938842996).jpg": {
+      "alt": "Representative North American B-25 Mitchell in dark blue paint, landing with its gear down."
+    },
+    "File:N978QS 2002 Cessna 750 Citation X C-N 750-0187 (5427260932).jpg": {
+      "alt": "Representative Cessna Citation X lifting its nose wheel on takeoff, with mountains behind the airport."
+    },
+    "File:NYPD helicopter N319PD.jpg": {
+      "alt": "Representative AgustaWestland AW119 Koala police helicopter in flight."
+    },
+    "File:Netjets Bombardier Challenger 350 N757QS BWI MD1.jpg": {
+      "alt": "Representative business jet, not the aircraft in this story: a Bombardier Challenger 350 on approach with its landing gear down.",
+      "shown": "Bombardier Challenger 350"
+    },
+    "File:Northrop F-5E (Tail No. 01557) 061006-F-1234S-073.jpg": {
+      "alt": "Representative Northrop F-5E Tiger II in camouflage paint, in flight.",
+      "shown": "F-5E"
+    },
+    "File:Outside G650 N520GA.JPG": {
+      "alt": "Representative Gulfstream G650 test aircraft in green primer, parked on an apron.",
+      "shown": "G650 test aircraft"
+    },
+    "File:P-8A Poseidon VX-20 Squadron.jpg": {
+      "alt": "Representative Boeing P-8A Poseidon in U.S. Navy markings in flight."
+    },
+    "File:P51 Mustang - CHino Airshow 2014 (14349568311).jpg": {
+      "alt": "Representative North American P-51D Mustang with a yellow nose, in flight.",
+      "shown": "P-51D"
+    },
+    "File:PB4Y-2 Privateer VP-23 in flight.jpg": {
+      "alt": "Historical black-and-white photograph of a U.S. Navy Consolidated PB4Y-2 Privateer in flight, representative of the type."
+    },
+    "File:PH-PAC Cessna F182Q.JPG": {
+      "alt": "Representative Reims-built Cessna F182Q Skylane taking off from a grass-lined runway.",
+      "shown": "Reims F182Q"
+    },
+    "File:Piaggio P-180 Avanti Rennes 2010 (cropped).jpg": {
+      "alt": "Representative Piaggio P.180 Avanti banking during a display flight."
+    },
+    "File:Piaggio-P.149D-Rimensberger.JPG": {
+      "alt": "Representative Piaggio P.149D flying over mountains.",
+      "shown": "P.149D"
+    },
+    "File:Pilatus PC-12 aircraft in flight over the Cleveland area and the (GRC-2024-C-04018).jpg": {
+      "alt": "Representative turboprop airplane, not the aircraft in this story: a NASA Pilatus PC-12 in flight above farmland and an airport.",
+      "shown": "Pilatus PC-12"
+    },
+    "File:Pilatus PC-24 roll-out.jpg": {
+      "alt": "Representative Pilatus PC-24 on a red carpet at its public roll-out, with a crowd behind it."
+    },
+    "File:Piper PA-12 C-FSCU 01.JPG": {
+      "alt": "Representative Piper PA-12 Super Cruiser on skis, parked on snow."
+    },
+    "File:Piper PA-28-151 Cherokee Warrior N405DS at Delaware Airpark.jpg": {
+      "alt": "Representative single-engine piston airplane, not the aircraft in this story: a Piper PA-28 Cherokee Warrior taxiing at a small airfield.",
+      "shown": "Piper PA-28-151 Cherokee Warrior"
+    },
+    "File:Piper PA-44 Seminole (8736186034).jpg": {
+      "alt": "Representative multi-engine piston airplane, not the aircraft in this story: a Piper PA-44 Seminole on approach with its landing gear down.",
+      "shown": "Piper PA-44 Seminole"
+    },
+    "File:Piper PA28-181 Archer II ‘G-BXEX’ (44034123880).jpg": {
+      "alt": "Representative Piper PA-28-181 Archer II climbing after takeoff.",
+      "shown": "PA-28-181 Archer II"
+    },
+    "File:PiperSaragtogaIITC.jpg": {
+      "alt": "Representative Piper Saratoga II TC on approach over trees.",
+      "shown": "Saratoga II TC"
+    },
+    "File:Raytheon Hawker-800XP.jpg": {
+      "alt": "Representative Hawker 800XP taxiing on an airport apron.",
+      "shown": "800XP"
+    },
+    "File:Robinson R44 Raven (6174406509).jpg": {
+      "alt": "Representative helicopter, not the aircraft in this story: a blue Robinson R44 flying low over autumn trees.",
+      "shown": "Robinson R44"
+    },
+    "File:SAS Scandinavian Airlines Boeing 737-800 (LN-RRJ) taking off from Stockholm - Arlanda Airport.jpg": {
+      "alt": "Representative Boeing 737-800 in SAS colors taking off past an airport terminal.",
+      "shown": "737-800"
+    },
+    "File:SR-71A in flight near Beale AFB 1988.JPEG": {
+      "alt": "Representative Lockheed SR-71A Blackbird in flight over desert terrain."
+    },
+    "File:Sling HW (N669JP, cn 005K) (7-29-2023).jpg": {
+      "alt": "Representative Sling High Wing kit airplane on display at an airshow, with visitors and a mobility scooter around it."
+    },
+    "File:Superconstellation2594.jpg": {
+      "alt": "Representative Lockheed Super Constellation in flight.",
+      "shown": "Super Constellation"
+    },
+    "File:T-34B-1.jpg": {
+      "alt": "Representative Beechcraft T-34B Mentor trainer in U.S. Navy markings, flying over water.",
+      "shown": "T-34B"
+    },
+    "File:T-38 (050415-F-0000S-002).jpg": {
+      "alt": "Representative Northrop T-38 Talon trainer in U.S. Air Force markings, in flight."
+    },
+    "File:Taylorcraft F-21A N4417A Mont Fld SAN 26.02.90R edited-2.jpg": {
+      "alt": "Representative Taylorcraft F-21A parked on an airfield.",
+      "shown": "F-21A"
+    },
+    "File:Thunderbirds Lockheed T-33 Shooting Star, Chino, California.jpg": {
+      "alt": "Representative Lockheed T-33 Shooting Star in Thunderbirds paint, taxiing with its canopy open."
+    },
+    "File:Tyrolean Jet Services Do-328-300 OE-HTJ.jpg": {
+      "alt": "Representative Fairchild Dornier 328JET on approach with its landing gear down."
+    },
+    "File:US Navy 030129-N-0226M-002 P-3C Orion.jpg": {
+      "alt": "Representative Lockheed P-3C Orion climbing after takeoff.",
+      "shown": "P-3C"
+    },
+    "File:USAF CV-22B Osprey 11-0058 RIAT 2023 06.jpg": {
+      "alt": "Representative Bell Boeing CV-22B Osprey in flight.",
+      "shown": "CV-22B"
+    },
+    "File:VH-YLC Vans RV6 at SAAA Langley Park Flyin October 2011 (6806014742).jpg": {
+      "alt": "Representative Van's Aircraft RV-6 taking off from a park."
+    },
+    "File:WC-135.jpg": {
+      "alt": "Representative Boeing WC-135 approaching a tanker's refueling boom, seen from the tanker."
+    },
+    "File:Wingsoverpgh IMG 2448 (34572173392).jpg": {
+      "alt": "Representative Mikoyan-Gurevich MiG-17 in silver paint with a red star, in flight."
+    },
+    "File:Zeppellin NT amk.JPG": {
+      "alt": "Representative Zeppelin NT airship in flight against a clear sky.",
+      "shown": "Zeppelin NT"
+    }
+  },
+  "classes": {
+    "single-engine-piston": {
+      "title": "Single-engine piston airplane",
+      "file": "File:Piper PA-28-151 Cherokee Warrior N405DS at Delaware Airpark.jpg",
+      "classes": ["L1P", "A1P", "S1P"]
+    },
+    "multi-engine-piston": {
+      "title": "Multi-engine piston airplane",
+      "file": "File:Piper PA-44 Seminole (8736186034).jpg",
+      "classes": ["L2P", "A2P", "S2P"]
+    },
+    "turboprop": {
+      "title": "Turboprop airplane",
+      "file": "File:Pilatus PC-12 aircraft in flight over the Cleveland area and the (GRC-2024-C-04018).jpg",
+      "classes": ["L1T", "L2T", "A1T", "A2T"]
+    },
+    "business-jet": {
+      "title": "Business jet",
+      "file": "File:Netjets Bombardier Challenger 350 N757QS BWI MD1.jpg",
+      "classes": ["L1J", "L2J", "L3J"],
+      "categories": ["business jet", "light jet"]
+    },
+    "airliner": {
+      "title": "Airliner",
+      "file": "File:Delta Air Lines Airbus A320 N320US on final approach to Boston Oct 2024.jpg",
+      "classes": ["L2J", "L3J", "L4J"],
+      "categories": ["airliner", "regional jet", "double-deck airliner"]
+    },
+    "helicopter": {
+      "title": "Helicopter",
+      "file": "File:Robinson R44 Raven (6174406509).jpg",
+      "classes": ["H1P", "H1T", "H2P", "H2T"]
+    },
+    "glider": {
+      "title": "Glider",
+      "file": "File:Discus 296.jpg",
+      "classes": ["L0-", "L1M", "L1P"],
+      "categories": ["glider", "motor glider"]
+    }
+  }
+}

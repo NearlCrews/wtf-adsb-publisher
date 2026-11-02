@@ -1,0 +1,12 @@
+{{!< default}}
+{{#if journal}}
+  {{#with journal}}{{> "journal"}}{{/with}}
+{{else}}
+<section class="wrap archive" aria-labelledby="archive-title">
+    {{#tag}}<div class="archive-heading"><p class="eyebrow">Observation topics</p><h1 id="archive-title">{{name}}</h1><p>{{description}}</p></div>{{/tag}}
+    {{> "topic-navigation"}}
+    <div class="story-list">{{#foreach posts}}{{> "story-card" archive=true}}{{else}}<p>No articles in this topic yet.</p>{{/foreach}}</div>
+    {{pagination}}
+</section>
+
+{{/if}}

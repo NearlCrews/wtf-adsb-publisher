@@ -1,0 +1,29 @@
+{{!< default}}
+{{#if home}}
+  <section class="wrap home-intro" aria-labelledby="home-title"><h1 id="home-title">{{home.heading}}</h1><p>{{home.intro}}</p></section>
+  <section class="wrap home-latest" aria-labelledby="latest-title">
+    <header class="section-heading"><h2 id="latest-title">Latest stories</h2><a class="text-link" href="{{@site.url}}/stories/">All stories <span aria-hidden="true">↗</span></a></header>
+    <div class="story-grid">{{#foreach home.latest}}{{> "story-tile"}}{{else}}<p>No stories have been published yet.</p>{{/foreach}}</div>
+  </section>
+  {{> "weekly-spotlight"}}
+  <section class="wrap home-topics" aria-labelledby="topics-title">
+    <header class="section-heading"><h2 id="topics-title">Browse by topic</h2><a class="text-link" href="{{@site.url}}/topics/">All topics <span aria-hidden="true">↗</span></a></header>
+    {{> "topic-sections" sections=home.sections}}
+  </section>
+  <section class="wrap home-aircraft" aria-labelledby="aircraft-title">
+    <header class="section-heading"><h2 id="aircraft-title">Aircraft</h2><a class="text-link" href="{{@site.url}}/aircraft/">All aircraft types <span aria-hidden="true">↗</span></a></header>
+    <div class="home-aircraft-grid">
+      <div><h3>Most recorded types</h3>{{#if home.types}}<ul class="hub-list">{{#foreach home.types}}<li><a href="{{url}}">{{name}}</a> <span>{{countLabel}}</span></li>{{/foreach}}</ul>{{else}}<p>No aircraft types yet.</p>{{/if}}</div>
+      <div><h3>Latest first sightings</h3>{{#if home.firsts}}<ul class="hub-list">{{#foreach home.firsts}}<li><a href="{{url}}">{{headline}}</a> <time datetime="{{observedStart}}">{{observedLabel}}</time></li>{{/foreach}}</ul>{{else}}<p>No first sightings yet. <a href="{{@site.url}}/topics/first-sightings/">What counts as a first sighting</a>.</p>{{/if}}</div>
+    </div>
+  </section>
+  {{#with home.chart}}<section class="wrap home-chart" aria-label="Stories by observation date">{{> "timeline"}}<p><a class="text-link" href="{{@site.url}}/stories/">Browse and search every story <span aria-hidden="true">↗</span></a></p></section>{{/with}}
+{{else}}
+  <div class="wrap home-intro"><h1>{{@custom.site_tagline}}</h1><p>{{@custom.publication_description}}</p></div>
+  {{#get "posts" limit="10" include="tags,authors"}}
+    <div class="wrap">{{#foreach posts limit="1"}}{{> "feature-story"}}{{/foreach}}</div>
+    <section class="wrap latest-section" aria-label="Earlier stories"><div class="story-list">{{#foreach posts from="2"}}{{> "story-card" archive=true}}{{else}}<p>No earlier stories have been published.</p>{{/foreach}}</div></section>
+  {{/get}}
+  {{> "weekly-spotlight"}}
+{{/if}}
+<aside class="guide-banner wrap" aria-labelledby="guide-title"><div class="guide-symbol" aria-hidden="true">i</div><div><p class="eyebrow">Field guide</p><h2 id="guide-title">Reading aircraft data</h2><p>Understand the measurements, their sources, and the limits of an observation.</p></div><a class="button button-outline" href="{{@site.url}}/field-guide/">Open the field guide <span aria-hidden="true">↗</span></a></aside>

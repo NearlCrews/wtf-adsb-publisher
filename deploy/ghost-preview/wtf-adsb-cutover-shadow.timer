@@ -1,0 +1,9 @@
+[Unit]
+Description=Check ADS-B shadow collection and publication parity every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:20,50:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

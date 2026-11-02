@@ -1,0 +1,17 @@
+{{!< default}}
+{{#if authorPage}}
+  {{#with authorPage}}
+  <section class="wrap archive" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><p class="eyebrow">Stories by</p><h1 id="archive-title">{{name}}</h1><p>{{bio}}</p></header>
+    <section aria-labelledby="author-latest"><h2 id="author-latest" class="list-heading">Latest stories</h2>{{#with list}}{{> "story-list"}}{{/with}}</section>
+    {{#if more}}<p><a class="text-link" href="{{@site.url}}/stories/">Every story in the archive <span aria-hidden="true">↗</span></a></p>{{/if}}
+  </section>
+  {{/with}}
+{{else}}
+<section class="wrap archive" aria-labelledby="archive-title">
+    {{#author}}<div class="archive-heading"><p class="eyebrow">Stories by</p><h1 id="archive-title">{{name}}</h1><p>{{bio}}</p></div>{{/author}}
+    <div class="story-list">{{#foreach posts}}{{> "story-card" archive=true}}{{/foreach}}</div>
+    {{pagination}}
+</section>
+{{/if}}

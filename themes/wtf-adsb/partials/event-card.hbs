@@ -1,0 +1,46 @@
+<article class="event-card event-entry type-{{primary_type}}{{#if lead}} event-lead{{/if}}{{#if media}} has-event-visual{{/if}}" data-event-id="{{id}}">
+  <header class="event-entry-heading">
+    <div class="event-meta"><span class="event-type"><span aria-hidden="true">{{type.icon}}</span> {{type.label}}</span><time datetime="{{observed_start}}">Observation start · {{day}} · {{time}}</time>{{> "source-badge"}}</div>
+    <h3><a href="{{article_path}}">{{title}}</a></h3>
+    <p class="event-identity-line"><span><span class="event-inline-label">Tail</span> <strong>{{details.registration}}</strong></span><span>{{details.typeName}}</span>{{#if details.distinctCallsign}}<span><span class="event-inline-label">Callsign</span> {{details.distinctCallsign}}</span>{{/if}}</p>
+    {{#if details.aircraftNote}}<p class="event-identity-source">{{details.aircraftNote}}</p>{{/if}}
+  </header>
+  <div class="event-entry-finding">
+    <p class="event-summary">{{#if lead}}{{details.summary}}{{else}}{{details.compactSummary}}{{/if}}</p>
+    {{#if details.airportPattern}}<p class="event-pattern-label">Airport-pattern candidate · {{details.airportPattern.airport_ident}} · Training unconfirmed</p>{{/if}}
+  </div>
+  <div class="event-entry-actions">
+    <a class="button event-read" href="{{article_path}}">Read observation <span aria-hidden="true">→</span></a>
+    {{#if details.primaryReferences}}<ul class="event-references event-primary-references" aria-label="Aircraft links">{{#foreach details.primaryReferences}}<li><a href="{{url}}" aria-label="{{ariaLabel}}" rel="external noopener noreferrer">{{label}} <span aria-hidden="true">↗</span></a></li>{{/foreach}}</ul>{{/if}}
+    {{#if details.moreReferences}}<details class="event-more-links"><summary>More aircraft links</summary><ul class="event-references" aria-label="More aircraft links">{{#foreach details.moreReferences}}<li><a href="{{url}}" aria-label="{{ariaLabel}}" rel="external noopener noreferrer">{{label}} <span aria-hidden="true">↗</span></a></li>{{/foreach}}</ul></details>{{/if}}
+  </div>
+  {{#if media}}
+    {{#if lead}}
+      <div class="event-entry-visual">{{> "event-visual" media lead=lead event_id=id synthetic=synthetic compactCaption=details.mediaCaption}}</div>
+    {{else}}
+      <figure class="event-thumbnail">
+        <a href="{{article_path}}" tabindex="-1" aria-hidden="true"><img src="{{media.src}}" alt="" width="{{#if media.width}}{{media.width}}{{else}}900{{/if}}" height="{{#if media.height}}{{media.height}}{{else}}600{{/if}}" loading="lazy" decoding="async" /></a>
+        <figcaption>{{details.thumbnailCaption}}{{#unless media.replaySrc}}{{#if media.creditPath}} <a class="event-image-credit" href="{{media.creditPath}}">Image source and license</a>{{/if}}{{/unless}}</figcaption>
+      </figure>
+    {{/if}}
+  {{/if}}
+  {{#if details.measurementGroups}}
+    <div class="event-entry-metrics" role="group" aria-label="Key recorded measurements">{{#foreach details.measurementGroups}}{{> "event-key-facts"}}{{/foreach}}</div>
+  {{/if}}
+  <details class="event-expanded event-evidence">
+    <summary>{{#if lead}}Aircraft details, measurements, and evidence{{else}}{{#if media.replaySrc}}Map, replay, and full record{{else}}{{#if media}}Image and full record{{else}}Aircraft details and full record{{/if}}{{/if}}{{/if}}</summary>
+    <div class="event-expanded-content">
+      {{#unless lead}}{{#if media}}<div class="event-expanded-visual">{{> "event-visual" media event_id=id synthetic=synthetic}}</div>{{/if}}{{/unless}}
+      <p class="event-observation-interval"><strong>Complete observation interval</strong><br />{{details.observationInterval}}</p>
+      <div class="event-record-grid">
+        <div>
+          <table class="event-fact-table event-aircraft-table"><caption>Aircraft details</caption><tbody>{{#foreach details.aircraft}}<tr><th scope="row">{{label}}</th><td>{{value}}</td></tr>{{/foreach}}</tbody></table>
+          {{#if details.aircraftNote}}<p class="event-fact-note">{{details.aircraftNote}}</p>{{/if}}
+          {{#if details.participants}}<table class="event-fact-table event-aircraft-table event-participant-table"><caption>Other aircraft</caption><tbody>{{#foreach details.participants}}<tr><th scope="row">{{label}}</th><td>{{value}}</td></tr>{{/foreach}}</tbody></table>{{/if}}
+        </div>
+        {{#if details.allMeasurementGroups}}<div class="event-full-measurements"><h4>All recorded measurements</h4>{{#foreach details.allMeasurementGroups}}{{> "measurement-table"}}{{/foreach}}</div>{{/if}}
+      </div>
+      {{#if details.notes}}<div class="event-record-notes"><h4>Evidence and limitations</h4>{{#foreach details.notes}}<p>{{this}}</p>{{/foreach}}</div>{{/if}}
+    </div>
+  </details>
+</article>

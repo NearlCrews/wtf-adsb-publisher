@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, follow">
+    <title>{{statusCode}}{{#if @site.title}} | {{@site.title}}{{/if}}</title>
+    {{> "fonts"}}
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}">
+</head>
+<body>
+    {{!-- Standalone on purpose: when the default layout or one of its helpers
+          is what failed, this page must still render. It prints no error text.
+          The fonts partial it shares uses no helper but asset. --}}
+    <main class="wrap archive"><header class="archive-heading"><p class="eyebrow">{{statusCode}}</p><h1>This page
+        could not be shown.</h1><p>Please try again in a moment.</p></header><a
+        class="button"
+        href="/"
+      >Return to the flight log</a></main>
+</body>
+</html>

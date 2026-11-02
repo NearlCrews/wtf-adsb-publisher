@@ -1,0 +1,2 @@
+{{!-- Below a list: the steps around every page number. --}}
+<nav class="pagination page-numbers" aria-label="{{label}}">{{> "page-prev"}}<ol>{{#foreach numbers}}<li>{{#if current}}<span aria-current="page">{{number}}</span>{{else}}<a href="{{url}}" data-event-page="{{number}}">{{number}}</a>{{/if}}</li>{{/foreach}}</ol>{{> "page-next"}}</nav>

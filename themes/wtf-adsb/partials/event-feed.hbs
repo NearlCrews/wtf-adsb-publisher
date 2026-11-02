@@ -1,0 +1,8 @@
+<section class="event-feed" aria-labelledby="feed-heading" data-view="{{key}}" data-page="{{page}}">
+  <div class="feed-heading"><div><h2 id="feed-heading" tabindex="-1">{{heading}}</h2><p>{{result}}</p></div><div class="feed-actions">{{> "page-size" label="Results per page"}}<a href="/stories/" class="latest-snapshot">Latest archive</a></div></div>
+  {{#with pagination}}{{> "page-steps"}}{{/with}}
+  {{#if lead}}<p class="eyebrow featured-label">{{featuredLabel}}</p>{{#with lead}}{{> "event-card"}}{{/with}}{{/if}}
+  <div class="event-rows">{{#foreach rows}}{{#if newDay}}<h3 class="event-date-group">{{day}}</h3>{{/if}}{{> "event-card"}}{{/foreach}}</div>
+  {{#unless count}}<p class="event-empty">No matching events are recorded in this snapshot. This does not mean no aircraft were present.</p>{{/unless}}
+  {{#with pagination}}{{> "page-numbers"}}{{/with}}
+</section>

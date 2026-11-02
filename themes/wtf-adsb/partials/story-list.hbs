@@ -1,0 +1,3 @@
+{{#with pagination}}{{> "page-steps"}}{{/with}}
+<div class="story-days">{{#foreach groups}}<div class="story-day">{{#if nested}}<h3 class="story-day-heading"><time datetime="{{datetime}}">{{label}}</time></h3>{{else}}<h2 class="story-day-heading"><time datetime="{{datetime}}">{{label}}</time></h2>{{/if}}{{#foreach stories}}{{> "story-entry"}}{{/foreach}}</div>{{/foreach}}</div>
+{{#with pagination}}{{> "page-numbers"}}{{/with}}

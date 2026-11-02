@@ -1,0 +1,18 @@
+# Template: copy to /etc/systemd/system with backup.sh in /opt/wtf-adsb, the
+# directory that holds compose.yaml. Change the paths if yours differs.
+[Unit]
+Description=Start Ghost after a reboot interrupted its backup
+Requires=docker.service
+After=docker.service
+# A catch-up backup at boot must not find the lock held by this unit.
+Before=wtf-adsb-backup.service
+ConditionPathExists=/opt/wtf-adsb/.ghost-stopped-by-backup
+
+[Service]
+Type=oneshot
+ExecStart=/opt/wtf-adsb/backup.sh recover
+TimeoutStartSec=5min
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

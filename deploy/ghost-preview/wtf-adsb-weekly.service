@@ -1,0 +1,17 @@
+# Template user unit for ~/.config/systemd/user. The paths assume the checkout
+# at ~/src/wtf-adsb-publisher and the configuration under /srv/wtf-adsb-publisher,
+# as in the README; change them if yours are elsewhere.
+[Unit]
+Description=Research missing WTF ADS-B weekly features
+After=network-online.target
+ConditionPathExists=!/srv/wtf-adsb-publisher/control/activation.hold
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/src/wtf-adsb-publisher
+ExecStart=/usr/bin/python3 %h/src/wtf-adsb-publisher/tools/run_container_job.py --config /srv/wtf-adsb-publisher/config/jobs.json run weekly
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# The runner durably queues the autopilot follow-up, including after recovery.
+UMask=0077
+TimeoutStartSec=infinity
+Nice=10

@@ -1,0 +1,113 @@
+name: Release publisher
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.24"
+          enable-cache: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.1"
+          package-manager-cache: false
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - run: uv python install
+      - run: uv sync --locked --extra dev
+      - name: Check the tag and write the release notes
+        run: |
+          version="$(.venv/bin/python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match project version $version" >&2
+            exit 1
+          fi
+          repository="${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=ghcr.io/$repository:$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          echo "LATEST=ghcr.io/$repository:latest" >> "$GITHUB_ENV"
+          # A pre-release by Python's rules (0.2.0rc1, 0.2.0b1, 0.2.0.dev1) never moves latest.
+          prerelease="$(.venv/bin/python -c 'import sys; from packaging.version import Version; print(str(Version(sys.argv[1]).is_prerelease).lower())' "$version")"
+          echo "PRERELEASE=$prerelease" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/release"
+          .venv/bin/python tools/release_notes.py "$GITHUB_REF_NAME" > "$RUNNER_TEMP/release/notes.md"
+      - run: npm install --global npm@12.2.0
+      - run: npm ci
+      - run: npm --prefix tools/ghost-theme ci
+      # Chromium system libraries (Playwright calls sudo); make prepare-checks then
+      # fetches Chrome for Testing and pulls the pinned Ghost and Caddy images.
+      - run: tools/ghost-theme/node_modules/.bin/playwright install-deps chromium
+      - run: make prepare-checks
+      - run: make check
+        env:
+          UV_OFFLINE: "1"
+      - run: make image IMAGE="$IMAGE"
+      - run: make test-image IMAGE="$IMAGE"
+      - name: Extract the image inventory
+        run: |
+          container="$(docker create "$IMAGE")"
+          trap 'docker rm "$container" > /dev/null' EXIT
+          docker cp "$container:/usr/local/share/wtf-adsb-publisher/build.json" "$RUNNER_TEMP/release/build.json"
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push the versioned image
+        run: |
+          docker push "$IMAGE"
+          digest="$(docker buildx imagetools inspect "$IMAGE" | awk '$1 == "Digest:" { print $2; exit }')"
+          if [ -z "$digest" ]; then
+            echo "Could not read the pushed image digest" >&2
+            exit 1
+          fi
+          image="${IMAGE%:*}@$digest"
+          {
+            echo "## Container image"
+            echo
+            echo "- Tag: \`$IMAGE\`"
+            echo "- Digest: \`$image\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo
+            echo "### Container image"
+            echo
+            echo "\`$image\`, also tagged \`$IMAGE\`."
+          } >> "$RUNNER_TEMP/release/notes.md"
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          prerelease=()
+          if [ "$PRERELEASE" = true ]; then
+            prerelease=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" --verify-tag "${prerelease[@]}" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/release/notes.md" \
+            "$RUNNER_TEMP/release/build.json" \
+            dist/wtf_adsb_publisher-*.tar.gz \
+            dist/wtf_adsb_publisher-*.whl
+      # latest moves only after the release exists, and never for a pre-release.
+      - name: Tag the image as latest
+        if: env.PRERELEASE == 'false'
+        run: |
+          docker tag "$IMAGE" "$LATEST"
+          docker push "$LATEST"
+          echo "- Also tagged \`$LATEST\`" >> "$GITHUB_STEP_SUMMARY"

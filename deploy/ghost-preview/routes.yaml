@@ -1,0 +1,20 @@
+routes:
+  /:
+    template: home
+  # The theme's own search reads this index; Ghost's search script stays off.
+  /search-index/:
+    template: search-index
+    content_type: application/json
+  /weekly/:
+    controller: channel
+    filter: tag:hash-weekly-unconfigured
+    template: weekly-spotlights
+
+collections:
+  /stories/:
+    permalink: /stories/{slug}/
+    template: index
+
+taxonomies:
+  tag: /topics/{slug}/
+  author: /author/{slug}/

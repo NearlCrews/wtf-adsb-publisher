@@ -1,0 +1,56 @@
+# Template for the static site server: copy this directory to
+# /opt/wtf-adsb/theme-preview on the web host, where receive-autopilot.py
+# installs each checked release into ./site. It joins the Ghost project's
+# frontend network so the public proxy reaches it as wtf-adsb-site.
+name: wtf-adsb-theme-preview
+
+services:
+  preview:
+    image: caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    cap_drop:
+      - ALL
+    # The official Caddy binary has this file capability and needs it in the bounding set.
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:9003:8080"
+    networks:
+      frontend:
+        aliases:
+          - wtf-adsb-site
+    volumes:
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./site
+        target: /srv
+        read_only: true
+        bind:
+          create_host_path: false
+    mem_limit: 64m
+    cpus: 0.25
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: local
+      options:
+        max-size: 5m
+        max-file: "2"
+
+networks:
+  frontend:
+    external: true
+    name: wtf-adsb_frontend

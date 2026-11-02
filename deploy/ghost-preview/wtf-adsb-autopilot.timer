@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for new WTF ADS-B publications every thirty minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+Persistent=true
+Unit=wtf-adsb-autopilot.service
+
+[Install]
+WantedBy=timers.target

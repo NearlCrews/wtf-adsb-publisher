@@ -1,0 +1,26 @@
+<article class="feature-story {{post_class}}">
+  <div class="feature-copy">
+    <div class="eyebrow"><span class="small-cross" aria-hidden="true">+</span>
+      Latest article
+      {{#primary_tag}}<span
+          class="feature-topic"
+        >{{name}}</span>{{/primary_tag}}</div>
+    <h2><a href="{{url}}">{{title}}</a></h2>
+    <p class="feature-summary">{{excerpt words="38"}}</p>
+    <div class="feature-actions"><a class="button" href="{{url}}">Read the story
+        <span aria-hidden="true">↗</span></a><span
+        class="reading-time"
+      >{{reading_time minute="1 min read" minutes="% min read"}}</span></div>
+  </div>
+  <a class="feature-image" href="{{url}}" tabindex="-1" aria-hidden="true">
+    {{#if feature_image}}<img
+        src="{{img_url feature_image size="l"}}"
+        srcset="{{> "srcset"}}"
+        sizes="(max-width: 760px) calc(100vw - 40px), 50vw"
+        alt=""
+        width="1200"
+        height="1000"
+        fetchpriority="high"
+      />{{else}}<span class="image-placeholder">A story from the sky</span>{{/if}}
+  </a>
+</article>

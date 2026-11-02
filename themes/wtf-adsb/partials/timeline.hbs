@@ -1,0 +1,20 @@
+<section class="event-timeline" aria-labelledby="timeline-title">
+  <div class="timeline-heading"><div><p class="eyebrow" data-range-label>{{dayCount}}-day record</p><h2 id="timeline-title">{{chartTitle}}</h2></div><p data-chart-range>{{range}}</p></div>
+  <p class="timeline-scope">One count per selected observation episode. This chart does not measure all flights or aircraft activity.</p>
+  {{#if review}}<p class="journal-notice">{{#if synthetic}}Synthetic examples · These counts demonstrate the design; they are not receiver history.{{else}}Unpublished review · These are private review copies of selected observations.{{/if}}</p>{{/if}}
+  <p class="timeline-scope" data-chart-aggregation>{{aggregation}}{{#unless staticChart}} · Counts match the current filters.{{/unless}}</p>
+  <div class="daily-chart" role="group" aria-label="Matching event counts; a text table follows" data-chart-scale="{{max}}">
+    <div class="chart-axis" aria-hidden="true"><span data-chart-max>{{max}}</span><span>0</span></div>
+    <div class="chart-days" data-chart-buckets>
+      {{#foreach days}}<div class="chart-day{{#if unavailable}} is-unavailable{{/if}}{{#if incomplete}} is-incomplete{{/if}}{{#if partial}} is-partial{{/if}}" data-chart-date="{{this.date}}">
+        <button class="day-bar" type="button" aria-label="{{detail}}" aria-pressed="false" data-day="{{this.date}}" data-range-end="{{to}}" title="{{detail}}" disabled>
+          {{#unless unavailable}}{{#foreach segments}}<span class="chart-segment type-{{id}} count-{{count}}" data-segment-type="{{id}}" aria-hidden="true"></span>{{/foreach}}{{/unless}}
+        </button><span class="chart-tick" aria-hidden="true">{{tick}}</span>
+      </div>{{/foreach}}
+    </div>
+  </div>
+  <div class="chart-key"><span><i class="unavailable-swatch" aria-hidden="true"></i>Unavailable or incomplete archive</span><span data-partial-key{{#unless hasPartial}} hidden{{/unless}}>Includes a partial day</span></div>
+  <div class="chart-legend" data-static-legend>{{#foreach types}}<span class="type-{{id}}"><span aria-hidden="true">{{icon}}</span> {{label}}</span>{{/foreach}}</div>
+  <details class="daily-table"><summary>Counts and event types as a table</summary><section class="table-scroll" aria-label="Event counts by date" tabindex="0"><table><caption>Matching events in the selected date range. UTC observation dates.</caption><thead><tr><th scope="col">Date or interval</th><th scope="col">Total</th>{{#foreach types}}<th scope="col">{{label}}</th>{{/foreach}}</tr></thead><tbody data-chart-table>{{#foreach days}}<tr><th scope="row">{{label}}{{#if partial}} (partial day){{/if}}{{#if incomplete}} (archive incomplete){{/if}}</th>{{#if unavailable}}<td colspan="6">Archive unavailable</td>{{else}}<td>{{total}}</td>{{#foreach segments}}<td>{{count}}</td>{{/foreach}}{{/if}}</tr>{{/foreach}}</tbody></table></section></details>
+  <p class="snapshot-time">Snapshot <time datetime="{{timestamp}}">{{asOf}}</time> · Event starts are counted once, on their UTC date.</p>
+</section>

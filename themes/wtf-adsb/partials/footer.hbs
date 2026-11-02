@@ -1,0 +1,14 @@
+<footer class="site-footer wrap">
+  <div><a class="footer-name" href="{{@site.url}}/">{{@site.title}}<span
+        class="brand-dot"
+      >.</span></a><p>{{@custom.publication_description}}</p></div>
+  <nav aria-label="Footer navigation">{{navigation type="secondary"}}</nav>
+  <div class="footer-details">
+    {{> "support-link"}}
+    <p class="footer-colophon">{{#if @custom.contact_email}}<a
+          href="mailto:{{@custom.contact_email}}"
+        >{{@custom.contact_email}}</a><br />{{/if}}Aircraft observations, measurements, and explanations.<br
+      />Published with
+      <a href="https://ghost.org/" rel="external">Ghost</a>.</p>
+  </div>
+</footer>

@@ -1,0 +1,136 @@
+# Public proxy template. Set DOMAIN in .env; Caddy obtains the certificate.
+# The example assumes Cloudflare proxies every public request. Trusting its
+# published ranges (https://www.cloudflare.com/ips/) makes client_ip the visitor
+# named by Cf-Connecting-Ip; a request from any other address keeps its own
+# address. Refresh the list when Cloudflare changes it. Behind another proxy,
+# list its ranges and client header instead; with no proxy in front, delete the
+# servers block and the country field below.
+{
+	servers {
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers Cf-Connecting-Ip
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Readership statistics (tools/site_stats.py; docs/operations.md):
+	# a JSON access log of this host only, never the www redirect, Ghost, or
+	# Tailscale. Each line keeps the time, client_ip, method, path without its
+	# query, status, user agent, referrer host, and Cloudflare's country code.
+	# Every request header, cookie, and response header is dropped. Files roll
+	# at 1 MiB and are deleted after 14 days.
+	log_append user_agent {http.request.header.User-Agent}
+	log_append referer {http.request.header.Referer}
+	log_append country {http.request.header.Cf-Ipcountry}
+	log {
+		output file /data/access/public.log {
+			mode 0600
+			roll_size 1MiB
+			roll_keep 400
+			roll_keep_for 336h
+		}
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>remote_ip delete
+				request>remote_port delete
+				request>proto delete
+				request>host delete
+				request>tls delete
+				request>uri regexp [?#].*$ ""
+				resp_headers delete
+				bytes_read delete
+				user_id delete
+				size delete
+				duration delete
+				referer regexp ^(?:[A-Za-z][A-Za-z0-9+.-]*:)?(?://)?(?:[^/?#@]*@)?([^/?#:]*).*$ $1
+			}
+		}
+	}
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://t.plnspttrs.net; font-src 'self'; connect-src 'self'; media-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+		-Server
+	}
+
+	# Content-addressed files and versioned theme assets never change at their
+	# URL, so browsers may keep them; pages and everything else revalidate.
+	# Story maps, replays and social images keep s-maxage=0: a withdrawal removes
+	# them at the origin, and the CDN must revalidate instead of serving a copy.
+	# Only successful responses are marked immutable.
+	@hashed path_regexp ^/(?:event-media/[a-f0-9]{64}\.(?:svg|json)|social/[a-f0-9]{64}\.(?:png|jpg))$
+	@versioned {
+		path /assets/*
+		query v=*
+	}
+	@mutable {
+		not path_regexp ^/(?:event-media/[a-f0-9]{64}\.(?:svg|json)|social/[a-f0-9]{64}\.(?:png|jpg))$
+		not {
+			path /assets/*
+			query v=*
+		}
+	}
+	header @hashed {
+		Cache-Control "public, max-age=31536000, s-maxage=0, immutable"
+		match status 2xx
+		defer
+	}
+	header @versioned {
+		Cache-Control "public, max-age=31536000, immutable"
+		match status 2xx
+		defer
+	}
+	header @hashed {
+		Cache-Control "no-cache, no-transform"
+		match status 4xx 5xx
+		defer
+	}
+	header @versioned {
+		Cache-Control "no-cache, no-transform"
+		match status 4xx 5xx
+		defer
+	}
+	header @mutable {
+		Cache-Control "no-cache, no-transform"
+		defer
+	}
+
+	# Public requests never reach Ghost or its administrative API.
+	@private path /ghost* /content* /members* /routes.json /audit-routes.json /event-snapshot.json /publication.json /.*
+	respond @private "Not found" 404
+	@unsupported not method GET HEAD
+	respond @unsupported "Method not allowed" 405
+
+	# The story feed is a static file served at Ghost's usual /rss/ address.
+	@feed path /rss /rss/
+	rewrite @feed /rss/index.xml
+	# Only the feed itself is an RSS document; a missing feed stays an HTML 404.
+	header @feed {
+		Content-Type "application/rss+xml; charset=utf-8"
+		match status 2xx
+		defer
+	}
+
+	# The static server keeps its old directory through the release swap.
+	# Retry reads across its brief container replacement.
+	reverse_proxy wtf-adsb-site:8080 {
+		lb_try_duration 15s
+		lb_try_interval 250ms
+		header_down -X-Robots-Tag
+		header_down -Server
+		header_down -Cache-Control
+		transport http {
+			dial_timeout 2s
+			response_header_timeout 10s
+		}
+	}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

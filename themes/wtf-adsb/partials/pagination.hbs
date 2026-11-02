@@ -1,0 +1,6 @@
+{{!-- Ghost's own list pagination, for the native templates. A single page shows only its count; otherwise both steps keep their place, as in page-prev and page-next. --}}
+<nav class="pagination page-numbers" aria-label="Story pages">
+  {{~#if prev}}<a class="page-step page-prev" href="{{page_url prev}}" rel="prev" aria-label="Previous page (newer stories)"><span aria-hidden="true">←</span> Previous</a>{{else}}{{#if next}}<a class="page-step page-prev" role="link" aria-disabled="true" aria-label="Previous page (newer stories)"><span aria-hidden="true">←</span> Previous</a>{{/if}}{{/if~}}
+  <span class="page-status">Page {{page}} of {{pages}}</span>
+  {{~#if next}}<a class="page-step page-next" href="{{page_url next}}" rel="next" aria-label="Next page (older stories)">Next <span aria-hidden="true">→</span></a>{{else}}{{#if prev}}<a class="page-step page-next" role="link" aria-disabled="true" aria-label="Next page (older stories)">Next <span aria-hidden="true">→</span></a>{{/if}}{{/if~}}
+</nav>

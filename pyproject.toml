@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wtf-adsb-publisher"
+version = "0.1.0"
+description = "Evidence-driven publishing pipeline for ADS-B findings"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "contracts/ENGINE-LICENSE"]
+requires-python = ">=3.12"
+dependencies = ["jsonschema==4.26.0", "packaging==26.3"]
+classifiers = ["Operating System :: POSIX :: Linux"]
+
+[project.urls]
+Homepage = "https://wtf-adsb.com"
+Source = "https://github.com/NearlCrews/wtf-adsb-publisher"
+Issues = "https://github.com/NearlCrews/wtf-adsb-publisher/issues"
+Changelog = "https://github.com/NearlCrews/wtf-adsb-publisher/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["build==1.6.1", "hatchling==1.32.4", "ruff==0.17.2"]
+
+[project.scripts]
+wtf-adsb-publisher = "wtf_adsb_publisher.cli:main"
+
+[project.entry-points."wtf_adsb_publisher.reader"]
+json-inbox = "wtf_adsb_publisher.plugins:JsonInbox"
+
+[project.entry-points."wtf_adsb_publisher.policy"]
+site-policy = "wtf_adsb_publisher.plugins:SitePolicy"
+
+[project.entry-points."wtf_adsb_publisher.writer"]
+openai = "wtf_adsb_publisher.plugins:OpenAIWriter"
+
+[project.entry-points."wtf_adsb_publisher.renderer"]
+site-media = "wtf_adsb_publisher.plugins:SiteMedia"
+
+[project.entry-points."wtf_adsb_publisher.publisher"]
+ghost = "wtf_adsb_publisher.plugins:Ghost"
+
+[project.entry-points."wtf_adsb_publisher.deployer"]
+static-ssh = "wtf_adsb_publisher.plugins:StaticSSH"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wtf_adsb_publisher"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/.private", "/artifacts", "/dist", "/.venv", "**/node_modules", "**/__pycache__"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+extend-exclude = [".private", "node_modules"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*.py" = ["E402"]
+"tests/*.py" = ["E402"]
+"tools/ghost-theme/*.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"

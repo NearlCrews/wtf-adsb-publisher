@@ -1,0 +1,35 @@
+{
+ "schema_version": 1,
+ "dataset_version": "topics-v1",
+ "notes": [
+  "Each publishable kind belongs to exactly one topic, and each topic to one section. A section slug equals the public event type of every kind in it.",
+  "Topic intros are site copy owned by the theme build; this table only routes stories."
+ ],
+ "sections": {
+  "unusual-aircraft": "Unusual aircraft",
+  "flight-patterns": "Flight patterns",
+  "performance": "Performance",
+  "transponder-reports": "Transponder reports",
+  "data-quality": "Data quality"
+ },
+ "topics": {
+  "notable-aircraft": {"title": "Notable aircraft", "section": "unusual-aircraft", "kinds": ["watch_type", "notable_variant", "military", "database_watch", "rare_here"]},
+  "first-sightings": {"title": "First sightings", "section": "unusual-aircraft", "kinds": ["first_type_here", "first_country_here"]},
+  "vintage-aircraft": {"title": "Vintage aircraft", "section": "unusual-aircraft", "kinds": ["vintage"]},
+  "watchlisted-aircraft": {"title": "Watchlisted aircraft", "section": "unusual-aircraft", "kinds": ["watchlist_match"]},
+  "high-altitude-balloons": {"title": "High-altitude balloons", "section": "unusual-aircraft", "kinds": ["stratospheric_balloon"]},
+  "formation-flights": {"title": "Formation flights", "section": "flight-patterns", "kinds": ["formation_flight"]},
+  "survey-flights": {"title": "Survey-style flight lines", "section": "flight-patterns", "kinds": ["survey_grid", "parallel_passes"]},
+  "holding-patterns": {"title": "Holding patterns", "section": "flight-patterns", "kinds": ["prolonged_holding", "holding_stack"]},
+  "hovering": {"title": "Hovering", "section": "flight-patterns", "kinds": ["hovering"]},
+  "soaring": {"title": "Soaring", "section": "flight-patterns", "kinds": ["thermal_soaring"]},
+  "flight-shapes": {"title": "Flight shapes", "section": "flight-patterns", "kinds": ["descending_spiral", "circling", "repeated_passes", "loitering", "confined_activity", "course_reversal", "altitude_oscillation", "departure_return", "possible_go_around", "extreme_turn_rate"]},
+  "rapid-descents": {"title": "Rapid descents", "section": "performance", "kinds": ["rapid_descent", "vertical"]},
+  "speed-and-altitude": {"title": "Speed and altitude", "section": "performance", "kinds": ["seasonal_speed_record", "fast", "high", "wind_boost", "rapid_climb", "selected_altitude_overshoot", "above_rated_altitude", "above_rated_speed"]},
+  "squawk-codes": {"title": "Squawk codes", "section": "transponder-reports", "kinds": ["special_squawk_7400", "special_squawk_7500", "special_squawk_7600", "special_squawk_7700", "special_squawk_general", "special_squawk_lifeguard", "special_squawk_minfuel", "special_squawk_nordo", "special_squawk_unlawful", "special_squawk_downed", "special_use_code", "archive_squawk_7400", "archive_squawk_7500", "archive_squawk_7600", "archive_squawk_7700"]},
+  "tcas-advisories": {"title": "TCAS advisories", "section": "transponder-reports", "kinds": ["tcas_ra"]},
+  "ads-b-glitches": {"title": "ADS-B glitches", "section": "data-quality", "kinds": ["outlier_gs", "outlier_alt_baro", "outlier_baro_rate", "outlier_archive_alt", "position_jump", "altitude_gap", "type_speed_mismatch", "type_altitude_mismatch", "identity_conflict", "emitter_type_mismatch", "unusual_emitter", "space_category", "correlated_data_anomaly"]},
+  "gps-integrity": {"title": "GPS integrity", "section": "data-quality", "kinds": ["gnss_integrity_loss", "gnss_integrity_cluster"]}
+ },
+ "content_sha256": "060ce16c83d7539bb3447cb2c0b560dc11d2437177da74951c3109d294711fc5"
+}

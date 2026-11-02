@@ -1,0 +1,19 @@
+# Template: copy to /etc/systemd/system with backup.sh in /opt/wtf-adsb, the
+# directory that holds compose.yaml. Change the paths if yours differs.
+[Unit]
+Description=Back up Ghost database, content and configuration
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/wtf-adsb/backup.sh
+# If the job is killed while Ghost is stopped, start Ghost again at once.
+ExecStopPost=/opt/wtf-adsb/backup.sh recover
+TimeoutStartSec=30min
+# Starting Ghost again can wait up to three minutes for its health.
+TimeoutStopSec=4min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+UMask=0077

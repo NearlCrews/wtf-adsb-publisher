@@ -1,0 +1,21 @@
+{{!< default}}
+{{#if operatorIndex}}
+  {{#with operatorIndex}}
+  <section class="wrap archive operator-index" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><h1 id="archive-title">{{heading}}</h1><p>{{intro}}</p></header>
+    {{#if operators}}<ul class="hub-list">{{#foreach operators}}<li><a href="{{url}}">{{name}}</a>{{#if designator}} <span class="type-code">{{designator}}</span>{{/if}} <span>{{countLabel}}</span></li>{{/foreach}}</ul>{{else}}<p>No story has an operator from a callsign designator yet.</p>{{/if}}
+  </section>
+  {{/with}}
+{{/if}}
+{{#if operatorHub}}
+  {{#with operatorHub}}
+  <section class="wrap archive hub-page" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><p class="eyebrow">Operator</p><h1 id="archive-title">{{heading}}</h1><p>{{basis}} {{summary}}.</p></header>
+    {{#if types}}<section class="hub-links" aria-labelledby="hub-types"><h2 id="hub-types">Aircraft types</h2><ul class="hub-list">{{#foreach types}}<li><a href="{{url}}">{{name}}</a></li>{{/foreach}}</ul></section>{{/if}}
+    <p class="hub-note">The operator comes from the callsign the aircraft broadcast. It does not show who owned the aircraft or who was aboard.</p>
+    <section aria-labelledby="hub-stories"><h2 id="hub-stories" class="list-heading">Stories</h2>{{#with list}}{{> "story-list"}}{{/with}}</section>
+  </section>
+  {{/with}}
+{{/if}}

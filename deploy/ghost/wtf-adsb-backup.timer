@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily Ghost backup
+# Pick a time ahead of the host provider's own snapshot window, if it has one.
+
+[Timer]
+OnCalendar=*-*-* 07:00:00 UTC
+RandomizedDelaySec=300
+Persistent=true
+Unit=wtf-adsb-backup.service
+
+[Install]
+WantedBy=timers.target

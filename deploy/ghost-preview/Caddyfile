@@ -1,0 +1,25 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:8080 {
+	root * /srv
+	encode zstd gzip
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Cache-Control "no-store"
+		-Server
+	}
+	@unsupported not method GET HEAD
+	respond @unsupported "Method not allowed" 405
+	file_server
+	handle_errors {
+		@missing expression {err.status_code} == 404
+		rewrite @missing /errors/404/index.html
+		file_server
+	}
+}

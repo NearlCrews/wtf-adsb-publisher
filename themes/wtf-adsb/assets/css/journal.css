@@ -1,0 +1,1531 @@
+/* Event colors denote subject, never severity or certainty. */
+:root {
+  --flight-patterns: #275d97;
+  --unusual-aircraft: #745299;
+  --performance: #13685c;
+  --data-quality: #a44820;
+  --transponder-reports: #826000;
+}
+
+:root[data-appearance="night"] {
+  --flight-patterns: #8bbbea;
+  --unusual-aircraft: #c6a6eb;
+  --performance: #7ecdbc;
+  --data-quality: #f5ac86;
+  --transponder-reports: #e3c766;
+}
+
+.type-flight-patterns {
+  --event-color: var(--flight-patterns);
+}
+
+.type-unusual-aircraft {
+  --event-color: var(--unusual-aircraft);
+}
+
+.type-performance {
+  --event-color: var(--performance);
+}
+
+.type-data-quality {
+  --event-color: var(--data-quality);
+}
+
+.type-transponder-reports {
+  --event-color: var(--transponder-reports);
+}
+
+.journal {
+  padding-top: 38px;
+}
+
+.journal-heading,
+.timeline-heading,
+.feed-heading,
+.event-meta,
+.chart-key,
+.date-filter,
+.journal-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.journal-heading {
+  margin-bottom: 28px;
+}
+
+.journal-heading h1 {
+  font-family: var(--serif);
+  font-size: clamp(30px, 3.2vw, 44px);
+  font-weight: 500;
+  line-height: 1.1;
+  margin: 0 0 8px;
+  letter-spacing: -0.03em;
+}
+
+.journal-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.journal-heading > a {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.event-timeline {
+  border: 1px solid var(--line);
+  padding: 24px 26px 16px;
+  border-radius: 4px;
+}
+
+.timeline-heading {
+  align-items: end;
+}
+
+.timeline-heading .eyebrow {
+  margin: 0 0 7px;
+}
+
+.timeline-heading h2 {
+  font-family: var(--sans);
+  font-size: 19px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  margin: 0;
+  font-weight: 600;
+}
+
+.timeline-heading > p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  text-align: right;
+}
+
+.timeline-scope,
+.snapshot-time,
+.journal-notice {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.timeline-scope {
+  margin: 12px 0 0;
+}
+
+.journal-notice {
+  color: var(--ink);
+  background: var(--surface);
+  padding: 8px 12px;
+  margin: 12px 0 0;
+}
+
+.daily-chart {
+  height: 166px;
+  display: flex;
+  gap: 10px;
+  margin: 24px 0 0;
+  padding-bottom: 26px;
+}
+
+.chart-axis {
+  width: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.chart-days {
+  flex: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 5px;
+  border-bottom: 1px solid var(--line);
+  border-top: 1px dotted var(--line);
+}
+
+.chart-day {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
+
+.day-bar {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  border: 0;
+  border-bottom: 3px solid var(--line);
+  border-radius: 2px 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  background: transparent;
+  cursor: pointer;
+}
+
+.day-bar:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.day-bar[aria-pressed="true"] {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.day-bar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.chart-segment {
+  display: block;
+  width: 100%;
+  background: var(--event-color);
+  flex-shrink: 0;
+}
+
+.is-unavailable .day-bar,
+.is-incomplete .day-bar,
+.unavailable-swatch {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 4px,
+    var(--line) 4px,
+    var(--line) 5px
+  );
+}
+
+.is-partial .day-bar {
+  border-bottom: 3px dashed var(--ink);
+}
+
+.chart-tick {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.chart-day:first-child .chart-tick {
+  left: 0;
+  transform: none;
+}
+
+.chart-day:last-child .chart-tick {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.chart-key {
+  justify-content: end;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 10px 0 14px;
+}
+
+.chart-key > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unavailable-swatch {
+  width: 16px;
+  height: 14px;
+  border: 1px solid var(--line);
+}
+
+.type-filters {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.event-filters button,
+.event-filters input,
+.event-filters select {
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  border-radius: 4px;
+  padding: 7px 11px;
+  min-height: 44px;
+}
+
+/* A field's boundary is what identifies it; buttons have their text. */
+.event-filters input,
+.event-filters select,
+.page-size-field select {
+  border: 1px solid var(--control-border);
+}
+
+.event-filters {
+  border: 1px solid var(--line);
+  padding: 20px 24px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.event-filters[hidden] {
+  display: none;
+}
+
+.journal-search-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 20px;
+}
+
+.journal-search-bar[hidden] {
+  display: none;
+}
+
+.journal-search-button,
+.clear-active-filters,
+.filter-dialog-heading button,
+.page-size-field select {
+  min-height: 44px;
+  border-radius: 4px;
+  padding: 8px 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.journal-search-button,
+.filter-dialog-heading button {
+  border: 1px solid var(--line);
+}
+
+.journal-search-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.journal-search-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+}
+
+.filter-count {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 20px;
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.active-filter-summary {
+  flex: 1;
+  min-width: 140px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.clear-active-filters {
+  border: 1px solid transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.event-filter-dialog {
+  width: min(var(--column), calc(100vw - 32px));
+  max-width: none;
+  max-height: min(800px, calc(100dvh - 48px));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: auto;
+  color: var(--ink);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.event-filter-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-filter-dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+html:has(.event-filter-dialog[open]) {
+  overflow: hidden;
+}
+
+.filter-dialog-heading {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.filter-dialog-heading h2 {
+  margin: 0;
+  font: 600 20px/1.3 var(--sans);
+}
+
+.event-filter-dialog .event-filters {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.filter-dialog-fields {
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.filter-dialog-actions {
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+  padding: 12px 24px;
+  background: var(--paper);
+}
+
+.filter-dialog-actions > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filter-dialog-actions .filter-apply {
+  background: var(--ink);
+  color: var(--paper);
+  min-width: 140px;
+  font-weight: 600;
+}
+
+.filter-dialog-status {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.filter-dialog-status:empty {
+  display: none;
+}
+
+.feed-actions {
+  display: flex;
+  align-items: end;
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+.search-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.event-filter-dialog .search-filter-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.filter-field label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select {
+  width: 100%;
+  min-width: 0;
+  background: var(--paper);
+}
+
+.filter-help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.event-filters button {
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.range-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.range-presets button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--surface);
+}
+
+.type-filters button {
+  color: var(--event-color, var(--ink));
+}
+
+.type-filters button[aria-pressed="true"] {
+  border-color: currentcolor;
+  box-shadow: inset 0 -2px currentcolor;
+  background: var(--surface);
+}
+
+.date-filter {
+  justify-content: start;
+  gap: 10px;
+  margin: 14px 0;
+  font-size: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.feed-actions .page-size-field select {
+  font-size: 16px;
+  width: auto;
+}
+
+.date-filter > .filter-field {
+  flex: 1 1 140px;
+}
+
+.event-filters :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .event-filters {
+    padding: 16px;
+  }
+
+  .search-filter-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-filter-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .filter-dialog-heading {
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+  }
+
+  .filter-dialog-fields {
+    flex: 1;
+    padding: 20px 16px;
+  }
+
+  .filter-dialog-actions {
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .feed-heading {
+    flex-wrap: wrap;
+  }
+}
+
+.daily-table {
+  margin-top: 14px;
+  font-size: 12px;
+}
+
+.daily-table summary {
+  cursor: pointer;
+  padding: 10px 0;
+  width: fit-content;
+  min-height: 44px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table-scroll:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.daily-table table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-table caption {
+  text-align: left;
+  color: var(--muted);
+  padding: 8px 0;
+}
+
+.daily-table th,
+.daily-table td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.daily-table th {
+  font-weight: 600;
+}
+
+.daily-table th:first-child {
+  min-width: 144px;
+}
+
+.snapshot-time {
+  margin: 6px 0 0;
+}
+
+.journal-status {
+  min-height: 1em;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 10px 0;
+}
+
+.feed-heading {
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0 18px;
+  align-items: end;
+}
+
+.feed-heading h2 {
+  font-size: 16px;
+  font-family: var(--sans);
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.feed-heading p,
+.feed-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+.featured-label {
+  margin: 27px 0 12px;
+}
+
+.event-card {
+  --event-color: var(--ink);
+
+  display: flex;
+  gap: 30px;
+  padding: 24px 0 24px 22px;
+  border-left: 3px solid var(--event-color);
+  border-bottom: 1px solid var(--line);
+}
+
+.event-card.type-flight-patterns {
+  --event-color: var(--flight-patterns);
+}
+
+.event-card.type-unusual-aircraft {
+  --event-color: var(--unusual-aircraft);
+}
+
+.event-card.type-performance {
+  --event-color: var(--performance);
+}
+
+.event-card.type-data-quality {
+  --event-color: var(--data-quality);
+}
+
+.event-card.type-transponder-reports {
+  --event-color: var(--transponder-reports);
+}
+
+/* Retained snapshot pages still use this earlier card markup. */
+.event-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-card-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "intro" "details";
+  gap: 0 28px;
+  align-items: start;
+}
+
+.event-card-layout.has-event-visual {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 34%);
+  grid-template-areas: "intro visual" "details visual";
+}
+
+.event-intro {
+  grid-area: intro;
+  min-width: 0;
+}
+
+.event-details {
+  grid-area: details;
+  min-width: 0;
+}
+
+.event-meta {
+  justify-content: start;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+
+.event-type {
+  color: var(--event-color);
+  font-weight: 600;
+}
+
+.event-meta time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.event-card h3 {
+  font: 500 clamp(23px, 2.1vw, 30px)/1.16 var(--serif);
+  letter-spacing: -0.025em;
+  margin: 0 0 12px;
+  max-width: 27em;
+}
+
+.journal-pagination a {
+  padding: 10px 0;
+}
+
+.event-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 66ch;
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.event-measurements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin: 20px 0;
+}
+
+.event-measurements > div {
+  flex: 1;
+  min-width: 110px;
+  max-width: 240px;
+}
+
+.event-measurements dt {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 3px;
+}
+
+.event-measurements dd {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.event-measurements small {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.event-measurements .measurement-scope {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+.event-aircraft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin: 20px 0 8px;
+}
+
+.event-aircraft > div {
+  min-width: 100px;
+}
+
+.event-aircraft dt,
+.aircraft-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.event-aircraft dd {
+  margin: 3px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.aircraft-note {
+  line-height: 1.5;
+  margin: 8px 0;
+}
+
+.event-references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 16px;
+}
+
+.event-references li {
+  min-width: 0;
+}
+
+.event-card h3 a {
+  text-decoration: none;
+}
+
+.event-card .event-references a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.event-card h3 a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.event-card .event-references a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.event-card .text-link {
+  font-size: 12px;
+}
+
+.event-visual {
+  margin: 0;
+  width: 210px;
+  align-self: center;
+}
+
+.event-visual img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.event-visual figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.event-card-layout .event-visual {
+  grid-area: visual;
+  width: auto;
+  min-width: 0;
+  align-self: start;
+}
+
+.event-card-layout .event-visual img {
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.event-image-credit {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  font-size: 11px;
+  text-underline-offset: 3px;
+}
+
+.event-lead {
+  background: var(--surface);
+  border-bottom: 0;
+  padding: 30px;
+  gap: 32px;
+}
+
+.event-lead h3 {
+  font-size: clamp(30px, 3.1vw, 43px);
+  line-height: 1.08;
+  max-width: 23ch;
+}
+
+.event-lead .event-visual {
+  width: 39%;
+}
+
+.event-lead.event-card-layout.has-event-visual {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-areas: "intro visual" "details visual";
+  gap: 0 32px;
+}
+
+.event-lead.event-card-layout .event-visual {
+  width: auto;
+}
+
+.event-card-layout:not(.event-lead) .event-measurements {
+  margin: 14px 0;
+}
+
+.event-card-layout:not(.event-lead) .event-measurements dd {
+  font-size: 21px;
+}
+
+.event-card-layout:not(.event-lead) .event-measurements .measurement-scope {
+  font-size: 11px;
+}
+
+.event-card-layout:not(.event-lead) .event-aircraft {
+  margin: 14px 0 6px;
+  gap: 12px 24px;
+}
+
+.event-card-layout:not(.event-lead) .event-aircraft dd {
+  font-size: 14px;
+}
+
+.event-date-group {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 32px 0 10px;
+}
+
+.event-empty {
+  padding: 36px 0;
+  color: var(--muted);
+}
+
+/* Pages kept from earlier snapshots still page with .journal-pagination; the
+   current pages use the shared .pagination styles in screen.css. */
+.journal-pagination {
+  justify-content: center;
+  padding: 30px 0;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.journal-pagination span {
+  color: var(--muted);
+}
+
+.article-observed {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.story-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.story-list .story-card {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 28px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 28px;
+}
+
+@media (max-width: 900px) {
+  .event-lead {
+    padding: 24px;
+    gap: 24px;
+  }
+
+  .event-lead h3 {
+    font-size: 34px;
+  }
+
+  .event-visual {
+    width: 170px;
+  }
+
+  .timeline-heading {
+    align-items: start;
+  }
+}
+
+@media (max-width: 620px) {
+  .journal {
+    padding-top: 26px;
+  }
+
+  .journal-heading {
+    display: block;
+    margin-bottom: 22px;
+  }
+
+  .journal-heading > a {
+    display: inline-block;
+    margin-top: 12px;
+  }
+
+  .journal-heading p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .event-timeline {
+    padding: 18px 14px 12px;
+  }
+
+  .timeline-heading {
+    display: block;
+  }
+
+  .timeline-heading > p {
+    text-align: left;
+    margin-top: 10px;
+  }
+
+  .timeline-heading h2 {
+    font-size: 17px;
+  }
+
+  .chart-days {
+    gap: clamp(0.5px, 0.18vw, 3px);
+  }
+
+  .daily-chart {
+    height: 132px;
+    gap: 5px;
+  }
+
+  .chart-tick {
+    font-size: 9px;
+  }
+
+  .chart-axis {
+    width: 12px;
+  }
+
+  .chart-key {
+    justify-content: start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .type-filters {
+    gap: 6px;
+  }
+
+  .type-filters button {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .date-filter label {
+    width: 100%;
+  }
+
+  .feed-heading {
+    display: block;
+  }
+
+  .feed-heading > span {
+    display: inline-block;
+    margin-top: 8px;
+  }
+
+  .event-card {
+    gap: 18px;
+    padding-left: 15px;
+  }
+
+  .event-card h3 {
+    font-size: 26px;
+  }
+
+  .event-summary {
+    font-size: 13px;
+  }
+
+  .event-lead {
+    display: flex;
+    flex-direction: column;
+    padding: 22px 18px;
+  }
+
+  .event-lead h3 {
+    font-size: 32px;
+  }
+
+  .event-lead .event-visual {
+    width: 100%;
+  }
+
+  .event-card-layout,
+  .event-card-layout.has-event-visual,
+  .event-lead.event-card-layout.has-event-visual {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .event-card-layout.has-event-visual,
+  .event-lead.event-card-layout.has-event-visual {
+    grid-template-areas: "intro" "visual" "details";
+  }
+
+  .event-card-layout .event-visual {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  .event-card:not(.event-lead, .event-card-layout) .event-visual {
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .event-lead.event-card-layout .event-visual {
+    width: calc(100% + 36px);
+    margin-inline: -18px;
+  }
+
+  .event-lead.event-card-layout .event-visual img {
+    border-inline: 0;
+    border-radius: 0;
+  }
+
+  .event-lead.event-card-layout .event-visual figcaption {
+    padding-inline: 18px;
+  }
+
+  .event-meta {
+    gap: 8px;
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .event-measurements {
+    gap: 14px;
+  }
+
+  .event-measurements > div {
+    min-width: 90px;
+  }
+
+  .event-measurements dd {
+    font-size: 22px;
+  }
+
+  .journal-pagination {
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .story-list .story-card {
+    display: block;
+  }
+}
+
+.chart-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  margin: 14px 0;
+}
+
+.chart-legend > span {
+  color: var(--event-color);
+}
+
+/* The current cards group identity and measurements; earlier snapshots retain
+   the original card selectors above. */
+.event-card-organized.event-card-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "intro"
+    "identity"
+    "measurements"
+    "resources"
+    "evidence"
+    "action";
+  gap: 16px 28px;
+}
+
+.event-card-organized.event-card-layout.has-event-visual {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-areas:
+    "intro visual"
+    "identity visual"
+    "measurements visual"
+    "resources visual"
+    "evidence evidence"
+    "action action";
+  row-gap: 16px;
+}
+
+.event-card-organized .event-summary {
+  margin-bottom: 0;
+}
+
+.event-identity {
+  grid-area: identity;
+}
+
+.event-measured {
+  grid-area: measurements;
+}
+
+.event-resources {
+  grid-area: resources;
+  min-width: 0;
+}
+
+.event-fact-panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 14px 16px;
+  background: var(--paper);
+}
+
+.event-card-organized h4 {
+  font: 600 13px/1.4 var(--sans);
+  letter-spacing: 0;
+  margin: 0 0 8px;
+}
+
+.event-fact-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-fact-table caption {
+  padding: 0 0 8px;
+  text-align: left;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.event-aircraft-table caption {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.event-card-organized .event-fact-table th,
+.event-card-organized .event-fact-table td {
+  border-top: 1px solid var(--line);
+  padding: 8px 0;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.event-card-organized .event-fact-table th {
+  width: 40%;
+  padding-right: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.event-card-organized .event-measurement-table th {
+  width: 57%;
+}
+
+.event-card-organized .event-fact-table td {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.event-fact-table small {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.event-card-organized .event-fact-table :where(tr:last-child) th,
+.event-card-organized .event-fact-table :where(tr:last-child) td {
+  padding-bottom: 0;
+}
+
+.event-fact-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+
+.event-measurement-table + .event-measurement-table {
+  margin-top: 18px;
+}
+
+.event-measurement-interval {
+  display: block;
+  margin-top: 2px;
+}
+
+.event-card-organized .event-references {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  gap: 0 12px;
+}
+
+.event-evidence {
+  grid-area: evidence;
+  min-width: 0;
+  border-block: 1px solid var(--line);
+}
+
+.event-evidence summary {
+  min-height: 44px;
+  padding-block: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.event-evidence-content {
+  padding: 4px 0 16px;
+  max-width: 90ch;
+}
+
+.event-evidence-content p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+
+.event-card-action {
+  grid-area: action;
+}
+
+.event-card-action .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+
+.observation-record .record-table {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  overflow: visible;
+  margin: 18px 0;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.observation-record .record-table caption {
+  padding-bottom: 10px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.observation-record .record-table th,
+.observation-record .record-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.observation-record .record-table th {
+  width: 38%;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.observation-record .record-measurements-group {
+  margin: 24px 0;
+}
+
+.observation-record .record-measurements-group > p {
+  font: 13px/1.6 var(--sans);
+  color: var(--muted);
+  margin: 8px 0;
+}
+
+.observation-record .record-details {
+  padding: 12px 0;
+  border-block: 1px solid var(--line);
+}
+
+.observation-record .record-details summary {
+  font: 500 15px/1.5 var(--sans);
+  padding-block: 10px;
+}
+
+.observation-record .record-details p {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  .event-card-organized .event-references {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .event-card-organized.event-card-layout.has-event-visual {
+    grid-template-columns: minmax(0, 0.6fr) minmax(0, 0.6fr) minmax(0, 1fr);
+    grid-template-areas:
+      "intro intro visual"
+      "identity measurements visual"
+      "resources resources visual"
+      "evidence evidence evidence"
+      "action action action";
+    column-gap: 20px;
+  }
+}
+
+@media (max-width: 620px) {
+  .event-card-organized.event-card-layout.has-event-visual {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "intro"
+      "identity"
+      "visual"
+      "measurements"
+      "resources"
+      "evidence"
+      "action";
+  }
+
+  .event-fact-panel {
+    padding: 12px;
+  }
+
+  .event-card-organized .event-fact-table th {
+    padding-right: 10px;
+  }
+
+  .event-card-organized.event-card-layout .event-visual {
+    margin-bottom: 0;
+  }
+
+  .observation-record .record-table th,
+  .observation-record .record-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
+
+/* This optional exclusion stays with the other staged search controls. */
+.airport-pattern-filter label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.airport-pattern-filter input[type="checkbox"] {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.airport-pattern-filter .filter-help {
+  max-width: 66ch;
+  margin: 0 0 0 30px;
+}
+
+.event-pattern-label {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink);
+}

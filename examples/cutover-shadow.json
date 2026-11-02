@@ -1,0 +1,23 @@
+{
+  "legacy_root": "/home/operator/src/wtf-adsb",
+  "engine_root": "/home/operator/src/wtf-adsb-engine",
+  "publisher_root": "/home/operator/src/wtf-adsb-publisher",
+  "production_config": "/private/old-publisher/config.json",
+  "production_journal": "/private/old-receiver/journal.sqlite3",
+  "shadow_container": "wtf-adsb-engine-shadow",
+  "engine_image_id": "sha256:REPLACE_WITH_TESTED_IMAGE_ID",
+  "publisher_image_id": "sha256:REPLACE_WITH_TESTED_PUBLISHER_IMAGE_ID",
+  "shadow_feed": "/private/shadow-engine/feed",
+  "shadow_inbox": "/private/shadow-publisher/inbox/inbox.sqlite3",
+  "evidence_directory": "/private/cutover/checkpoints",
+  "approved_artifacts_sha256": "REPLACE_AFTER_CHECKS_AND_REVIEWS",
+  "minimum_free_bytes": 21474836480,
+  "configuration_files": [
+    "/private/old-publisher/config.json",
+    "/private/old-publisher/ai.env",
+    "/private/shadow-engine/receiver.toml",
+    "/private/shadow-engine/compose.yaml",
+    "/private/shadow-engine/.env",
+    "/private/shadow-engine/references/watchlist.json"
+  ]
+}

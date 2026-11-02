@@ -1,0 +1,128 @@
+name: wtf-adsb-publisher
+
+x-state: &state
+  type: bind
+  source: ${PUBLISHER_STATE_DIR:?Set PUBLISHER_STATE_DIR}
+  target: /state
+  bind: { create_host_path: false }
+x-artifacts: &artifacts
+  type: bind
+  source: ${PUBLISHER_ARTIFACTS_DIR:?Set PUBLISHER_ARTIFACTS_DIR}
+  target: /app/artifacts/ghost-theme
+  bind: { create_host_path: false }
+x-feed: &feed
+  type: bind
+  source: ${ENGINE_FEED_DIR:?Set ENGINE_FEED_DIR}
+  target: /feed
+  read_only: true
+  bind: { create_host_path: false }
+x-config: &config
+  type: bind
+  source: ${PUBLISHER_CONFIG_DIR:?Set PUBLISHER_CONFIG_DIR}/publisher.json
+  target: /config/publisher.json
+  read_only: true
+  bind: { create_host_path: false }
+x-control: &control
+  type: bind
+  source: ${PUBLISHER_CONTROL_DIR:?Set PUBLISHER_CONTROL_DIR}
+  target: /control
+  read_only: true
+  bind: { create_host_path: false }
+# Optional: the operator's reference directory (PUBLISHER_REFERENCE_DIR, an
+# absolute host path), read-only at /references. This short volume syntax
+# creates a missing host path as an empty root-owned directory, so create the
+# directory before setting the variable. Empty or unset, an empty named volume
+# stands in and the publisher keeps its built-in rules.
+x-references: &references ${PUBLISHER_REFERENCE_DIR:-references}:/references:ro
+# Optional: the operator's private terms file (PUBLISHER_PRIVATE_TERMS_FILE, an
+# absolute host path), read-only at /config/private-terms.txt, where
+# publisher.json's private_terms_file then points. Empty or unset, /dev/null
+# stands in and publisher.json names no file.
+x-terms: &terms ${PUBLISHER_PRIVATE_TERMS_FILE:-/dev/null}:/config/private-terms.txt:ro
+# Optional: the operator's About text (PUBLISHER_ABOUT_FILE, an absolute host
+# path), read-only at /config/about.md, where publisher.json's about_file then
+# points. Empty or unset, /dev/null stands in, and the publisher treats an
+# about_file of /dev/null as unset.
+x-about: &about ${PUBLISHER_ABOUT_FILE:-/dev/null}:/config/about.md:ro
+x-job: &job
+  image: ${PUBLISHER_IMAGE:?Set PUBLISHER_IMAGE to a tested local sha256 image ID}
+  platform: linux/amd64
+  pull_policy: never
+  profiles: [jobs]
+  restart: "no"
+  init: true
+  # The image's account is 1000:1000; another uid needs a derived image with that account.
+  user: "${PUBLISHER_UID:-1000}:${PUBLISHER_GID:-1000}"
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: ${PUBLISHER_MEMORY_LIMIT:-4g}
+  shm_size: 256m
+  tmpfs:
+    - /tmp:size=512m,mode=1777
+  environment:
+    HOME: /home/publisher
+    XDG_CACHE_HOME: /tmp/cache
+    XDG_CONFIG_HOME: /tmp/config
+    PUBLISHER_ACTIVATION_HOLD: /control/activation.hold
+  volumes:
+    [*state, *artifacts, *feed, *config, *control, *references, *terms, *about]
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  publish:
+    <<: *job
+    # PUBLISHER_PUBLISH_OPTIONS is empty, or --no-deploy to publish to Ghost only.
+    command: publish --config /config/publisher.json ${PUBLISHER_PUBLISH_OPTIONS:-}
+    secrets: [ghost-admin-key]
+    volumes:
+      - *state
+      - *artifacts
+      - *feed
+      - *config
+      - *control
+      - *references
+      - *terms
+      - *about
+      - type: bind
+        source: ${PUBLISHER_SSH_CONFIG:?Set PUBLISHER_SSH_CONFIG}
+        target: /home/publisher/.ssh/config
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${PUBLISHER_SSH_KEY_FILE:?Set PUBLISHER_SSH_KEY_FILE}
+        target: /home/publisher/.ssh/id_ed25519
+        read_only: true
+        bind: { create_host_path: false }
+      - type: bind
+        source: ${PUBLISHER_SSH_KNOWN_HOSTS:?Set PUBLISHER_SSH_KNOWN_HOSTS}
+        target: /home/publisher/.ssh/known_hosts
+        read_only: true
+        bind: { create_host_path: false }
+  write:
+    <<: *job
+    command: [write, --config, /config/publisher.json]
+    env_file: ${PUBLISHER_AI_ENV_FILE:?Set PUBLISHER_AI_ENV_FILE}
+    secrets: [openai-api-key]
+  weekly:
+    <<: *job
+    command: [weekly, --config, /config/publisher.json]
+    env_file: ${PUBLISHER_AI_ENV_FILE:?Set PUBLISHER_AI_ENV_FILE}
+    secrets: [openai-api-key]
+  admin:
+    <<: *job
+    profiles: [maintenance]
+    command: [admin, --help]
+
+volumes:
+  references:
+
+secrets:
+  ghost-admin-key:
+    file: ${PUBLISHER_GHOST_KEY_FILE:?Set PUBLISHER_GHOST_KEY_FILE}
+  openai-api-key:
+    file: ${PUBLISHER_OPENAI_KEY_FILE:?Set PUBLISHER_OPENAI_KEY_FILE}

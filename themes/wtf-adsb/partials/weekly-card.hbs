@@ -1,0 +1,19 @@
+<article class="weekly-card">
+  <div class="weekly-copy">
+    <p class="eyebrow">{{weekLabel}}</p>
+    {{#if review}}<p class="weekly-review">{{#if synthetic}}Synthetic example ·
+        {{/if}}Unpublished weekly pick</p>{{/if}}
+    {{#if archive}}<h2><a href="{{url}}">{{title}}</a></h2>{{else}}<h3><a href="{{url}}">{{title}}</a></h3>{{/if}}
+    <p>{{reason}}</p>
+    <a class="text-link" href="{{url}}">Read the researched story
+      <span aria-hidden="true">↗</span></a>
+  </div>
+  {{#if feature_image}}<img
+      class="weekly-image"
+      src="{{feature_image}}"
+      alt="{{feature_image_alt}}"
+      width="720"
+      height="480"
+      loading="lazy"
+    />{{/if}}
+</article>

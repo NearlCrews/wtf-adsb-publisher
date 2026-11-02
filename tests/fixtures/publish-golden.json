@@ -1,0 +1,7162 @@
+{
+ "corrected_exception_into_a_full_old_date": [
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ],
+    "2026-10-01": [
+     "11",
+     "12"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 2,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ],
+    "2026-10-01": [
+     "12"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 10
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ],
+    "2026-10-01": [
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18",
+     "19",
+     "20"
+    ]
+   },
+   "persists": 9,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "13": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "14": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "15": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "16": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "17": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "18": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "19": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "20": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "21": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "22": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 2,
+    "failed": 0,
+    "invalid": 0,
+    "published": 8,
+    "suspended": 0,
+    "unchanged": 11
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  }
+ ],
+ "refused_displaced_exception": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 9,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 8,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "11",
+     "12",
+     "13",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 5,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "13": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 4,
+    "suspended": 0,
+    "unchanged": 8
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "11",
+     "13",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "13": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 1,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 10
+   },
+   "writes": [
+    "draft"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "11",
+     "13",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "13": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 10
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_a_corrected_date_rechecks_the_per_aircraft_exceptional_cap": [
+  {
+   "days": {
+    "2026-10-02": [
+     "1",
+     "2"
+    ],
+    "2026-10-03": [
+     "3"
+    ]
+   },
+   "persists": 4,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 3,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-02": [
+     "1",
+     "2",
+     "3"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 3,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 2
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-02": [
+     "1",
+     "2",
+     "3"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 3,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 3
+   },
+   "writes": []
+  }
+ ],
+ "test_a_demotion_holds_while_its_ghost_write_fails_and_never_blocks_a_dossier": [
+  {
+   "days": {},
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": true,
+     "post": null,
+     "priority": "ordinary",
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 1,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": []
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_a_live_exception_demoted_with_room_under_the_cap_is_updated_and_the_pass_goes_on": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ]
+   },
+   "persists": 5,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 4,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 4
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 2,
+    "suspended": 0,
+    "unchanged": 4
+   },
+   "writes": [
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 6
+   },
+   "writes": []
+  }
+ ],
+ "test_a_live_exception_over_the_per_aircraft_cap_gives_way_first": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "11",
+     "12",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 4,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 3,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 11
+   },
+   "writes": [
+    "draft"
+   ]
+  }
+ ],
+ "test_a_live_story_keeps_its_slot_against_later_stronger_candidates": [
+  {
+   "days": {
+    "2026-10-01": [
+     "aaaaaa:1790856000.000000"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "aaaaaa:1790856000.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "000002:1790859602.000000",
+     "000003:1790859603.000000",
+     "000004:1790859604.000000",
+     "000005:1790859605.000000",
+     "000006:1790859606.000000",
+     "000007:1790859607.000000",
+     "000008:1790859608.000000",
+     "000009:1790859609.000000",
+     "aaaaaa:1790856000.000000"
+    ]
+   },
+   "persists": 9,
+   "records": {
+    "000002:1790859602.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000003:1790859603.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000004:1790859604.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000005:1790859605.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000006:1790859606.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000007:1790859607.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000008:1790859608.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "000009:1790859609.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "aaaaaa:1790856000.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 8,
+    "suspended": 0,
+    "unchanged": 1
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  }
+ ],
+ "test_a_published_exception_survives_a_later_selection_demotion": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 10
+   },
+   "writes": []
+  }
+ ],
+ "test_a_stored_repeated_descent_is_not_promoted_by_the_publisher": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "abcdef:1790856000.000000": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": []
+  }
+ ],
+ "test_a_story_released_as_ordinary_carries_no_proof_and_stays_ordinary": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": true,
+     "post": "published",
+     "priority": "ordinary",
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 1
+   },
+   "writes": []
+  }
+ ],
+ "test_a_suspension_for_unreadable_evidence_keeps_the_story_claim": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {},
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 1,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 0
+   },
+   "writes": [
+    "draft"
+   ]
+  },
+  {
+   "days": {},
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 1,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": []
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_corrected_overflow_is_suspended_before_it_can_exceed_the_ordinary_quota": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 9
+   },
+   "writes": [
+    "draft"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": true,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 8
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_interval_correction_into_a_full_previous_utc_day_suspends_before_writing": [
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ],
+    "2026-10-01": [
+     "11"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-09-30": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 9
+   },
+   "writes": [
+    "draft"
+   ]
+  }
+ ],
+ "test_live_article_that_no_longer_projects_is_suspended_and_recovers": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 2,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "2",
+     "3"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 1,
+    "published": 1,
+    "suspended": 1,
+    "unchanged": 1
+   },
+   "writes": [
+    "published",
+    "draft"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 2
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_live_article_with_an_unresolved_card_still_holds_its_slot": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 1,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 8
+   },
+   "writes": []
+  }
+ ],
+ "test_lost_post_response_is_reconciled_without_duplicate_or_manual_approval": [
+  {
+   "days": {},
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 1,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 1
+   },
+   "writes": []
+  }
+ ],
+ "test_lost_put_response_never_allows_a_tenth_ordinary_post_between_writes": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 9,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 8,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "12",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 2,
+    "suspended": 0,
+    "unchanged": 8
+   },
+   "writes": [
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "12",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 1,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 9
+   },
+   "writes": [
+    "draft"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 2,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 2,
+     "state": "pending",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": []
+  }
+ ],
+ "test_nine_already_live_then_exceptional_afternoon_event_publishes_automatically": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "11",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 10
+   },
+   "writes": []
+  }
+ ],
+ "test_one_uneditable_owned_article_does_not_starve_other_publications": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 1,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 1,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_ordinary_quota_includes_approved_legacy_publications": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": []
+  }
+ ],
+ "test_owner_removal_does_not_suppress_a_later_exceptional_finding": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {},
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": true,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": []
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1:exceptional"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": true,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "1:exceptional": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_publication_caps_one_aircraft_burst_at_two_exceptional_stories": [
+  {
+   "days": {
+    "2026-10-01": [
+     "2",
+     "3"
+    ]
+   },
+   "persists": 3,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 2,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "10",
+     "11",
+     "12",
+     "13",
+     "14",
+     "15",
+     "16",
+     "17",
+     "18",
+     "19",
+     "2",
+     "20",
+     "21",
+     "3"
+    ]
+   },
+   "persists": 13,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "12": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "13": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "14": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "15": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "16": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "17": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "18": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "19": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "20": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "21": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 12,
+    "suspended": 0,
+    "unchanged": 2
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  }
+ ],
+ "test_retention_of_the_same_encounter_does_not_duplicate_an_exception": [
+  {
+   "days": {
+    "2026-10-01": [
+     "000001:1790855400.000000"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "000001:1790855400.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "000001:1790855400.000000"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "000001:1790855400.000000": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": true,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 1
+   },
+   "writes": []
+  }
+ ],
+ "test_scarce_slots_follow_rank_not_recency": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 9,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 8,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "10",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "10": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "11": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 8
+   },
+   "writes": [
+    "published"
+   ]
+  }
+ ],
+ "test_selection_demotion_survives_staging": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 10,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 9,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published",
+    "published"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "1",
+     "2",
+     "3",
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "9"
+    ]
+   },
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "20": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": "ordinary",
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "4": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "5": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "6": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "7": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "8": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "9": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 9
+   },
+   "writes": []
+  }
+ ],
+ "test_suspended_story_does_not_hold_its_aircraft_but_an_owner_removal_does": [
+  {
+   "days": {
+    "2026-10-01": [
+     "1"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 0,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {},
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 1,
+    "unchanged": 0
+   },
+   "writes": [
+    "draft"
+   ]
+  },
+  {
+   "days": {
+    "2026-10-01": [
+     "2"
+    ]
+   },
+   "persists": 2,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "published",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 1,
+    "failed": 0,
+    "invalid": 0,
+    "published": 1,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": [
+    "published"
+   ]
+  },
+  {
+   "days": {},
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": true,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 2,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": []
+  },
+  {
+   "days": {},
+   "persists": 1,
+   "records": {
+    "1": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": null,
+     "revision": 1,
+     "state": "approved",
+     "suspended": true
+    },
+    "2": {
+     "demoted_at_release": null,
+     "post": "draft",
+     "priority": null,
+     "published_exceptional": false,
+     "removed": true,
+     "revision": 1,
+     "state": "approved",
+     "suspended": null
+    },
+    "3": {
+     "demoted_at_release": null,
+     "post": null,
+     "priority": null,
+     "published_exceptional": null,
+     "removed": null,
+     "revision": 1,
+     "state": "pending",
+     "suspended": null
+    }
+   },
+   "result": {
+    "deferred": 3,
+    "failed": 0,
+    "invalid": 0,
+    "published": 0,
+    "suspended": 0,
+    "unchanged": 0
+   },
+   "writes": []
+  }
+ ]
+}

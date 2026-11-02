@@ -1,0 +1,10 @@
+{{!< default}}
+{{#if journal}}
+  {{#with journal}}{{> "journal"}}{{/with}}
+{{else}}{{#if archive}}
+  <section class="wrap archive" aria-labelledby="archive-title">
+    {{#with archive}}{{> "breadcrumbs"}}<header class="archive-heading"><h1 id="archive-title">{{heading}}</h1><p>{{intro}}</p></header>{{#with list}}{{> "story-list"}}{{/with}}{{/with}}
+  </section>
+{{else}}
+  <section class="wrap archive" aria-labelledby="archive-title"><div class="archive-heading"><p class="eyebrow">The observation journal</p><h1 id="archive-title">All stories</h1><p>Recorded measurements, aircraft details, and the reasoning behind each account.</p></div>{{> "topic-navigation"}}<div class="story-list">{{#foreach posts}}{{> "story-card" archive=true}}{{else}}<p>No stories have been published yet.</p>{{/foreach}}</div>{{pagination}}</section>
+{{/if}}{{/if}}

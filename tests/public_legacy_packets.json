@@ -1,0 +1,2737 @@
+{
+  "heatmap_outlier_gs": {
+    "interval": [
+      1789999340,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": "ZZZ837",
+        "icao_address": "A00002",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX1",
+        "type_code": "BALL",
+        "type_description": "Balloon"
+      },
+      "kind": "outlier_gs",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix1"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX1"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/ZZZ837"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00002"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": 8,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "kn",
+        "metric_value": 1005.6,
+        "qualifying_count": 3,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:03:20+00:00",
+        "start_utc": "2026-09-21T14:02:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 1005.6
+          },
+          {
+            "field": "archive_alt",
+            "label": "Archived altitude; reference not retained",
+            "unit": "ft",
+            "value": 64500.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "4455"
+      },
+      "schema_version": 1,
+      "surrounding_readings": [
+        {
+          "archive_alt": 64500.0,
+          "gs": 15.5,
+          "source": "adsb_icao",
+          "squawk": "0000",
+          "timestamp": 1789999370.0
+        },
+        {
+          "archive_alt": 64525.0,
+          "gs": 16.0,
+          "source": "adsb_icao",
+          "squawk": "4455",
+          "timestamp": 1789999385.0
+        },
+        {
+          "archive_alt": 64500.0,
+          "gs": 1005.6,
+          "source": "adsb_icao",
+          "squawk": "4455",
+          "timestamp": 1789999400.0
+        },
+        {
+          "archive_alt": 64550.0,
+          "gs": 15.0,
+          "source": "adsb_icao",
+          "squawk": "4455",
+          "timestamp": 1789999415.0
+        }
+      ]
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "archive_alt": 64500,
+          "dbFlags": 8,
+          "desc": "Balloon",
+          "flight": "ZZZ837",
+          "gs": 1005.6,
+          "hex": "a00002",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "N0FIX1",
+          "squawk": "4455",
+          "t": "BALL",
+          "type": "adsb_icao"
+        },
+        "archive_reference": "2026/09/01/heatmap/1.bin.ttf@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "archive_references": [],
+        "context_samples": [
+          {
+            "archive_alt": 64500,
+            "gs": 15.5,
+            "source": "adsb_icao",
+            "squawk": "0000",
+            "timestamp": 1789999370
+          },
+          {
+            "archive_alt": 64525,
+            "gs": 16.0,
+            "source": "adsb_icao",
+            "squawk": "4455",
+            "timestamp": 1789999385
+          },
+          {
+            "archive_alt": 64500,
+            "gs": 1005.6,
+            "source": "adsb_icao",
+            "squawk": "4455",
+            "timestamp": 1789999400
+          },
+          {
+            "archive_alt": 64550,
+            "gs": 15.0,
+            "source": "adsb_icao",
+            "squawk": "4455",
+            "timestamp": 1789999415
+          }
+        ],
+        "historical_corpus": {
+          "altitude_reference": "archive_unspecified",
+          "carried_labels": "Callsign and squawk may be carried between saved positions; repeated position samples are not independent retransmissions of those fields.",
+          "message_freshness": "not_retained",
+          "source": "heatmap"
+        },
+        "metadata_as_of": "2026-10-05T00:00:00+00:00",
+        "observed_at": 1789999400,
+        "watchlist": {}
+      },
+      "first_seen": 1789999400,
+      "hex": "a00002",
+      "hits": 3,
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "kind": "outlier_gs",
+      "last_seen": 1790000000,
+      "origin": "Historical corpus: heatmap",
+      "title": "Fixture",
+      "unit": "kn",
+      "value": 1005.6
+    }
+  },
+  "heatmap_vintage": {
+    "interval": [
+      1789999340,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A00001",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX2",
+        "type_code": "DC3",
+        "type_description": "DOUGLAS DC-3"
+      },
+      "kind": "vintage",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix2"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX2"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX2"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00001"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": null,
+        "database_year": 1944.0,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "years",
+        "metric_value": 82.0,
+        "qualifying_count": 3,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:03:20+00:00",
+        "start_utc": "2026-09-21T14:02:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 150.1
+          },
+          {
+            "field": "archive_alt",
+            "label": "Archived altitude; reference not retained",
+            "unit": "ft",
+            "value": 4500.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "0000"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "archive_alt": 4500,
+          "desc": "DOUGLAS DC-3",
+          "gs": 150.1,
+          "hex": "a00001",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "N0FIX2",
+          "squawk": "0000",
+          "t": "DC3",
+          "type": "adsb_icao",
+          "year": "1944"
+        },
+        "archive_reference": "2026/09/01/heatmap/1.bin.ttf@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "archive_references": [],
+        "historical_corpus": {
+          "altitude_reference": "archive_unspecified",
+          "carried_labels": "Callsign and squawk may be carried between saved positions; repeated position samples are not independent retransmissions of those fields.",
+          "message_freshness": "not_retained",
+          "source": "heatmap"
+        },
+        "metadata_as_of": "2026-10-05T00:00:00+00:00",
+        "observed_at": 1789999400,
+        "watchlist": {}
+      },
+      "first_seen": 1789999400,
+      "hex": "a00001",
+      "hits": 3,
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "kind": "vintage",
+      "last_seen": 1790000000,
+      "origin": "Historical corpus: heatmap",
+      "title": "Fixture",
+      "unit": "years",
+      "value": 82
+    }
+  },
+  "heatmap_watch_type_0000": {
+    "interval": [
+      1789999340,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A0000B",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "XX-0005",
+        "type_code": "C5M",
+        "type_description": "LOCKHEED C-5M Super Galaxy"
+      },
+      "kind": "watch_type",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/xx-0005"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/XX-0005"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/XX-0005"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a0000b"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": 1,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "",
+        "metric_value": null,
+        "qualifying_count": 3,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:03:20+00:00",
+        "start_utc": "2026-09-21T14:02:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 432.5
+          },
+          {
+            "field": "archive_alt",
+            "label": "Archived altitude; reference not retained",
+            "unit": "ft",
+            "value": 31000.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "0000"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "archive_alt": 31000,
+          "dbFlags": 1,
+          "desc": "LOCKHEED C-5M Super Galaxy",
+          "flight": "",
+          "gs": 432.5,
+          "hex": "a0000b",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "XX-0005",
+          "squawk": "0000",
+          "t": "C5M",
+          "type": "adsb_icao"
+        },
+        "archive_reference": "2026/09/01/heatmap/1.bin.ttf@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "archive_references": [],
+        "historical_corpus": {
+          "altitude_reference": "archive_unspecified",
+          "carried_labels": "Callsign and squawk may be carried between saved positions; repeated position samples are not independent retransmissions of those fields.",
+          "message_freshness": "not_retained",
+          "source": "heatmap"
+        },
+        "metadata_as_of": "2026-10-05T00:00:00+00:00",
+        "observed_at": 1789999400,
+        "watchlist": {}
+      },
+      "first_seen": 1789999400,
+      "hex": "a0000b",
+      "hits": 3,
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "kind": "watch_type",
+      "last_seen": 1790000000,
+      "origin": "Historical corpus: heatmap",
+      "title": "Fixture",
+      "unit": "",
+      "value": null
+    }
+  },
+  "heatmap_watch_type_carried": {
+    "interval": [
+      1789999340,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": "ZZZ2023",
+        "icao_address": "A0000C",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "XX-0006",
+        "type_code": "C5M",
+        "type_description": "LOCKHEED C-5M Super Galaxy"
+      },
+      "kind": "watch_type",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/xx-0006"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/XX-0006"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/ZZZ2023"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a0000c"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": 1,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "",
+        "metric_value": null,
+        "qualifying_count": 3,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:03:20+00:00",
+        "start_utc": "2026-09-21T14:02:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 440.0
+          },
+          {
+            "field": "archive_alt",
+            "label": "Archived altitude; reference not retained",
+            "unit": "ft",
+            "value": 33000.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "4102"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "archive_alt": 33000,
+          "dbFlags": 1,
+          "desc": "LOCKHEED C-5M Super Galaxy",
+          "flight": "ZZZ2023",
+          "gs": 440.0,
+          "hex": "a0000c",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "XX-0006",
+          "squawk": "4102",
+          "t": "C5M",
+          "type": "adsb_icao"
+        },
+        "archive_reference": "2026/09/01/heatmap/1.bin.ttf@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "archive_references": [],
+        "historical_corpus": {
+          "altitude_reference": "archive_unspecified",
+          "carried_labels": "Callsign and squawk may be carried between saved positions; repeated position samples are not independent retransmissions of those fields.",
+          "message_freshness": "not_retained",
+          "source": "heatmap"
+        },
+        "metadata_as_of": "2026-10-05T00:00:00+00:00",
+        "observed_at": 1789999400,
+        "watchlist": {}
+      },
+      "first_seen": 1789999400,
+      "hex": "a0000c",
+      "hits": 3,
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "kind": "watch_type",
+      "last_seen": 1790000000,
+      "origin": "Historical corpus: heatmap",
+      "title": "Fixture",
+      "unit": "",
+      "value": null
+    }
+  },
+  "heatmap_watch_type_no_altitude": {
+    "interval": [
+      1789999340,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": "ZZZ2024",
+        "icao_address": "A0000D",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "XX-0007",
+        "type_code": "C5M",
+        "type_description": "LOCKHEED C-5M Super Galaxy"
+      },
+      "kind": "watch_type",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/xx-0007"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/XX-0007"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/ZZZ2024"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a0000d"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "",
+        "metric_value": null,
+        "qualifying_count": 3,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:03:20+00:00",
+        "start_utc": "2026-09-21T14:02:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 400.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "4102"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "archive_alt": null,
+          "desc": "LOCKHEED C-5M Super Galaxy",
+          "flight": "ZZZ2024",
+          "gs": 400.0,
+          "hex": "a0000d",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "XX-0007",
+          "squawk": "4102",
+          "t": "C5M",
+          "type": "adsb_icao"
+        },
+        "archive_reference": "2026/09/01/heatmap/1.bin.ttf@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "archive_references": [],
+        "historical_corpus": {
+          "altitude_reference": "archive_unspecified",
+          "carried_labels": "Callsign and squawk may be carried between saved positions; repeated position samples are not independent retransmissions of those fields.",
+          "message_freshness": "not_retained",
+          "source": "heatmap"
+        },
+        "metadata_as_of": "2026-10-05T00:00:00+00:00",
+        "observed_at": 1789999400,
+        "watchlist": {}
+      },
+      "first_seen": 1789999400,
+      "hex": "a0000d",
+      "hits": 3,
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "kind": "watch_type",
+      "last_seen": 1790000000,
+      "origin": "Historical corpus: heatmap",
+      "title": "Fixture",
+      "unit": "",
+      "value": null
+    }
+  },
+  "live_circling": {
+    "interval": [
+      1789999220,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A00008",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX3",
+        "type_code": "B407",
+        "type_description": "BELL 407"
+      },
+      "kind": "circling",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix3"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX3"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX3"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00008"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        },
+        {
+          "id": "type_reference",
+          "label": "Bell 407",
+          "url": "https://www.bellflight.com/products/bell-407"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Overlapping qualifying windows, not flights or loops",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "minutes",
+        "metric_value": 12.0,
+        "qualifying_count": 20,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:01:20+00:00",
+        "start_utc": "2026-09-21T14:00:20+00:00"
+      },
+      "pattern": {
+        "accumulated_turns": 3.4,
+        "closed_loops": 3.0,
+        "duration_seconds": 600.0,
+        "end_utc": "2026-09-21T14:13:20+00:00",
+        "largest_gap_seconds": 20.0,
+        "limitations": [
+          "Movement geometry does not establish the operator, mission or activity on the ground."
+        ],
+        "median_reported_speed_kn": 71.2,
+        "metrics_scope": "These metrics and sample counts describe this selected analysis window, which can be shorter than the merged observation interval.",
+        "observed_sources": [
+          "adsb_icao"
+        ],
+        "quality_review_required": false,
+        "sample_count": 46.0,
+        "shape_verified": true,
+        "start_utc": "2026-09-21T14:03:20+00:00"
+      },
+      "received": {
+        "emergency_status": "none",
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 70.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 1500.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:13:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "1200"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "patterns",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 1500,
+          "desc": "BELL 407",
+          "emergency": "none",
+          "gs": 70,
+          "hex": "a00008",
+          "r": "N0FIX3",
+          "squawk": "1200",
+          "t": "B407",
+          "type": "adsb_icao"
+        },
+        "observed_at": 1790000000,
+        "pattern": {
+          "accumulated_turns": 3.4,
+          "closed_loops": 3,
+          "duration_seconds": 600,
+          "ended_at": 1790000000,
+          "largest_gap_seconds": 20,
+          "median_reported_speed_kn": 71.2,
+          "observed_sources": [
+            "adsb_icao"
+          ],
+          "quality_review_required": false,
+          "sample_count": 46,
+          "shape_verified": true,
+          "started_at": 1789999400
+        },
+        "watchlist": {}
+      },
+      "first_seen": 1789999280,
+      "hex": "a00008",
+      "hits": 20,
+      "id": 10,
+      "kind": "circling",
+      "last_seen": 1790000000,
+      "origin": "Live receiver",
+      "title": "Circling",
+      "unit": "minutes",
+      "value": 12
+    }
+  },
+  "live_fast_ladd": {
+    "interval": [
+      1789999640,
+      1789999960
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": "ZZZ1234",
+        "icao_address": "A00009",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX4",
+        "type_code": "B738",
+        "type_description": "BOEING 737-800"
+      },
+      "kind": "fast",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix4"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX4"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/ZZZ1234"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00009"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": 12,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:12:40+00:00",
+        "metric_unit": "kn",
+        "metric_value": 655.0,
+        "qualifying_count": 6,
+        "qualifying_count_end_utc": "2026-09-21T14:11:40+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:08:20+00:00",
+        "start_utc": "2026-09-21T14:07:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": "none",
+        "emitter_category": "A3",
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 655.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 37000.0
+          },
+          {
+            "field": "baro_rate",
+            "label": "Pressure-altitude vertical rate",
+            "unit": "ft/min",
+            "value": 0.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:10:00+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "6312"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "performance",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 37000,
+          "baro_rate": 0,
+          "category": "A3",
+          "dbFlags": 12,
+          "desc": "BOEING 737-800",
+          "emergency": "none",
+          "flight": "ZZZ1234",
+          "gs": 655.0,
+          "hex": "a00009",
+          "r": "N0FIX4",
+          "squawk": "6312",
+          "t": "B738",
+          "type": "adsb_icao"
+        },
+        "confirmation": {
+          "quality_flags": [],
+          "sustained": true
+        },
+        "observed_at": 1789999800,
+        "watchlist": {}
+      },
+      "first_seen": 1789999700,
+      "hex": "a00009",
+      "hits": 6,
+      "id": 11,
+      "kind": "fast",
+      "last_seen": 1789999900,
+      "origin": "Live receiver",
+      "title": "Fast",
+      "unit": "kn",
+      "value": 655.0
+    }
+  },
+  "live_hovering": {
+    "interval": [
+      1789999440,
+      1790000010
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A00006",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX5",
+        "type_code": "EC35",
+        "type_description": "EUROCOPTER EC-135"
+      },
+      "kind": "hovering",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix5"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX5"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX5"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00006"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {
+        "altitude_reference": "alt_baro",
+        "confirmed": true,
+        "duration_seconds": 300.0,
+        "end_utc": "2026-09-21T14:11:55+00:00",
+        "footprint_nm": 0.006,
+        "limitations": [
+          "Individual field ages are unknown; correlated measurements are not independent verification."
+        ],
+        "quality_review_required": false,
+        "sample_count": 21.0,
+        "start_utc": "2026-09-21T14:06:55+00:00",
+        "state": "active"
+      },
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Overlapping qualifying windows, not flights or loops",
+        "end_utc": "2026-09-21T14:13:30+00:00",
+        "metric_unit": "s",
+        "metric_value": 300.0,
+        "qualifying_count": 5,
+        "qualifying_count_end_utc": "2026-09-21T14:12:30+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:05:00+00:00",
+        "start_utc": "2026-09-21T14:04:00+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 2.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 675.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:11:55+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": null
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "patterns",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 675,
+          "desc": "EUROCOPTER EC-135",
+          "gs": 2,
+          "hex": "a00006",
+          "lat": -45.0249,
+          "lon": -150.0,
+          "r": "N0FIX5",
+          "t": "EC35",
+          "type": "adsb_icao"
+        },
+        "encounter_start": 1789999500,
+        "maneuver": {
+          "altitude_reference": "alt_baro",
+          "confirmed": true,
+          "duration_seconds": 300.0,
+          "ended_at": 1789999915.0,
+          "evaluated_at": 1789999915.0,
+          "field_freshness_known": false,
+          "footprint_nm": 0.006,
+          "kind": "hovering",
+          "quality_flags": [],
+          "quality_review_required": false,
+          "sample_count": 21,
+          "started_at": 1789999615.0,
+          "state": "active",
+          "version": "maneuvers-v2"
+        },
+        "maneuver_samples": [
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999615.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999630.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999645.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999660.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999675.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999690.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999705.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999720.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999735.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999750.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999765.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999780.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999795.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999810.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999825.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999840.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999855.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999870.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999885.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999900.0
+          },
+          {
+            "alt_baro": 675,
+            "gs": 2,
+            "lat": -45.0249,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "ts": 1789999915.0
+          }
+        ],
+        "observed_at": 1789999915.0,
+        "watchlist": {}
+      },
+      "first_seen": 1789999500,
+      "hex": "a00006",
+      "hits": 5,
+      "id": 7,
+      "kind": "hovering",
+      "last_seen": 1789999950,
+      "origin": "Live receiver",
+      "title": "Near-stationary airborne reports",
+      "unit": "s",
+      "value": 300.0
+    }
+  },
+  "live_position_jump": {
+    "interval": [
+      1789999910,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A0000A",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX6",
+        "type_code": "A320",
+        "type_description": null
+      },
+      "kind": "position_jump",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix6"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX6"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX6"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a0000a"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "kn",
+        "metric_value": 3600.0,
+        "qualifying_count": 1,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:12:50+00:00",
+        "start_utc": "2026-09-21T14:11:50+00:00"
+      },
+      "pattern": {},
+      "position_discontinuity": {
+        "displacement_nm": 30.02,
+        "elapsed_seconds": 30.0,
+        "implied_speed_kn": 3602.4,
+        "interpretation": "A discontinuity between two positions, not a measured physical speed or an observed connecting flight path.",
+        "source_after": "mlat",
+        "source_before": "adsb_icao"
+      },
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 420.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:13:20+00:00",
+        "source": "mlat",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": null
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "oddities",
+      "evidence": {
+        "aircraft": {
+          "gs": 420,
+          "hex": "a0000a",
+          "lat": -44.525,
+          "lon": -150.0,
+          "r": "N0FIX6",
+          "seen_pos": 0,
+          "t": "A320",
+          "type": "mlat"
+        },
+        "observed_at": 1790000000,
+        "previous_position": {
+          "lat": -45.025,
+          "lon": -150.0,
+          "seen_pos": 0,
+          "type": "adsb_icao"
+        },
+        "previous_snapshot_at": 1789999970,
+        "watchlist": {}
+      },
+      "first_seen": 1789999970,
+      "hex": "a0000a",
+      "hits": 1,
+      "id": 12,
+      "kind": "position_jump",
+      "last_seen": 1790000000,
+      "origin": "Live receiver",
+      "title": "Jump",
+      "unit": "kn",
+      "value": 3600.0
+    }
+  },
+  "live_rapid_descent": {
+    "interval": [
+      1789999040,
+      1789999860
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A00004",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX7",
+        "type_code": "BE20",
+        "type_description": "BEECH 200 Super King Air"
+      },
+      "kind": "rapid_descent",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix7"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX7"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX7"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00004"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {
+        "altitude_change_ft": -10350.0,
+        "altitude_reference": "alt_baro",
+        "average_rate_fpm": -6900.0,
+        "confirmed": true,
+        "duration_seconds": 90.0,
+        "end_utc": "2026-09-21T14:05:10+00:00",
+        "expected_altitude_change_ft": -9066.7,
+        "limitations": [
+          "Individual field ages are unknown; correlated measurements are not independent verification."
+        ],
+        "median_rate_fpm": -7600.0,
+        "peak_at_utc": "2026-09-21T14:03:40+00:00",
+        "peak_rate_fpm": -7600.0,
+        "qualifying_duration_seconds": 60.0,
+        "qualifying_end_utc": "2026-09-21T14:04:40+00:00",
+        "qualifying_sample_count": 7.0,
+        "qualifying_start_utc": "2026-09-21T14:03:40+00:00",
+        "quality_review_required": false,
+        "rate_field": "baro_rate",
+        "sample_count": 10.0,
+        "start_utc": "2026-09-21T14:03:40+00:00",
+        "state": "recovered",
+        "sustained_altitude_change_ft": -6900.0,
+        "sustained_duration_seconds": 60.0,
+        "sustained_end_utc": "2026-09-21T14:04:40+00:00",
+        "sustained_expected_altitude_change_ft": -7600.0,
+        "sustained_rate_fpm": -7600.0,
+        "sustained_sample_count": 7.0,
+        "sustained_start_utc": "2026-09-21T14:03:40+00:00",
+        "threshold_fpm": 4500.0
+      },
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:11:00+00:00",
+        "metric_unit": "ft/min",
+        "metric_value": -7600.0,
+        "qualifying_count": 7,
+        "qualifying_count_end_utc": "2026-09-21T14:10:00+00:00",
+        "qualifying_count_start_utc": "2026-09-21T13:58:20+00:00",
+        "start_utc": "2026-09-21T13:57:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": "none",
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 300.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 17700.0
+          },
+          {
+            "field": "baro_rate",
+            "label": "Pressure-altitude vertical rate",
+            "unit": "ft/min",
+            "value": -7600.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:40+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "1200"
+      },
+      "schema_version": 1,
+      "surrounding_readings": [
+        {
+          "alt_baro": 20000.0,
+          "baro_rate": -2000.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999400.0
+        },
+        {
+          "alt_baro": 18850.0,
+          "baro_rate": -2000.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999410.0
+        },
+        {
+          "alt_baro": 17700.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999420.0
+        },
+        {
+          "alt_baro": 16550.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999430.0
+        },
+        {
+          "alt_baro": 15400.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999440.0
+        },
+        {
+          "alt_baro": 14250.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999450.0
+        },
+        {
+          "alt_baro": 13100.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999460.0
+        },
+        {
+          "alt_baro": 11950.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999470.0
+        },
+        {
+          "alt_baro": 10800.0,
+          "baro_rate": -7600.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999480.0
+        },
+        {
+          "alt_baro": 9650.0,
+          "baro_rate": -2000.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999490.0
+        },
+        {
+          "alt_baro": 8500.0,
+          "baro_rate": -2000.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999500.0
+        },
+        {
+          "alt_baro": 7350.0,
+          "baro_rate": -2000.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999510.0
+        },
+        {
+          "alt_baro": 7350.0,
+          "baro_rate": -500.0,
+          "emergency_status": "none",
+          "gs": 300.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999540.0
+        }
+      ]
+    },
+    "source": {
+      "category": "performance",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 17700,
+          "baro_rate": -7600,
+          "desc": "BEECH 200 Super King Air",
+          "emergency": "none",
+          "gs": 300,
+          "hex": "a00004",
+          "lat": -45.005,
+          "lon": -150.0,
+          "r": "N0FIX7",
+          "squawk": "1200",
+          "t": "BE20",
+          "type": "adsb_icao"
+        },
+        "context_samples": [
+          {
+            "alt_baro": 20000,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999400
+          },
+          {
+            "alt_baro": 18850,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -45.015,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999410
+          },
+          {
+            "alt_baro": 17700,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -45.005,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999420
+          },
+          {
+            "alt_baro": 16550,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.995,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999430
+          },
+          {
+            "alt_baro": 15400,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.985,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999440
+          },
+          {
+            "alt_baro": 14250,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.975,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999450
+          },
+          {
+            "alt_baro": 13100,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.965,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999460
+          },
+          {
+            "alt_baro": 11950,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.955,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999470
+          },
+          {
+            "alt_baro": 10800,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.945,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999480
+          },
+          {
+            "alt_baro": 9650,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.935,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999490
+          },
+          {
+            "alt_baro": 8500,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.925,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999500
+          },
+          {
+            "alt_baro": 7350,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.915,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999510
+          },
+          {
+            "alt_baro": 7350,
+            "baro_rate": -500,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.915,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999540
+          }
+        ],
+        "encounter_start": 1789999100,
+        "maneuver": {
+          "altitude_change_ft": -10350.0,
+          "altitude_reference": "alt_baro",
+          "average_rate_fpm": -6900.0,
+          "confirmed": true,
+          "duration_seconds": 90,
+          "ended_at": 1789999510,
+          "episode_start": 1789999420,
+          "evaluated_at": 1789999510,
+          "expected_altitude_change_ft": -9066.7,
+          "field_freshness_known": false,
+          "kind": "rapid_descent",
+          "median_rate_fpm": -7600.0,
+          "peak_at": 1789999420,
+          "peak_rate_fpm": -7600.0,
+          "qualifying_duration_seconds": 60,
+          "qualifying_ended_at": 1789999480,
+          "qualifying_sample_count": 7,
+          "qualifying_started_at": 1789999420,
+          "quality_flags": [],
+          "quality_review_required": false,
+          "rate_field": "baro_rate",
+          "sample_count": 10,
+          "started_at": 1789999420,
+          "state": "recovered",
+          "sustained_altitude_change_ft": -6900.0,
+          "sustained_duration_seconds": 60,
+          "sustained_ended_at": 1789999480,
+          "sustained_expected_altitude_change_ft": -7600.0,
+          "sustained_rate_fpm": -7600.0,
+          "sustained_sample_count": 7,
+          "sustained_started_at": 1789999420,
+          "threshold_fpm": 4500,
+          "version": "maneuvers-v2"
+        },
+        "maneuver_samples": [
+          {
+            "alt_baro": 17700,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -45.005,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999420
+          },
+          {
+            "alt_baro": 16550,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.995,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999430
+          },
+          {
+            "alt_baro": 15400,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.985,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999440
+          },
+          {
+            "alt_baro": 14250,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.975,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999450
+          },
+          {
+            "alt_baro": 13100,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.965,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999460
+          },
+          {
+            "alt_baro": 11950,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.955,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999470
+          },
+          {
+            "alt_baro": 10800,
+            "baro_rate": -7600,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.945,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999480
+          },
+          {
+            "alt_baro": 9650,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.935,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999490
+          },
+          {
+            "alt_baro": 8500,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.925,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999500
+          },
+          {
+            "alt_baro": 7350,
+            "baro_rate": -2000,
+            "emergency": "none",
+            "gs": 300,
+            "lat": -44.915,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999510
+          }
+        ],
+        "observed_at": 1789999420,
+        "peak_sample": {
+          "alt_baro": 17700,
+          "baro_rate": -7600,
+          "emergency": "none",
+          "gs": 300,
+          "lat": -45.005,
+          "lon": -150.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999420
+        },
+        "watchlist": {}
+      },
+      "first_seen": 1789999100,
+      "hex": "a00004",
+      "hits": 7,
+      "id": 7,
+      "kind": "rapid_descent",
+      "last_seen": 1789999800,
+      "origin": "Live receiver",
+      "title": "Rapid descent reports",
+      "unit": "ft/min",
+      "value": -7600.0
+    }
+  },
+  "live_special_7700": {
+    "interval": [
+      1789999540,
+      1789999910
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": null,
+        "icao_address": "A00005",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX8",
+        "type_code": "C172",
+        "type_description": "CESSNA 172"
+      },
+      "kind": "special_squawk_7700",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix8"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX8"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX8"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00005"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {
+        "confirmed": true,
+        "duration_seconds": 90.0,
+        "end_utc": "2026-09-21T14:09:50+00:00",
+        "limitations": [
+          "Individual field ages are unknown; correlated measurements are not independent verification."
+        ],
+        "quality_review_required": false,
+        "sample_count": 10.0,
+        "start_utc": "2026-09-21T14:08:20+00:00",
+        "state": "ended"
+      },
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:11:50+00:00",
+        "metric_unit": "",
+        "metric_value": null,
+        "qualifying_count": 5,
+        "qualifying_count_end_utc": "2026-09-21T14:10:50+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:06:40+00:00",
+        "start_utc": "2026-09-21T14:05:40+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": "general",
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 250.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 12000.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:09:50+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "7700"
+      },
+      "schema_version": 1,
+      "surrounding_readings": [
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999700.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999710.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999720.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999730.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999740.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999750.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999760.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999770.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999780.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "general",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "7700",
+          "ts": 1789999790.0
+        },
+        {
+          "alt_baro": 12000.0,
+          "emergency_status": "none",
+          "gs": 250.0,
+          "source": "adsb_icao",
+          "squawk": "1200",
+          "ts": 1789999810.0
+        }
+      ]
+    },
+    "source": {
+      "category": "signals",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 12000,
+          "desc": "CESSNA 172",
+          "emergency": "general",
+          "gs": 250,
+          "hex": "a00005",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "N0FIX8",
+          "squawk": "7700",
+          "t": "C172",
+          "type": "adsb_icao"
+        },
+        "context_samples": [
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999700
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999710
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999720
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999730
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999740
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999750
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999760
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999770
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999780
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999790
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "none",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "1200",
+            "ts": 1789999810
+          }
+        ],
+        "encounter_start": 1789999600,
+        "maneuver": {
+          "confirmed": true,
+          "duration_seconds": 90,
+          "ended_at": 1789999790,
+          "episode_start": 1789999700,
+          "evaluated_at": 1789999810,
+          "field_freshness_known": false,
+          "kind": "special_squawk_7700",
+          "quality_flags": [],
+          "quality_review_required": false,
+          "reported_squawk": "7700",
+          "reported_status": "general",
+          "sample_count": 10,
+          "started_at": 1789999700,
+          "state": "ended",
+          "version": "maneuvers-v2"
+        },
+        "maneuver_samples": [
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999700
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999710
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999720
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999730
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999740
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999750
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999760
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999770
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999780
+          },
+          {
+            "alt_baro": 12000,
+            "emergency": "general",
+            "gs": 250,
+            "lat": -45.025,
+            "lon": -150.0,
+            "source": "adsb_icao",
+            "squawk": "7700",
+            "ts": 1789999790
+          }
+        ],
+        "observed_at": 1789999790,
+        "watchlist": {}
+      },
+      "first_seen": 1789999600,
+      "hex": "a00005",
+      "hits": 5,
+      "id": 7,
+      "kind": "special_squawk_7700",
+      "last_seen": 1789999850,
+      "origin": "Live receiver",
+      "title": "Special transponder status",
+      "unit": "",
+      "value": null
+    }
+  },
+  "live_watchlist": {
+    "interval": [
+      1789999040,
+      1790000000
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": "N0FIX9",
+        "icao_address": "A00007",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIX9",
+        "type_code": "GLF6",
+        "type_description": "GULFSTREAM G650"
+      },
+      "kind": "watchlist_match",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fix9"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIX9"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/N0FIX9"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00007"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        },
+        {
+          "id": "watchlist_source",
+          "label": "Community watchlist association and source data",
+          "url": "https://github.com/sdr-enthusiasts/plane-alert-db/blob/cccccccccccccccccccccccccccccccccccccccc/plane-alert-db.csv"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": 8,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:13:20+00:00",
+        "metric_unit": "",
+        "metric_value": null,
+        "qualifying_count": 4,
+        "qualifying_count_end_utc": "2026-09-21T14:12:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T13:58:20+00:00",
+        "start_utc": "2026-09-21T13:57:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": "none",
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 455.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 41000.0
+          },
+          {
+            "field": "alt_geom",
+            "label": "Geometric altitude",
+            "unit": "ft",
+            "value": 41650.0
+          },
+          {
+            "field": "baro_rate",
+            "label": "Pressure-altitude vertical rate",
+            "unit": "ft/min",
+            "value": 64.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:12:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "3451"
+      },
+      "schema_version": 1,
+      "surrounding_readings": [],
+      "watchlist": {
+        "association_label": "Example association",
+        "attribution": "Aircraft association/category: Plane Alert DB / SDR-Enthusiasts and contributors.",
+        "category": "Distinctive aircraft",
+        "claim_scope": "Source association only; not verified current ownership, operator, historical association or presence of any person aboard.",
+        "individual_association_date": null,
+        "licenses": [
+          {
+            "id": "ODbL-1.0",
+            "name": "Open Database License 1.0",
+            "url": "https://opendatacommons.org/licenses/odbl/1-0/"
+          },
+          {
+            "id": "DBCL-1.0",
+            "name": "Database Contents License 1.0",
+            "url": "https://opendatacommons.org/licenses/dbcl/1-0/"
+          }
+        ],
+        "retrieved_at": "2026-10-02T00:00:00+00:00",
+        "review_required": true,
+        "source_commit": "cccccccccccccccccccccccccccccccccccccccc",
+        "source_name": "Plane Alert DB",
+        "source_row": 42,
+        "source_snapshot_date": "2026-10-01T00:00:00+00:00",
+        "source_url": "https://github.com/sdr-enthusiasts/plane-alert-db/blob/cccccccccccccccccccccccccccccccccccccccc/plane-alert-db.csv"
+      }
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 41000,
+          "alt_geom": 41650,
+          "baro_rate": 64,
+          "dbFlags": 8,
+          "desc": "GULFSTREAM G650",
+          "emergency": "none",
+          "flight": "N0FIX9",
+          "gs": 455.0,
+          "hex": "a00007",
+          "r": "N0FIX9",
+          "squawk": "3451",
+          "t": "GLF6",
+          "type": "adsb_icao"
+        },
+        "observed_at": 1789999940,
+        "watchlist": {
+          "association": "Example association",
+          "hex": "a00007",
+          "match_status": "icao_and_registration",
+          "neutral_category": "Distinctive aircraft",
+          "public_claim_allowed": true,
+          "source": {
+            "commit": "cccccccccccccccccccccccccccccccccccccccc",
+            "fetched_at": "2026-10-02T00:00:00Z",
+            "source_date": "2026-10-01T00:00:00Z",
+            "url": "https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/cccccccccccccccccccccccccccccccccccccccc/plane-alert-db.csv"
+          },
+          "source_registration": "N0FIX9",
+          "source_row": 42
+        }
+      },
+      "first_seen": 1789999100,
+      "hex": "a00007",
+      "hits": 4,
+      "id": 9,
+      "kind": "watchlist_match",
+      "last_seen": 1789999940,
+      "origin": "Live receiver",
+      "title": "Watchlist",
+      "unit": "",
+      "value": null
+    }
+  },
+  "trace_watch_type": {
+    "interval": [
+      1789999340,
+      1790000060
+    ],
+    "legacy_packet": {
+      "aircraft": {
+        "callsign": "ZZZ4521",
+        "icao_address": "A00003",
+        "metadata_caveat": "Current database match; historical registration/type assignment is not independently verified.",
+        "registration": "N0FIXA",
+        "type_code": "BLCF",
+        "type_description": "BOEING 747-400 LCF Dreamlifter"
+      },
+      "kind": "watch_type",
+      "link_caveat": "Identity lookups may show another date or assignment. Links are not verification of this flight or permission to copy photos.",
+      "links": [
+        {
+          "id": "aircraft_history",
+          "label": "Aircraft history on Flightradar24",
+          "url": "https://www.flightradar24.com/data/aircraft/n0fixa"
+        },
+        {
+          "id": "aircraft_photos",
+          "label": "Photos of this registration on JetPhotos",
+          "url": "https://www.jetphotos.com/registration/N0FIXA"
+        },
+        {
+          "id": "flight_lookup",
+          "label": "Callsign / aircraft lookup on FlightAware",
+          "url": "https://www.flightaware.com/live/flight/ZZZ4521"
+        },
+        {
+          "id": "address_lookup",
+          "label": "Address lookup on ADS-B Exchange",
+          "url": "https://globe.adsbexchange.com/?icao=a00003"
+        },
+        {
+          "id": "type_lookup",
+          "label": "Look up the aircraft type designator",
+          "url": "https://www.icao.int/operational-safety/doc-8643-aircraft-type-designators/search"
+        }
+      ],
+      "maneuver": {},
+      "metadata": {
+        "database_flags": null,
+        "database_year": null,
+        "rarity_scope": null
+      },
+      "observation": {
+        "count_meaning": "Primary finding only: Qualifying reports with possibly different values; not repetitions of the peak",
+        "end_utc": "2026-09-21T14:14:20+00:00",
+        "metric_unit": "",
+        "metric_value": null,
+        "qualifying_count": 3,
+        "qualifying_count_end_utc": "2026-09-21T14:13:20+00:00",
+        "qualifying_count_start_utc": "2026-09-21T14:03:20+00:00",
+        "start_utc": "2026-09-21T14:02:20+00:00"
+      },
+      "pattern": {},
+      "received": {
+        "emergency_status": null,
+        "emitter_category": null,
+        "readings": [
+          {
+            "field": "gs",
+            "label": "Ground speed",
+            "unit": "kn",
+            "value": 480.0
+          },
+          {
+            "field": "alt_baro",
+            "label": "Pressure altitude",
+            "unit": "ft",
+            "value": 37000.0
+          },
+          {
+            "field": "archive_alt",
+            "label": "Archived altitude; reference not retained",
+            "unit": "ft",
+            "value": 37000.0
+          },
+          {
+            "field": "baro_rate",
+            "label": "Pressure-altitude vertical rate",
+            "unit": "ft/min",
+            "value": 0.0
+          }
+        ],
+        "saved_readings_at_utc": "2026-09-21T14:03:20+00:00",
+        "source": "adsb_icao",
+        "source_caveat": "The collection can include ADS-B, MLAT and relayed data; presence does not prove direct local reception.",
+        "squawk": "2316"
+      },
+      "schema_version": 1,
+      "surrounding_readings": []
+    },
+    "source": {
+      "category": "airframes",
+      "evidence": {
+        "aircraft": {
+          "alt_baro": 37000,
+          "archive_alt": 37000,
+          "baro_rate": 0,
+          "desc": "BOEING 747-400 LCF Dreamlifter",
+          "flight": "ZZZ4521",
+          "gs": 480.0,
+          "hex": "a00003",
+          "lat": -45.025,
+          "lon": -150.0,
+          "r": "N0FIXA",
+          "squawk": "2316",
+          "t": "BLCF",
+          "type": "adsb_icao"
+        },
+        "archive_reference": "2026/09/01/heatmap/1.bin.ttf@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "archive_references": [],
+        "historical_corpus": {
+          "altitude_reference": "trace_flags",
+          "carried_labels": "Callsign and squawk may be carried between saved positions; repeated position samples are not independent retransmissions of those fields.",
+          "message_freshness": "not_retained",
+          "source": "traces"
+        },
+        "metadata_as_of": "2026-10-05T00:00:00+00:00",
+        "observed_at": 1789999400,
+        "watchlist": {}
+      },
+      "first_seen": 1789999400,
+      "hex": "a00003",
+      "hits": 3,
+      "id": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "kind": "watch_type",
+      "last_seen": 1790000000,
+      "origin": "Historical corpus: traces",
+      "title": "Fixture",
+      "unit": "",
+      "value": null
+    }
+  }
+}

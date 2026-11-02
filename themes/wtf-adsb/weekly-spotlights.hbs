@@ -1,0 +1,12 @@
+{{!< default}}
+<section class="wrap weekly-archive" aria-labelledby="weekly-archive-title">
+  <header class="archive-heading"><p class="eyebrow">A closer look</p><h1 id="weekly-archive-title">Weekly picks</h1><p>One observation each week, with the research that helps explain it.</p></header>
+  {{#if weeklyArchive}}
+    {{#with weeklyArchive.pagination}}{{> "page-steps"}}{{/with}}
+    {{#foreach weeklyArchive.picks}}{{> "weekly-card" archive=true}}{{else}}<p>No researched weekly picks have been published yet.</p>{{/foreach}}
+    {{#with weeklyArchive.pagination}}{{> "page-numbers"}}{{/with}}
+  {{else}}
+    {{#foreach posts}}{{> "weekly-approved-card"}}{{else}}<p>No researched weekly picks have been published yet.</p>{{/foreach}}
+    {{pagination}}
+  {{/if}}
+</section>

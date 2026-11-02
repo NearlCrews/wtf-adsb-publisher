@@ -1,0 +1,30 @@
+{
+  "name": "wtf-adsb-publisher",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "WTF ADS-B publishing and theme checks",
+  "engines": {
+    "node": ">=24.8.0"
+  },
+  "scripts": {
+    "lint:js": "eslint themes/wtf-adsb/assets/js eslint.config.mjs tools/lint-assets.mjs tools/ghost-theme --max-warnings 0",
+    "lint:css": "stylelint 'themes/wtf-adsb/assets/css/*.css' 'tools/ghost-theme/*.css' --max-warnings 0",
+    "lint:html": "html-validate 'artifacts/ghost-theme/preview/**/*.html'",
+    "lint:theme-html": "html-validate 'artifacts/ghost-theme/preview/**/*.html'",
+    "lint:svg": "node tools/lint-assets.mjs",
+    "format:check": "prettier --check 'themes/wtf-adsb/**/*.{js,mjs,css,json}' 'deploy/**/*.{yaml,yml,json}' '*.json' '*.mjs' 'tools/*.mjs' 'tools/ghost-theme/*.{mjs,css,json}' '.stylelintrc.json' '.htmlvalidate.json' '.prettierrc.json'",
+    "format:assets": "prettier --write 'themes/wtf-adsb/**/*.{js,mjs,css,json}' 'deploy/**/*.{yaml,yml,json}' '*.json' '*.mjs' 'tools/*.mjs' 'tools/ghost-theme/*.{mjs,css,json}' '.stylelintrc.json' '.htmlvalidate.json' '.prettierrc.json'",
+    "lint:assets": "npm run lint:js && npm run lint:css && npm run lint:svg && npm run format:check",
+    "lint": "npm run lint:assets"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "html-validate": "11.17.0",
+    "prettier": "3.9.10",
+    "stylelint": "17.16.0",
+    "stylelint-config-standard": "40.0.0"
+  }
+}

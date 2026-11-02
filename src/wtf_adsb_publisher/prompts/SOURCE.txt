@@ -1,0 +1,11 @@
+Humanizer 3.1.0, by Siqi Chen (blader/humanizer).
+https://github.com/blader/humanizer/tree/225a6f39ac85f76ee48dbad772ea4abe4ed6c9d8
+
+humanizer.md is an unmodified copy of that commit's SKILL.md. The accompanying
+humanizer.LICENSE preserves its MIT license and copyright notice.
+
+writing.py adds the full skill to AI story and legacy-note requests in embedded
+mode: the model edits internally and returns only the final structured text.
+Evidence limits and the response schema remain in force. These instructions
+guide prose; they do not verify facts or prove that a story was written by a
+human.

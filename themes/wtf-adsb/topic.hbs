@@ -1,0 +1,24 @@
+{{!< default}}
+{{#if topicIndex}}
+  {{#with topicIndex}}
+  <section class="wrap archive topic-index" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><h1 id="archive-title">{{heading}}</h1><p>{{intro}}</p></header>
+    {{> "topic-sections"}}
+  </section>
+  {{/with}}
+{{/if}}
+{{#if topic}}
+  {{#with topic}}
+  <section class="wrap archive topic-page" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><p class="eyebrow">{{sectionTitle}}</p><h1 id="archive-title">{{heading}}</h1></header>
+    {{#if showIntro}}<div class="topic-intro">{{#foreach intro}}<p>{{this}}</p>{{/foreach}}{{#if sources}}<aside class="sources" aria-labelledby="topic-sources"><h2 id="topic-sources">Sources</h2><ul>{{#foreach sources}}<li><a href="{{url}}" rel="external noopener noreferrer">{{title}}</a>, {{publisher}}</li>{{/foreach}}</ul></aside>{{/if}}</div>{{/if}}
+    <section class="topic-stories" aria-labelledby="topic-stories-title"><h2 id="topic-stories-title" class="list-heading">{{storiesHeading}}</h2>{{#if list}}{{#with list}}{{> "story-list"}}{{/with}}{{else}}<p>No story in this topic has been published yet. New stories appear here as soon as they are released.</p>{{/if}}</section>
+    <aside class="topic-links" aria-label="Related reading">
+      {{#if related}}<div><h2>Related topics</h2><ul class="hub-list">{{#foreach related}}<li><a href="{{url}}">{{title}}</a> <span>{{countLabel}}</span></li>{{/foreach}}</ul></div>{{/if}}
+      {{#if guide}}<div><h2>In the field guide</h2><ul class="hub-list">{{#foreach guide}}<li><a href="{{url}}">{{label}}</a></li>{{/foreach}}</ul></div>{{/if}}
+    </aside>
+  </section>
+  {{/with}}
+{{/if}}

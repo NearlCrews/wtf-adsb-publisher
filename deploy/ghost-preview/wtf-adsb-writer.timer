@@ -1,0 +1,12 @@
+[Unit]
+Description=Upgrade story prose between publication passes
+
+[Timer]
+OnCalendar=*-*-* *:10,40:00
+Persistent=true
+# Spread the start so it rarely meets another AI writer's lock.
+RandomizedDelaySec=90
+Unit=wtf-adsb-writer.service
+
+[Install]
+WantedBy=timers.target

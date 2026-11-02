@@ -1,0 +1,36 @@
+<header class="site-header wrap">
+  <a class="wordmark" href="{{@site.url}}/" aria-label="{{@site.title}} home">
+    {{#if @site.logo}}<img
+        src="{{@site.logo}}"
+        alt="{{@site.title}}"
+        width="220"
+        height="48"
+      />{{else}}{{@site.title}}<span class="brand-dot">.</span>{{/if}}
+  </a>
+  <nav class="site-navigation" aria-label="Main navigation">{{navigation}}</nav>
+  <div class="header-controls">
+    {{!-- Both controls need site.js, which reveals them. --}}
+    <button
+      class="icon-button"
+      type="button"
+      data-search-index="{{@site.url}}/search-index/"
+      aria-label="Search stories"
+      hidden
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle
+          cx="10.5"
+          cy="10.5"
+          r="6.5"
+        ></circle><path d="m16 16 5 5"></path></svg>
+    </button>
+    <button
+      class="appearance-button"
+      type="button"
+      data-appearance-toggle
+      hidden
+    ><span data-appearance-label>Night view</span><span
+        aria-hidden="true"
+      >◐</span></button>
+  </div>
+  {{> "support-link"}}
+</header>

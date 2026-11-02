@@ -1,0 +1,1 @@
+\.ts\.net|\.private/|(?<![\d.])100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}(?!\.?\d)|(?:receiver|site)[_-]?(?:lat|lon|lng)(?:itude|gitude)?(?![a-z])|(?<![\w+/=])(?:r_d(?:st|ir)|rr_l(?:at|on)|rssi)(?![\w+/=])|tskey-|sk-proj-

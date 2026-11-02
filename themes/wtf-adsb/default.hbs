@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="{{@site.locale}}" data-appearance="{{@custom.default_appearance}}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{meta_title}}</title>
+    {{> "fonts"}}
+    <script src="{{asset "js/appearance.js"}}"></script>
+    <link rel="stylesheet" href="{{asset "css/screen.css"}}">
+    <link rel="stylesheet" href="{{asset "css/journal.css"}}">
+    <link rel="stylesheet" href="{{asset "css/geographic-replay.css"}}">
+    <link rel="stylesheet" href="{{asset "css/event-cards.css"}}">
+    <link rel="stylesheet" href="{{asset "css/weekly-spotlight.css"}}">
+    {{#if chartStyles}}<link rel="stylesheet" href="{{chartStyles}}">{{/if}}
+    <script src="{{asset "js/site.js"}}" defer></script>
+    {{!-- Scripts load only on pages that use them. --}}
+    {{#if journal}}<script src="{{asset "js/journal.js"}}" defer></script>{{/if}}
+    {{#if journal}}<script src="{{asset "js/geographic-replay.js"}}" defer></script>{{else}}{{#if replay}}<script src="{{asset "js/geographic-replay.js"}}" defer></script>{{/if}}{{/if}}
+    {{#is "home"}}<script src="{{asset "js/weekly-spotlight.js"}}" defer></script>{{/is}}
+    {{ghost_head}}
+</head>
+<body class="{{body_class}}">
+    <a class="skip-link" href="#main">Skip to content</a>
+    {{> "header"}}
+    <main id="main" tabindex="-1">{{{body}}}</main>
+    {{> "footer"}}
+    {{ghost_foot}}
+</body>
+</html>

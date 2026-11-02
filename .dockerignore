@@ -1,0 +1,56 @@
+# Send only source needed by the application image.
+**
+!Dockerfile
+!.dockerignore
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!THIRD_PARTY_NOTICES.md
+!package.json
+!package-lock.json
+!src/
+!src/**
+!contracts/
+!contracts/**
+!examples/
+!examples/**
+!tools/
+!tools/**
+!themes/
+!themes/**
+!tests/
+!tests/**
+!deploy/
+!deploy/container/
+!deploy/container/entrypoint.py
+!deploy/container/build_metadata.py
+!deploy/ghost-preview/
+!deploy/ghost-preview/routes.yaml
+
+# Never copy a checkout's installed dependencies, caches, or private state.
+**/.git
+**/.private
+**/private
+**/secrets
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.pyc
+**/*.pyo
+**/*.sqlite*
+**/*.db
+**/*.pem
+**/*.key
+**/*.log
+**/*.sync-merge
+**/.env
+**/.env.*
+
+# Operator-supplied reference data (see src/wtf_adsb_publisher/data/README.md)
+# never enters the image, even when a local copy sits in the checkout.
+**/reference-aircraft-types-v1.json
+**/reference-identity-v1.json
+**/reference-notable-variants-v1.json

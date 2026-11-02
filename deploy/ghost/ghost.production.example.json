@@ -1,0 +1,56 @@
+{
+  "url": "https://example.com",
+  "admin": {
+    "url": "https://admin.example.ts.net",
+    "redirects": false
+  },
+  "portal": {
+    "url": false
+  },
+  "sodoSearch": {
+    "url": false
+  },
+  "comments": {
+    "url": false
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 2368
+  },
+  "database": {
+    "client": "mysql",
+    "connection": {
+      "host": "mysql",
+      "user": "ghost",
+      "password": "REPLACE_WITH_THE_MYSQL_PASSWORD_SECRET",
+      "database": "ghost"
+    },
+    "pool": {
+      "min": 2,
+      "max": 10
+    }
+  },
+  "paths": {
+    "contentPath": "/var/lib/ghost/content"
+  },
+  "logging": {
+    "transports": ["stdout"]
+  },
+  "privacy": {
+    "useGravatar": false
+  },
+  "mail": {
+    "transport": "SMTP",
+    "from": "Site name <noreply@example.com>",
+    "options": {
+      "host": "smtp.example.com",
+      "port": 587,
+      "secure": false,
+      "requireTLS": true,
+      "auth": {
+        "user": "REPLACE_WITH_SMTP_USER",
+        "pass": "REPLACE_WITH_SMTP_PASSWORD"
+      }
+    }
+  }
+}

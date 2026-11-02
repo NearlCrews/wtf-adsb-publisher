@@ -1,0 +1,23 @@
+/* The design preview's notice; not part of the Ghost theme. */
+.preview-notice {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 20px;
+  background: var(--accent-light);
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+
+.preview-notice strong {
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .preview-notice {
+    font-size: 10px;
+    padding-inline: 12px;
+  }
+}

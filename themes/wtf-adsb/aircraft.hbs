@@ -1,0 +1,39 @@
+{{!< default}}
+{{#if aircraftIndex}}
+  {{#with aircraftIndex}}
+  <section class="wrap archive aircraft-index" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><h1 id="archive-title">{{heading}}</h1><p>{{intro}}</p></header>
+    {{#if letters}}<nav class="letter-index" aria-label="Aircraft types by letter"><ul>{{#foreach letters}}<li><a href="#letter-{{letter}}">{{letter}}</a></li>{{/foreach}}</ul></nav>
+    {{#foreach letters}}<section class="letter-group" aria-labelledby="letter-{{letter}}"><h2 id="letter-{{letter}}">{{letter}}</h2><ul class="hub-list">{{#foreach types}}<li><a href="{{url}}">{{name}}</a>{{#if typeCode}} <span class="type-code">{{typeCode}}</span>{{/if}} <span>{{countLabel}}</span></li>{{/foreach}}</ul></section>{{/foreach}}{{else}}<p>No aircraft types have stories yet.</p>{{/if}}
+  </section>
+  {{/with}}
+{{/if}}
+{{#if typeHub}}
+  {{#with typeHub}}
+  <section class="wrap archive hub-page" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><p class="eyebrow">Aircraft type{{#if typeCode}} · {{typeCode}}{{/if}}</p><h1 id="archive-title">{{heading}}</h1><p>{{summary}}</p></header>
+    {{#if showProfile}}{{#if facts}}<section class="hub-profile" aria-labelledby="hub-profile-title"><h2 id="hub-profile-title">About the {{name}}</h2><ul class="type-facts">{{#foreach facts}}<li>{{text}}{{#if number}} <a href="#hub-source-{{number}}" aria-label="Source {{number}}">[{{number}}]</a>{{/if}}</li>{{/foreach}}</ul>{{#if sources}}<ol class="type-sources" aria-label="Sources">{{#foreach sources}}<li id="hub-source-{{number}}"><a href="{{url}}" rel="external noopener noreferrer">{{title}}</a>{{#if publisher}}, {{publisher}}{{/if}}</li>{{/foreach}}</ol>{{/if}}</section>{{/if}}{{/if}}
+    {{#if airframes}}<section class="hub-links" aria-labelledby="hub-airframes"><h2 id="hub-airframes">Airframes with more than one story</h2><ul class="hub-list">{{#foreach airframes}}<li><a href="{{url}}">{{registration}}</a> <span>{{countLabel}}</span></li>{{/foreach}}</ul></section>{{/if}}
+    {{#if operators}}<section class="hub-links" aria-labelledby="hub-operators"><h2 id="hub-operators">Operators seen flying it</h2><ul class="hub-list">{{#foreach operators}}<li><a href="{{url}}">{{name}}</a> <span>{{countLabel}}</span></li>{{/foreach}}</ul></section>{{/if}}
+    <section aria-labelledby="hub-stories"><h2 id="hub-stories" class="list-heading">Stories</h2>{{#with list}}{{> "story-list"}}{{/with}}</section>
+  </section>
+  {{/with}}
+{{/if}}
+{{#if airframeHub}}
+  {{#with airframeHub}}
+  <section class="wrap archive hub-page" aria-labelledby="archive-title">
+    {{> "breadcrumbs"}}
+    <header class="archive-heading"><p class="eyebrow">Airframe</p><h1 id="archive-title">{{heading}}</h1><p>{{summary}}</p></header>
+    <table class="event-fact-table hub-facts"><caption>Identity and its sources</caption><tbody>
+      <tr><th scope="row">Registration</th><td>{{registration}} <small>(aircraft database)</small></td></tr>
+      <tr><th scope="row">Aircraft type</th><td><a href="{{typeUrl}}">{{typeName}}</a> <small>(aircraft database)</small></td></tr>
+      {{#if operators}}<tr><th scope="row">Callsign operator</th><td>{{#foreach operators}}<a href="{{url}}">{{name}}</a>{{#if designator}} <small>(callsign designator {{designator}})</small>{{/if}}{{#unless @last}}; {{/unless}}{{/foreach}}</td></tr>{{/if}}
+      {{#if countries}}<tr><th scope="row">Registration country</th><td>{{countries}} <small>(registration prefix or address block)</small></td></tr>{{/if}}
+    </tbody></table>
+    <p class="hub-note">A database match describes the entry today; it does not show who was aboard or why the aircraft flew.</p>
+    <section aria-labelledby="hub-stories"><h2 id="hub-stories" class="list-heading">Every story</h2>{{#with list}}{{> "story-list"}}{{/with}}</section>
+  </section>
+  {{/with}}
+{{/if}}

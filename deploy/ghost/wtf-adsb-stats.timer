@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily private readership counts for the previous UTC day
+
+[Timer]
+OnCalendar=*-*-* 00:10:00 UTC
+RandomizedDelaySec=300
+Persistent=true
+Unit=wtf-adsb-stats.service
+
+[Install]
+WantedBy=timers.target

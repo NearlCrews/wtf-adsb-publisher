@@ -1,0 +1,35 @@
+{
+  "name": "wtf-adsb-theme-tools",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Site builds, browser checks, and packaging for the wtf-adsb Ghost theme",
+  "scripts": {
+    "browser:install": "python3 install_browser.py",
+    "browser:check": "node browser.mjs",
+    "build": "node build.mjs",
+    "check:browser": "node check-browser-lifecycle.mjs && node check-browser.mjs && node check-journal.mjs && node check-weekly.mjs && node check-production.mjs",
+    "check:replay": "node check-replay.mjs && node check-geographic-replay.mjs",
+    "check:media": "python3 -m unittest discover -s . -p test_webp_encoder_pipe.py && node check-media.mjs && node check-site-model.mjs",
+    "check:ghost": "node_modules/node/bin/node node_modules/gscan/bin/cli.js ../../themes/wtf-adsb",
+    "package": "python3 package.py"
+  },
+  "dependencies": {
+    "handlebars": "4.7.10",
+    "playwright": "1.64.1"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "gscan": "6.6.1",
+    "node": "24.22.1"
+  },
+  "overrides": {
+    "gscan": {
+      "handlebars": "4.7.10"
+    }
+  },
+  "allowScripts": {
+    "node@24.22.1": true
+  }
+}

@@ -1,0 +1,2 @@
+{{!-- The step to the newer page. On the first page it stays in place as a link that goes nowhere: no address, so it takes no focus, and aria-disabled says why. --}}
+{{#if prev}}<a class="page-step page-prev" href="{{prev}}" rel="prev" aria-label="Previous page (newer {{noun}})" data-event-page="previous"><span aria-hidden="true">←</span> Previous</a>{{else}}<a class="page-step page-prev" role="link" aria-disabled="true" aria-label="Previous page (newer {{noun}})"><span aria-hidden="true">←</span> Previous</a>{{/if}}

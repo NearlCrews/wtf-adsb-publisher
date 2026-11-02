@@ -1,0 +1,9 @@
+{{!-- Latin-subset WOFF2 fonts, made as tools/ghost-theme/README.md describes.
+      The preload and the rules share one asset URL per file, so the browser
+      uses the preloaded body font instead of fetching it again. The
+      standalone error.hbs includes this too: use no helper but asset. --}}
+<link rel="preload" href="{{asset "fonts/InstrumentSans-latin.woff2"}}" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:"Instrument Sans";src:url("{{asset "fonts/InstrumentSans-latin.woff2"}}") format("woff2");font-style:normal;font-weight:400 700;font-display:swap}
+@font-face{font-family:Newsreader;src:url("{{asset "fonts/Newsreader-latin.woff2"}}") format("woff2");font-style:normal;font-weight:400 600;font-display:swap}
+</style>

@@ -1,0 +1,37 @@
+{
+  "production": false,
+  "site_origin": "https://example.com",
+  "contact_email": "contact@example.com",
+  "site_name": "Example ADS-B",
+  "site_tagline": "Unusual aircraft and odd ADS-B readings",
+  "site_description": "Unusual aircraft and odd ADS-B readings from one receiver",
+  "about_file": "/config/about.md",
+  "author_name": "Example Operator",
+  "support_link": {
+    "url": "https://example.com/support",
+    "label": "Support this site"
+  },
+  "feed_directory": "/srv/wtf-adsb/feed",
+  "inbox_database": "/srv/wtf-adsb-publisher/state/inbox.sqlite3",
+  "budget_database": "/srv/wtf-adsb-publisher/state/budget.sqlite3",
+  "state_dir": "/srv/wtf-adsb-publisher/state",
+  "live_since": "2026-11-01T00:00:00Z",
+  "max_feed_age_seconds": 300,
+  "allow_replay_publication": false,
+  "extension_schemas": [],
+  "ghost_origin": "https://ghost.example.ts.net",
+  "ghost_key_file": "/run/secrets/ghost-admin-key",
+  "weekly_key_file": "/run/secrets/openai-api-key",
+  "preview_ssh_host": "site",
+  "private_terms_file": "/config/private-terms.txt",
+  "private_terms": [],
+  "reference_dir": "/references",
+  "plugins": {
+    "reader": { "plugin": "json-inbox" },
+    "policy": { "plugin": "site-policy" },
+    "writer": { "plugin": "openai" },
+    "renderer": { "plugin": "site-media" },
+    "publisher": { "plugin": "ghost" },
+    "deployer": { "plugin": "static-ssh" }
+  }
+}

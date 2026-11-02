@@ -1,0 +1,445 @@
+"""Weekly nominations and reviewed research attached to existing public events."""
+
+import hashlib
+import json
+import re
+from datetime import datetime, timedelta, timezone
+from html import escape
+from html.parser import HTMLParser
+
+VERSION = 1
+MATCH = re.compile(r"\bmatch\b", re.I)
+SCOPES = {
+    "type_background": "Aircraft type background",
+    "airframe_history": "Individual aircraft history",
+    "interpretation": "Interpretation",
+}
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def week_start(value):
+    from .public_events import _instant
+
+    day = _instant(value).date()
+    return day - timedelta(days=day.weekday())
+
+
+def previous_week(as_of):
+    end = week_start(as_of)
+    return (end - timedelta(days=7)).isoformat(), end.isoformat()
+
+
+def nominate(report, as_of):
+    """Use daily-selected episodes; uncertain leads remain a separate private list."""
+    from . import curation
+    from .public_events import utc
+
+    if report.get("version") != curation.VERSION:
+        raise ValueError("Rerun daily curation before nominating under the current selection policy")
+    as_of = utc(as_of)
+    start, end = previous_week(as_of)
+
+    def in_week(row):
+        day = datetime.fromtimestamp(row["first_seen"], timezone.utc).date().isoformat()
+        return start <= day < end
+
+    candidates = sorted(
+        (row for row in report["selected"] if row["eligible"] and in_week(row)),
+        key=lambda row: (
+            -row["exceptional"],
+            -row["interest"],
+            -row["evidence"],
+            -row["depth"],
+            row["first_seen"],
+            row["episode_key"],
+            str(row["finding_id"]),
+        ),
+    )
+    return {
+        "schema_version": VERSION,
+        "as_of_utc": as_of,
+        "week_start": start,
+        "week_end_exclusive": end,
+        "curation_version": report["version"],
+        "curation_sha256": digest(report),
+        "candidate_count": len(candidates),
+        "nominee": candidates[0] if candidates else None,
+        "shortlist": candidates[:5],
+        "research_leads": [row for row in report["priority_review"] if in_week(row)],
+        "publication_status": "private_research_brief",
+    }
+
+
+def validate_research(raw, event, *, as_of=None):
+    """Validate records and evidence binding, not the truth of researched claims."""
+    from . import public_events as public
+
+    public._keys(raw, ("week_start", "evidence_version", "reason", "sections", "sources", "limitations"))
+    start = public._date(raw["week_start"])
+    if start != week_start(event["observed_start"]).isoformat():
+        raise ValueError("Weekly research must use the observation's Monday UTC date")
+    if raw["evidence_version"] != event["evidence_version"]:
+        raise ValueError("Research was prepared for different observation evidence")
+    if as_of and start >= week_start(as_of).isoformat():
+        raise ValueError("Weekly research requires a completed observation week")
+    reason = public._text(raw["reason"], 600)
+    if MATCH.search(reason):
+        # The type is a database match, never identification, so a sighting is never "a match".
+        raise ValueError("Weekly research must not call the sighting a match")
+    sources = raw["sources"]
+    if not isinstance(sources, list) or not 2 <= len(sources) <= 12:
+        raise ValueError("Weekly research needs two to twelve researched sources")
+    normalized_sources = []
+    for source in sources:
+        public._keys(source, ("id", "title", "url", "publisher", "retrieved_at", "applies_to", "primary"))
+        if not isinstance(source["id"], str) or not re.fullmatch(r"[a-z][a-z0-9_-]{0,39}", source["id"]):
+            raise ValueError("Invalid research source ID")
+        reference = public._references(
+            [{"id": source["id"], "label": source["title"], "url": source["url"]}]
+        )[0]
+        retrieved = public.utc(source["retrieved_at"])
+        if as_of and public._instant(retrieved) > public._instant(as_of):
+            raise ValueError("Research retrieval cannot be in the future")
+        if type(source["primary"]) is not bool:
+            raise ValueError("Research source needs an explicit primary-source flag")
+        normalized_sources.append(
+            {
+                "id": reference["id"],
+                "title": reference["label"],
+                "url": reference["url"],
+                "publisher": public._text(source["publisher"], 180),
+                "retrieved_at": retrieved,
+                "applies_to": public._text(source["applies_to"], 400),
+                "primary": source["primary"],
+            }
+        )
+    ids = {source["id"] for source in normalized_sources}
+    if (
+        len(ids) != len(sources)
+        or len({source["url"] for source in sources}) != len(sources)
+        or not any(source["primary"] for source in sources)
+    ):
+        raise ValueError("Use distinct sources, including at least one primary source")
+    sections = raw["sections"]
+    if not isinstance(sections, list) or not 2 <= len(sections) <= 8:
+        raise ValueError("Weekly research needs two to eight substantive sections")
+    normalized_sections, cited = [], set()
+    for section in sections:
+        public._keys(section, ("heading", "scope", "text", "sources"))
+        if section["scope"] not in SCOPES:
+            raise ValueError("Unknown research claim scope")
+        if section["scope"] == "airframe_history" and not any(
+            event["aircraft"].get(key) for key in ("registration", "icao_address")
+        ):
+            raise ValueError("Individual aircraft history requires an aircraft identity")
+        references = section["sources"]
+        if (
+            not isinstance(references, list)
+            or not references
+            or any(not isinstance(key, str) or key not in ids for key in references)
+        ):
+            raise ValueError("Every research section needs known source references")
+        text = public._text(section["text"], 2500)
+        if len(text) < 80:
+            raise ValueError("Weekly research needs substantive context")
+        cited.update(references)
+        normalized_sections.append(
+            {
+                "heading": public._text(section["heading"], 120),
+                "scope": section["scope"],
+                "text": text,
+                "sources": sorted(set(references)),
+            }
+        )
+    if cited != ids:
+        raise ValueError("Every research source must support a section")
+    limitations = raw["limitations"]
+    if not isinstance(limitations, list) or not 1 <= len(limitations) <= 8:
+        raise ValueError("Record the material limits of the research")
+    return {
+        "week_start": start,
+        "evidence_version": event["evidence_version"],
+        "reason": reason,
+        "sections": normalized_sections,
+        "sources": normalized_sources,
+        "limitations": [public._text(item, 600) for item in limitations],
+    }
+
+
+def check_source(source, event, *, require_interest=True):
+    """Bind source facts; new publication also requires current quality and interest.
+
+    Structural recovery reads may withdraw a dossier accepted under older rules.
+    A completed dossier never certifies a new publication's eligibility.
+    """
+    from . import public_events as public
+    from . import selection, stories
+    from .curation import context_only
+
+    if not isinstance(source, dict):
+        raise ValueError("Weekly research requires its original private finding")
+    if not require_interest:
+        # A newer measurement allowlist cannot reproduce every old projection.
+        # Recovery validates the saved packet and dossier structurally; new
+        # writes, approvals and exports must still regenerate their source below.
+        return
+    if context_only(source.get("kind"), source.get("evidence")):
+        raise ValueError("Weekly research needs an independently interesting primary finding")
+    if source.get("verdict") in {"routine", "bad_data"}:
+        raise ValueError("The weekly source finding has been rejected")
+    assessment = selection.assess({**source, "verdict": None}, {})
+    if not assessment["story_eligible"] or assessment["review_required"]:
+        raise ValueError("The weekly source finding still needs factual review")
+    interval = tuple(public._instant(event[key]).timestamp() for key in ("observed_start", "observed_end"))
+    # An absent saved match means no enrichment. Revalidating an approved
+    # dossier must not consult a watchlist that may have changed since capture.
+    source = {
+        **source,
+        "evidence": {**source["evidence"], "watchlist": source["evidence"].get("watchlist") or {}},
+    }
+    regenerated = stories.evidence_packet(source, include_track=False, observation_interval=interval)
+    metadata = {"title": event["title"], "summary": event["summary"], "article_path": event["article_path"]}
+    if "priority_evidence" not in event:
+        # An event the publisher treats as ordinary carries no exception proof.
+        metadata["priority"] = "ordinary"
+    if public._projection(regenerated, metadata)["evidence_version"] != event["evidence_version"]:
+        raise ValueError("Weekly source does not match the reviewed public evidence")
+
+
+def binding(event):
+    return digest({key: event[key] for key in ("id", "revision", "evidence_version", "weekly_spotlight")})
+
+
+def research_html(event):
+    research = event.get("weekly_spotlight")
+    if not research:
+        return ""
+    research = validate_research(research, event)
+    marker = binding(event)
+    source_numbers = {source["id"]: index for index, source in enumerate(research["sources"], 1)}
+    lines = [
+        f'<section class="weekly-research" data-weekly-research="{marker}" aria-label="Weekly research">',
+        "<h2>Why this was our weekly pick</h2>",
+        f"<p>{escape(research['reason'])}</p>",
+    ]
+    for section in research["sections"]:
+        citations = " ".join(
+            f'<a href="#weekly-source-{key}" aria-label="Source {source_numbers[key]}">[{source_numbers[key]}]</a>'
+            for key in section["sources"]
+        )
+        lines.extend(
+            [
+                f"<h2>{escape(section['heading'])}</h2>",
+                f'<p class="research-scope">{SCOPES[section["scope"]]}</p>',
+                f"<p>{escape(section['text'])} {citations}</p>",
+            ]
+        )
+    lines.extend(["<h2>What remains uncertain</h2>", "<ul>"])
+    lines.extend(f"<li>{escape(text)}</li>" for text in research["limitations"])
+    lines.extend(["</ul>", "<h2>Research sources</h2>", "<ol>"])
+    for source in research["sources"]:
+        lines.append(
+            f'<li id="weekly-source-{source["id"]}"><a href="{escape(source["url"], quote=True)}">'
+            f"{escape(source['title'])}</a> — {escape(source['publisher'])}. "
+            f"{escape(source['applies_to'])} "
+            f'Accessed <time datetime="{source["retrieved_at"]}">{source["retrieved_at"][:10]}</time>.</li>'
+        )
+    lines.extend(["</ol>", "</section>"])
+    return "\n".join(lines)
+
+
+class PublishedBlocks(HTMLParser):
+    """Locate active, nonduplicated research, observation and story prose sections in Ghost HTML."""
+
+    MARKERS = (
+        ("data-weekly-research", "research"),
+        ("data-evidence-version", "evidence"),
+        ("data-story-version", "story"),
+    )
+
+    VOID = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+
+    def __init__(self, html):
+        super().__init__(convert_charrefs=False)
+        self.html, self.stack, self.blocks = html, [], []
+        self.markers = 0
+        self.lines = [0]
+        for match in re.finditer("\n", html):
+            self.lines.append(match.end())
+        self.feed(html)
+        self.close()
+
+    def html_offset(self):
+        line, column = self.getpos()
+        return self.lines[line - 1] + column
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        inert = (
+            (self.stack and self.stack[-1][1])
+            or tag in {"template", "script", "style", "noscript"}
+            or "hidden" in attrs
+            or attrs.get("aria-hidden") == "true"
+            or bool(
+                re.search(
+                    r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse))\s*(?:!important\s*)?(?:;|$)",
+                    attrs.get("style", ""),
+                    re.I,
+                )
+            )
+        )
+        marker = next((kind for attribute, kind in self.MARKERS if attribute in attrs), None)
+        if marker == "research":
+            self.markers += 1
+        if tag not in self.VOID:
+            self.stack.append((tag, bool(inert), marker, self.html_offset()))
+
+    def handle_endtag(self, tag):
+        index = next((i for i in range(len(self.stack) - 1, -1, -1) if self.stack[i][0] == tag), None)
+        if index is None:
+            return
+        _, inert, marker, start = self.stack[index]
+        if marker and not inert:
+            self.blocks.append((marker, self.html[start : self.html.find(">", self.html_offset()) + 1]))
+        del self.stack[index:]
+
+
+def published_research_matches(event, post):
+    from . import publication
+
+    tags = post.get("tags")
+    if not isinstance(tags, list):
+        return False
+    names = {tag.get("name") for tag in tags if isinstance(tag, dict) and isinstance(tag.get("name"), str)}
+    if not {"Weekly spotlight", "#weekly-" + binding(event)} <= names:
+        return False
+    parsed = PublishedBlocks(post.get("html", ""))
+    researched = [html for kind, html in parsed.blocks if kind == "research"]
+    evidence = [html for kind, html in parsed.blocks if kind == "evidence"]
+    return (
+        parsed.markers == 1
+        and researched == [research_html(event)]
+        and len(evidence) == 1
+        and f'data-event-id="{event["id"]}"' in evidence[0]
+        and f'data-evidence-version="{event["evidence_version"]}"' in evidence[0]
+        and publication.observation_card_matches(event, evidence[0])
+    )
+
+
+def validate_picks(events, as_of):
+    weeks = set()
+    for event in events:
+        if "weekly_spotlight" not in event:
+            continue
+        research = validate_research(event["weekly_spotlight"], event, as_of=as_of)
+        if research != event["weekly_spotlight"]:
+            raise ValueError("Research must be normalized")
+        if research["week_start"] in weeks:
+            raise ValueError("Only one weekly pick is allowed per observation week")
+        weeks.add(research["week_start"])
+
+
+def native_partials(snapshot):
+    """Generate public-only Ghost templates with request-time week/post guards."""
+    from . import public_events as public
+
+    snapshot = public.validate_snapshot(snapshot)
+    if snapshot["mode"] != "published":
+        raise ValueError("Native weekly templates require a published snapshot")
+    picks = [event for event in snapshot["events"] if "weekly_spotlight" in event]
+
+    def literal(value):
+        return json.dumps(value, ensure_ascii=False)
+
+    def card(event):
+        research = event["weekly_spotlight"]
+        start = datetime.fromisoformat(research["week_start"]).date()
+
+        def text(value):
+            return escape(value, quote=True).replace("{", "&#123;").replace("}", "&#125;")
+
+        label = f"{start.isoformat()} – {(start + timedelta(days=6)).isoformat()} UTC"
+        url = text(event["article_path"])
+        html = f'<article class="weekly-card"><div class="weekly-copy"><p class="eyebrow">{label}</p><h3><a href="{url}">{text(event["title"])}</a></h3><p>{text(research["reason"])}</p><a class="text-link" href="{url}">Read the researched story <span aria-hidden="true">↗</span></a></div>'
+        if event.get("media"):
+            html += f'<img class="weekly-image" src="{text(event["media"]["src"])}" alt="{text(event["media"]["alt"])}" width="720" height="480" loading="lazy" />'
+        return html + "</article>"
+
+    def changed_at(event):
+        return public._instant(event["revised_at"]).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+    empty = "<p>No researched pick is ready for last week yet.</p>"
+    current = next(
+        (
+            event
+            for event in picks
+            if event["weekly_spotlight"]["week_start"] == previous_week(snapshot["as_of_utc"])[0]
+        ),
+        None,
+    )
+    active = empty
+    if current:
+        iso = public._instant(snapshot["as_of_utc"]).isocalendar()
+        calendar_week = f"{iso.year}-W{iso.week:02d}"
+        query = native_query(current)
+        active = (
+            '{{#match (date format="GGGG-[W]WW" timezone="UTC") ' + literal(calendar_week) + "}}"
+            '{{#get "posts" filter=' + literal(query) + ' limit="1"}}'
+            "{{#foreach posts}}" + card(current) + "{{else}}" + empty + "{{/foreach}}"
+            "{{else}}" + empty + "{{/get}}"
+            "{{else}}" + empty + "{{/match}}"
+        )
+    archived = []
+    for event in picks:
+        archived.append(
+            "{{#match slug " + literal(public.article_slug(event["article_path"])) + "}}"
+            '{{#match (date updated_at format="YYYY-MM-DDTHH:mm:ss.SSS[Z]" timezone="UTC") '
+            + literal(changed_at(event))
+            + "}}"
+            "{{#has tag=" + literal("#weekly-" + binding(event)) + "}}" + card(event) + "{{/has}}"
+            "{{/match}}{{/match}}"
+        )
+    return {
+        "partials/weekly-current.hbs": active + "\n",
+        "partials/weekly-approved-card.hbs": "\n".join(archived) + "\n",
+    }
+
+
+def native_query(event):
+    from .public_events import _instant, article_slug
+
+    # The pinned Ghost stores whole-second UTC SQL timestamps. ISO's T/Z
+    # spelling does not compare equal in its SQLite channel queries.
+    revised = _instant(event["revised_at"])
+    if revised.microsecond:
+        raise ValueError("Native weekly picks require Ghost's whole-second revision timestamps")
+    revised = revised.strftime("%Y-%m-%d %H:%M:%S")
+    return f"slug:{article_slug(event['article_path'])}+visibility:public+tag:weekly-spotlight+tag:hash-weekly-{binding(event)}+updated_at:'{revised}'"
+
+
+def native_archive_filter(snapshot):
+    from . import public_events as public
+
+    snapshot = public.validate_snapshot(snapshot)
+    if snapshot["mode"] != "published":
+        raise ValueError("Native weekly routes require a published snapshot")
+    queries = [f"({native_query(event)})" for event in snapshot["events"] if "weekly_spotlight" in event]
+    return ",".join(queries) or "tag:hash-weekly-unconfigured"
