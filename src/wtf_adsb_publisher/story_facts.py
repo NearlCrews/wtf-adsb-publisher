@@ -275,6 +275,9 @@ SHAPE_FACTS = {
         ("rt.axis", "axis_heading_deg"),
     ),
 }
+# Kinds whose closest horizontal separation is also stated in feet (sep.horizontal_ft).
+SEPARATION_KINDS = frozenset({"formation_flight", "tcas_ra"})
+FEET_PER_NM = 6076.12
 # What qualified an aerobatic-style episode (aer.basis), in story words.
 AEROBATIC_BASIS_WORDS = {"type": "an aerobatic type", "turn_rate": "a sustained hard turn"}
 RECORD_KINDS = kinds.where(record=True)
@@ -1371,6 +1374,16 @@ def _shape(facts, packet, kind):
         _fact(facts, "aer.basis", AEROBATIC_BASIS_WORDS.get(episode.get("basis")), "derived")
 
 
+def _separation(facts, packet, kind):
+    """The closest horizontal separation in feet, to the nearest 10 ft, beside its NM measurement."""
+    if kind not in SEPARATION_KINDS:
+        return
+    nautical_miles = number(_dict(packet, "maneuver").get("min_separation_nm"))
+    if nautical_miles is not None and nautical_miles >= 0:
+        feet = round(nautical_miles * FEET_PER_NM, -1)
+        _fact(facts, "sep.horizontal_ft", int(feet), "derived", unit="ft", field="min_separation_nm")
+
+
 def _unregistered(facts, packet):
     """An address no registry lists: what it transmitted, the registries asked, and when it appeared."""
     block = _dict(packet, "unregistered")
@@ -1869,6 +1882,7 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
     if kind == "unregistered_address":
         _unregistered(facts, packet)
     _shape(facts, packet, kind)
+    _separation(facts, packet, kind)
     _repeat(facts, related, observed)
     limits = _limits(packet, projection)
     if kind == "notable_variant" and identity["description"]:

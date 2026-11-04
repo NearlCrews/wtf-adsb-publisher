@@ -969,6 +969,21 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
   }).stories[0];
   assert.equal(cards.leadMedia, summary);
   assert.equal(cards.cardMedia, stock);
+  assert.equal(cards.profileImage, null);
+  // The altitude profile travels by its role, beside whichever figure leads.
+  const profile = {
+    role: "profile",
+    src: "/event-media/d.svg",
+    width: 1200,
+    height: 400,
+  };
+  const profiled = siteModel([helicopter], {
+    topics,
+    lead: { [helicopter.id]: summary },
+    profiles: { [helicopter.id]: profile },
+  }).stories[0];
+  assert.equal(profiled.profileImage, profile);
+  assert.equal(profiled.leadMedia, summary);
   // The credits page lists the class photos in their own section, after the
   // type photos, each under a third-level heading.
   const html = imageCreditsPage.html;

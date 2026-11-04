@@ -32,7 +32,20 @@ WIDTH, HEIGHT = 1200, 800
 MAX_POINTS = 256
 # Decoded archive objects kept while one selection renders.
 ARCHIVE_CACHE = 8
-COLORS = {"ink": "#193e39", "muted": "#50665d", "paper": "#eceee4", "line": "#187268"}
+COLORS = {
+    "ink": "#193e39",
+    "muted": "#50665d",
+    "paper": "#eceee4",
+    "line": "#187268",
+    # The other aircraft of a formation or an advisory, in maps and profiles.
+    "other": "#af4735",
+}
+# Kinds whose map also draws each participant's saved track.
+SECOND_TRACK_KINDS = frozenset({"formation_flight", "tcas_ra"})
+# Kinds that add an altitude profile below the map; TCAS plots the other aircraft too.
+PROFILE_KINDS = frozenset({"tcas_ra", "stratospheric_balloon", "thermal_soaring", "aerobatic_practice"})
+PROFILE_HEIGHT = 400
+MAX_PARTICIPANTS = 12
 
 
 def instant(value):
@@ -52,13 +65,29 @@ def text(x, y, value, size=36, *, color=None, anchor="start", weight=400):
     )
 
 
-def svg(title, caption, body):
+def svg(title, caption, body, height=HEIGHT):
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" '
-        f'viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title description">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" '
+        f'viewBox="0 0 {WIDTH} {height}" role="img" aria-labelledby="title description">'
         f'<title id="title">{escape(title)}</title><desc id="description">{escape(caption)}</desc>'
-        f'<rect width="{WIDTH}" height="{HEIGHT}" fill="{COLORS["paper"]}"/>' + body + "</svg>\n"
+        f'<rect width="{WIDTH}" height="{height}" fill="{COLORS["paper"]}"/>' + body + "</svg>\n"
     )
+
+
+def legend(x, y, entries, size=24):
+    """Line swatches and labels, left to right from (x, y): [(label, color), ...]."""
+    body = ""
+    for label, color in entries:
+        body += f'<path d="M{x} {y - size * 0.35:.1f}H{x + 40}" stroke="{color}" stroke-width="7" stroke-linecap="round"/>'
+        body += text(x + 52, y, label, size, color=COLORS["muted"])
+        x += 52 + round(len(label) * size * 0.58) + 36
+    return body
+
+
+def primary_label(event):
+    """The subject aircraft's short name in a legend: registration, else callsign."""
+    aircraft = event["aircraft"]
+    return aircraft.get("registration") or aircraft.get("callsign") or "This aircraft"
 
 
 def type_name(event):
@@ -147,6 +176,24 @@ def segments(raw_points, start, end):
     return airport_context.parts(window, describe=telemetry)
 
 
+def participant_tracks(evidence, start, end):
+    """Each participant's drawn lines, from the saved ``track`` its evidence entry carries.
+
+    The positions pass the same checks as the primary's (segments): a participant
+    without a saved track, or with too many positions, is not drawn.
+    """
+    raw = evidence.get("participants") if isinstance(evidence, dict) else None
+    tracks = []
+    for item in raw[:MAX_PARTICIPANTS] if isinstance(raw, list) else ():
+        points = item.get("track") if isinstance(item, dict) else None
+        if not isinstance(points, list) or not points or len(points) > MAX_POINTS:
+            continue
+        parts = segments([point for point in points if isinstance(point, dict)], start, end)
+        if any(len(part) >= 2 for part in parts):
+            tracks.append(parts)
+    return tracks
+
+
 def degree(value, latitude):
     value = value if latitude else (value + 180) % 360 - 180
     direction = ("N" if value >= 0 else "S") if latitude else ("E" if value >= 0 else "W")
@@ -227,11 +274,14 @@ def map_background(basemaps, bounds):
     return None if pixels is None else (pixels, "image/png")
 
 
-def track_image(event, parts, *, analysis_window, basemaps=None):
+def track_image(event, parts, *, analysis_window, basemaps=None, others=()):
+    """The map of the recorded track; ``others`` (participant_tracks) are drawn in a second color."""
     points = [point for part in parts for point in part]
     if len(points) < 3 or not any(len(part) >= 2 for part in parts):
         return None
-    project, bounds = projection(points)
+    others = [track for track in others if track] if event.get("kind") in SECOND_TRACK_KINDS else []
+    # The frame fits every drawn aircraft; the replay and the path length stay the primary's.
+    project, bounds = projection(points + [point for track in others for part in track for point in part])
     context = backdrop(project, bounds)
     background = map_background(basemaps, bounds)
     map_pixels = background[0] if background else None
@@ -264,7 +314,15 @@ def track_image(event, parts, *, analysis_window, basemaps=None):
         f"Saved positions of {subject(event)}{near}, drawn from {scope}. "
         "The line breaks at gaps over 45 seconds, at source changes and at rejected positions. "
         f"The path measures {miles_text(length)} ({fmt(length)} nautical miles) along the plotted segments. "
-        "Archive timestamps do not establish exact message freshness. " + context["caption"]
+        "Archive timestamps do not establish exact message freshness. "
+        + (
+            f"The {'line' if len(others) == 1 else 'lines'} in the second color "
+            f"{'shows' if len(others) == 1 else 'show'} the saved positions of the other aircraft "
+            "over the same interval, split by the same rules. "
+            if others
+            else ""
+        )
+        + context["caption"]
     )
     body = text(70, 76, "Recorded track", 48, weight=600)
     body += text(1130, 76, event["aircraft"].get("registration", ""), 36, anchor="end")
@@ -284,7 +342,9 @@ def track_image(event, parts, *, analysis_window, basemaps=None):
         '<path d="M1060 258V195M1047 217 1060 193 1073 217" fill="none" stroke="#193e39" stroke-width="4"/>'
     )
     body += text(1060, 180, "N", 30, anchor="middle", weight=600)
-    for part in parts:
+    # The other aircraft first, so the story's own aircraft is drawn on top.
+    drawn = [(part, COLORS["other"]) for track in others for part in track]
+    for part, color in [*drawn, *((part, COLORS["line"]) for part in parts)]:
         coordinates = [project(point) for point in part]
         if len(part) >= 2:
             path = " ".join(
@@ -292,10 +352,9 @@ def track_image(event, parts, *, analysis_window, basemaps=None):
             )
             if map_pixels is not None:
                 body += f'<path d="{path}" fill="none" stroke="#ffffff" stroke-width="13" stroke-linejoin="round" stroke-linecap="round"/>'
-            body += f'<path d="{path}" fill="none" stroke="{COLORS["line"]}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>'
-        body += "".join(
-            f'<circle cx="{x:.2f}" cy="{y:.2f}" r="4.5" fill="{COLORS["ink"]}"/>' for x, y in coordinates
-        )
+            body += f'<path d="{path}" fill="none" stroke="{color}" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>'
+        dot = COLORS["ink"] if color == COLORS["line"] else color
+        body += "".join(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="4.5" fill="{dot}"/>' for x, y in coordinates)
     for point, fill in ((points[0], "#fafbf5"), (points[-1], "#d47136")):
         x, y = project(point)
         body += f'<circle cx="{x:.2f}" cy="{y:.2f}" r="12" fill="{fill}" stroke="#193e39" stroke-width="4"/>'
@@ -307,6 +366,10 @@ def track_image(event, parts, *, analysis_window, basemaps=None):
     body += text(1130, 716, f"Recorded path ≈ {fmt(length * MILES_PER_NM)} mi", 36, anchor="end", weight=600)
     body += text(1130, 766, "First ○    Last ●", 26, anchor="end", color=COLORS["muted"])
     body += text(70, 766, context["credit"], 22, color=COLORS["muted"])
+    if others:
+        body += legend(
+            470, 766, [(primary_label(event), COLORS["line"]), ("Other aircraft", COLORS["other"])]
+        )
     pattern = airport_pattern(parts, event, analysis_window=analysis_window)
     return {
         "kind": "track",
@@ -316,6 +379,112 @@ def track_image(event, parts, *, analysis_window, basemaps=None):
         "replay": replay,
         "creditPath": "/about/#map-data",
         **({"airportPattern": pattern} if pattern else {}),
+    }
+
+
+def _barometric(parts):
+    """A track's pressure-altitude readings as lines of (timestamp, ft), split where the track splits."""
+    lines = []
+    for part in parts:
+        line = [
+            (point["ts"], point["altitude"])
+            for point in part
+            if point.get("altitude_reference") == "barometric" and number(point.get("altitude")) is not None
+        ]
+        if line:
+            lines.append(line)
+    return lines
+
+
+def _nice_step(span, ticks=4):
+    """A 1, 2, or 5 times a power of ten step that splits ``span`` into about ``ticks`` parts."""
+    raw = max(span, 1) / ticks
+    magnitude = 10 ** math.floor(math.log10(raw))
+    return next(step * magnitude for step in (1, 2, 5, 10) if step * magnitude >= raw)
+
+
+def profile_image(event, parts, others=()):
+    """Pressure altitude against time for the episode: the aircraft, and for TCAS the other aircraft.
+
+    Drawn from the map's own accepted segments (``parts``, and participant_tracks for
+    ``others``), barometric readings only; 1200 by 400. None without two readings.
+    """
+    if event.get("kind") not in PROFILE_KINDS:
+        return None
+    series = [(primary_label(event), COLORS["line"], _barometric(parts))]
+    if event["kind"] == "tcas_ra":
+        series += [("Other aircraft", COLORS["other"], _barometric(track)) for track in others]
+    series = [item for item in series if sum(len(line) for line in item[2]) >= 2]
+    if not series or series[0][1] != COLORS["line"]:
+        return None
+    readings = [reading for _, _, lines in series for line in lines for reading in line]
+    first, last = min(stamp for stamp, _ in readings), max(stamp for stamp, _ in readings)
+    if first == last:
+        return None
+    low, high = min(value for _, value in readings), max(value for _, value in readings)
+    step = _nice_step(high - low)
+    floor, ceiling = math.floor(low / step) * step, math.ceil(high / step) * step
+    if floor == ceiling:
+        floor, ceiling = floor - step, ceiling + step
+    left, right, top, bottom = 150, 1110, 100, 320
+
+    def place(stamp, value):
+        return (
+            left + (stamp - first) / (last - first) * (right - left),
+            bottom - (value - floor) / (ceiling - floor) * (bottom - top),
+        )
+
+    minutes = (last - first) / 60
+    own = [value for line in series[0][2] for _, value in line]
+    others_shown = len(series) > 1
+    title = (
+        f"Chart of {possessive(subject(event))} pressure altitude over {span(last - first)}, "
+        f"from {fmt(min(own))} to {fmt(max(own))} ft"
+        + (", beside the other aircraft in the advisory." if others_shown else ".")
+    )
+    caption = (
+        f"Pressure altitude reported by {subject(event)}"
+        + (" and the other aircraft in the advisory" if others_shown else "")
+        + " against minutes from the first plotted report. Lines stop where the map's track breaks. "
+        "The altitudes are reported pressure altitudes, not corrected for local air pressure, and "
+        "archive timestamps do not establish exact message freshness."
+    )
+    body = text(70, 52, "Altitude profile", 34, weight=600)
+    body += legend(640, 52, [(label, color) for label, color, _ in series], size=22)
+    body += text(70, 84, "Pressure altitude (ft)", 22, color=COLORS["muted"])
+    body += (
+        f'<rect x="{left}" y="{top}" width="{right - left}" height="{bottom - top}" rx="10" fill="#fafbf5"/>'
+    )
+    value = floor
+    while value <= ceiling + step / 2:
+        _, y = place(first, value)
+        body += f'<path d="M{left} {y:.2f}H{right}" stroke="#c5d0c3" stroke-width="2"/>'
+        body += text(left - 14, y + 8, fmt(value), 22, anchor="end", color=COLORS["muted"])
+        value += step
+    for ratio in (0, 0.5, 1):
+        x = left + ratio * (right - left)
+        body += text(x, 352, fmt(round(minutes * ratio, 1)), 22, anchor="middle", color=COLORS["muted"])
+    body += text(
+        (left + right) / 2, 386, "Minutes from the first report", 22, anchor="middle", color=COLORS["muted"]
+    )
+    for _, color, lines in series:
+        for line in lines:
+            coordinates = [place(stamp, value) for stamp, value in line]
+            if len(coordinates) >= 2:
+                path = " ".join(
+                    f"{'M' if i == 0 else 'L'}{x:.2f} {y:.2f}" for i, (x, y) in enumerate(coordinates)
+                )
+                body += f'<path d="{path}" fill="none" stroke-linejoin="round" stroke="{color}" stroke-width="5"/>'
+            body += "".join(
+                f'<circle cx="{x:.2f}" cy="{y:.2f}" r="4" fill="{color}"/>' for x, y in coordinates
+            )
+    return {
+        "role": "profile",
+        "alt": title,
+        "caption": caption,
+        "svg": svg(title, caption, body, PROFILE_HEIGHT),
+        "width": WIDTH,
+        "height": PROFILE_HEIGHT,
     }
 
 
@@ -481,8 +650,10 @@ def media_entry(image, event):
 
     The SVG and the replay are named by their SHA-256, and the replay names its
     SVG. Returns (entry, [(file name, bytes), ...]); the image is not changed.
+    A figure such as the profile carries its own width, height, and role.
     """
     image = dict(image)
+    width, height = image.pop("width", WIDTH), image.pop("height", HEIGHT)
     raw = image.pop("svg").encode()
     name = hashlib.sha256(raw).hexdigest() + ".svg"
     files = [(name, raw)]
@@ -504,8 +675,8 @@ def media_entry(image, event):
         **image,
         "evidence_version": event["evidence_version"],
         "src": "/event-media/" + name,
-        "width": WIDTH,
-        "height": HEIGHT,
+        "width": width,
+        "height": height,
     }
     return entry, files
 

@@ -262,6 +262,124 @@ try {
   );
   await assert.rejects(loadEventMedia(snapshot, manifestPath));
 
+  // A second figure: the altitude profile, 1200 by 400, listed by its role.
+  const profileSvg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400"><title>Altitude profile</title><path d="M150 300L1110 100" fill="none" stroke="#187268"/></svg>';
+  const profileName =
+    createHash("sha256").update(profileSvg).digest("hex") + ".svg";
+  await fs.writeFile(path.join(folder, "event-media", profileName), profileSvg);
+  const profileFigure = {
+    role: "profile",
+    evidence_version: snapshot.events[0].evidence_version,
+    src: `/event-media/${profileName}`,
+    width: 1200,
+    height: 400,
+    alt: "Altitude over time for this episode.",
+    caption: "Pressure altitude against time.",
+  };
+  const withProfile = structuredClone(manifest);
+  withProfile.events[id].figures = [profileFigure];
+  await writeManifest(withProfile);
+  const profiled = await loadEventMedia(snapshot, manifestPath);
+  assert.deepEqual(profiled.figures[id], [profileFigure]);
+  assert.equal(profiled.media[id].figures, undefined);
+  assert.deepEqual(result.figures, {});
+  assert.equal(profiled.files.get(profileName).toString(), profileSvg);
+  assert.equal((await loadEventMedia(snapshot, manifestPath)).files.size, 2);
+  for (const change of [
+    (figures) => (figures[0].role = "chart"),
+    (figures) => (figures[0].height = 800),
+    (figures) => (figures[0].width = 1000),
+    (figures) => (figures[0].alt = " "),
+    (figures) => delete figures[0].caption,
+    (figures) => (figures[0].evidence_version = "c".repeat(64)),
+    (figures) => (figures[0].src = "/event-media/../private.svg"),
+    (figures) => (figures[0].caption = "private.example.ts.net"),
+    (figures) => (figures[0].replaySrc = manifest.events[id].src),
+    (figures) => figures.push(structuredClone(figures[0])),
+    (figures) => figures.splice(0),
+  ]) {
+    const invalid = structuredClone(withProfile);
+    change(invalid.events[id].figures);
+    await writeManifest(invalid);
+    await assert.rejects(loadEventMedia(snapshot, manifestPath));
+  }
+  // A profile drawn at the map's size, or a map at the profile's, fails the
+  // SVG check; so does a map background inside a profile.
+  for (const body of [
+    profileSvg.replaceAll("400", "800"),
+    profileSvg.replace(
+      "</svg>",
+      `<image x="90" y="165" width="1020" height="440" href="data:image/png;base64,AA=="/></svg>`,
+    ),
+  ]) {
+    const hash = createHash("sha256").update(body).digest("hex");
+    await fs.writeFile(path.join(folder, "event-media", `${hash}.svg`), body);
+    const invalid = structuredClone(withProfile);
+    invalid.events[id].figures[0].src = `/event-media/${hash}.svg`;
+    await writeManifest(invalid);
+    await assert.rejects(loadEventMedia(snapshot, manifestPath));
+  }
+  await writeManifest();
+
+  // The renderer: a formation map draws the other aircraft's saved track in
+  // the second color under a two-entry legend, and a TCAS profile plots both
+  // aircraft's pressure altitude on a 1200 by 400 figure the SVG check accepts.
+  const rendered = spawnSync(
+    "python3",
+    [
+      "-B",
+      "-c",
+      `
+import importlib.util, json, sys
+sys.path.insert(0, ${JSON.stringify(tools)})
+spec = importlib.util.spec_from_file_location("event_media", ${JSON.stringify(path.join(tools, "event-media.py"))})
+media = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(media)
+from validate_media import validate
+start = 1790000000
+def track(lat, climb):
+    return [{"ts": start + i * 15, "lat": lat + i * 0.002, "lon": -150 + i * 0.003, "alt_baro": 20000 + i * climb, "gs": 300, "source": "adsb_icao"} for i in range(20)]
+evidence = {"maneuver_samples": track(-45, 0), "participants": [{"hex": "ae5678", "role": "wingman", "track": track(-44.999, 0)}]}
+event = {"id": "formation", "kind": "formation_flight", "evidence_version": "b" * 64, "aircraft": {"registration": "05-5140", "type_code": "C17"}, "observed_start": "2026-09-21T12:13:20+00:00", "observed_end": "2026-09-21T12:18:05+00:00"}
+parts = media.segments(evidence["maneuver_samples"], start, start + 285)
+others = media.participant_tracks(evidence, start, start + 285)
+image = media.track_image(event, parts, analysis_window=False, others=others)
+validate(image["svg"])
+tcas = {**event, "kind": "tcas_ra"}
+threat = media.participant_tracks({"participants": [{"role": "threat", "track": track(-44.99, 120)}]}, start, start + 285)
+profile = media.profile_image(tcas, media.segments(track(-45, -100), start, start + 285), threat)
+validate(profile["svg"], height=400)
+try:
+    validate(profile["svg"])
+except ValueError:
+    pass
+else:
+    raise SystemExit("A profile passed as a map")
+print(json.dumps({"map": image["svg"], "caption": image["caption"], "profile": profile["svg"], "role": profile["role"], "size": [profile["width"], profile["height"]]}))
+`,
+    ],
+    { encoding: "utf8", timeout: 60000 },
+  );
+  assert.equal(rendered.status, 0, rendered.stderr);
+  const drawn = JSON.parse(rendered.stdout);
+  const strokes = (svgText, color) =>
+    svgText.split(`fill="none" stroke="${color}" stroke-width="7"`).length - 1;
+  assert.equal(strokes(drawn.map, "#187268"), 1);
+  assert.equal(strokes(drawn.map, "#af4735"), 1);
+  assert.match(drawn.map, /05-5140/);
+  assert.match(drawn.map, /Other aircraft/);
+  assert.match(drawn.caption, /other aircraft/);
+  assert.equal(drawn.role, "profile");
+  assert.deepEqual(drawn.size, [1200, 400]);
+  assert.match(drawn.profile, /viewBox="0 0 1200 400"/);
+  assert.match(drawn.profile, /Pressure altitude \(ft\)/);
+  assert.match(drawn.profile, /Minutes from the first report/);
+  assert.equal(
+    drawn.profile.split('fill="none" stroke-linejoin="round"').length - 1,
+    2,
+  );
+
   // The pinned browser re-encodes a map background as a still, untagged WebP
   // that the SVG validator accepts; the same input always gives the same bytes,
   // whether the run's shared browser session or a fresh one encodes it.
@@ -544,7 +662,7 @@ for photo in json.load(sys.stdin):
   ])
     assert.ok(thirdPartyResources(html, ORIGIN, { story: true }).length, html);
   console.log(
-    "Media evidence, content hashes, type and class photo credits, class photo selection, airframe photo input, and unsafe-image checks passed.",
+    "Media evidence, content hashes, altitude profiles, second tracks, type and class photo credits, class photo selection, airframe photo input, and unsafe-image checks passed.",
   );
 } finally {
   await fs.rm(folder, { recursive: true, force: true });

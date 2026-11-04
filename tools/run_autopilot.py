@@ -162,9 +162,11 @@ def generate_media(snapshot, ledger, destination, previous=None, *, seed=False, 
     for event in snapshot["events"]:
         old = cached["events"].get(event["id"])
         if compatible and old and old["evidence_version"] == event["evidence_version"]:
-            for key in ("src", "replaySrc"):
-                if old.get(key):
-                    path = Path(previous).parent / "event-media" / Path(old[key]).name
+            sources = [old.get(key) for key in ("src", "replaySrc")]
+            sources += [figure.get("src") for figure in old.get("figures", [])]
+            for src in sources:
+                if src:
+                    path = Path(previous).parent / "event-media" / Path(src).name
                     if path.is_symlink() or hashlib.sha256(path.read_bytes()).hexdigest() != path.stem:
                         raise ValueError("Invalid cached media")
                     target = assets / path.name
@@ -179,21 +181,29 @@ def generate_media(snapshot, ledger, destination, previous=None, *, seed=False, 
         if event.get("subjectless"):
             # A subjectless story's aircraft are examples: no track map, only its day summary.
             image = module.summary_image(event)
+        parts, others = [], []
         if image is None:
-            points = raw.get("maneuver_samples") or raw.get("pattern_samples") or raw.get("track") or []
+            # A TCAS episode's own samples are its advisory messages; its positions are the
+            # context samples around them.
+            keys = ("maneuver_samples", "pattern_samples", "track")
+            if event["kind"] == "tcas_ra":
+                keys = ("context_samples", *keys)
+            points = next((raw[key] for key in keys if raw.get(key)), [])
             parts = (
                 automatic.get("media_parts")
                 if automatic.get("media_evidence_version") == event["evidence_version"]
                 else None
             )
+            start, end = module.instant(event["observed_start"]), module.instant(event["observed_end"])
             if parts is None:
-                parts = module.segments(
-                    points, module.instant(event["observed_start"]), module.instant(event["observed_end"])
-                )
-            image = module.track_image(event, parts, analysis_window=False, basemaps=basemaps)
-        manifest["events"][event["id"]] = module.store_image(
-            image or module.summary_image(event), assets, event
-        )
+                parts = module.segments(points, start, end)
+            if event["kind"] in module.SECOND_TRACK_KINDS:
+                others = module.participant_tracks(raw, start, end)
+            image = module.track_image(event, parts, analysis_window=False, basemaps=basemaps, others=others)
+        entry = module.store_image(image or module.summary_image(event), assets, event)
+        if profile := module.profile_image(event, parts, others):
+            entry["figures"] = [module.store_image(profile, assets, event)]
+        manifest["events"][event["id"]] = entry
     public.write_json_atomic(destination / "manifest.json", manifest, private=True)
     return destination / "manifest.json"
 

@@ -27,7 +27,20 @@ export async function loadEventMedia(snapshot, filename) {
     throw new Error("Media manifest does not match the observation snapshot");
   const privateText = privateNames();
   const kinds = new Set(["track", "measurement-chart", "observation-summary"]);
+  // Figures beside the lead image, by role, with each role's fixed size.
+  const roles = { profile: { width: 1200, height: 400 } };
+  const figureKeys = new Set([
+    "role",
+    "evidence_version",
+    "src",
+    "width",
+    "height",
+    "alt",
+    "caption",
+  ]);
   const media = {};
+  // {event id: [figure, ...]}, apart from the lead so cards and the journal keep their media.
+  const eventFigures = {};
   const files = new Map();
   const svgs = [];
   async function loadAsset(src, extension) {
@@ -70,6 +83,10 @@ export async function loadEventMedia(snapshot, filename) {
       (entry.replaySrc !== undefined && entry.kind !== "track") ||
       (entry.airportPattern !== undefined &&
         (entry.kind !== "track" || !entry.replaySrc)) ||
+      (entry.figures !== undefined &&
+        (!Array.isArray(entry.figures) ||
+          !entry.figures.length ||
+          entry.figures.length > Object.keys(roles).length)) ||
       privateText.test(JSON.stringify(entry))
     )
       throw new Error(`Invalid or stale event media for ${event.id}`);
@@ -81,6 +98,35 @@ export async function loadEventMedia(snapshot, filename) {
     )
       throw new Error(`Invalid event SVG for ${event.id}`);
     svgs.push({ svg: data.toString() });
+    const figures = [];
+    for (const figure of entry.figures || []) {
+      const size = roles[figure?.role];
+      if (
+        !size ||
+        Object.keys(figure).some((key) => !figureKeys.has(key)) ||
+        figures.some((other) => other.role === figure.role) ||
+        figure.evidence_version !== event.evidence_version ||
+        figure.width !== size.width ||
+        figure.height !== size.height ||
+        typeof figure.alt !== "string" ||
+        !figure.alt.trim() ||
+        figure.alt.length > 300 ||
+        typeof figure.caption !== "string" ||
+        !figure.caption.trim() ||
+        figure.caption.length > 1200 ||
+        privateText.test(JSON.stringify(figure))
+      )
+        throw new Error(`Invalid or stale event figure for ${event.id}`);
+      const figureData = await loadAsset(figure.src, "svg");
+      if (
+        !/^<svg\s[^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"/.test(
+          figureData.toString(),
+        )
+      )
+        throw new Error(`Invalid event SVG for ${event.id}`);
+      svgs.push({ svg: figureData.toString(), height: figure.height });
+      figures.push({ ...figure });
+    }
     if (entry.replaySrc !== undefined) {
       const replay = JSON.parse(
         (await loadAsset(entry.replaySrc, "json")).toString(),
@@ -121,6 +167,7 @@ export async function loadEventMedia(snapshot, filename) {
       ...(entry.replaySrc ? { replaySrc: entry.replaySrc } : {}),
       ...(entry.airportPattern ? { airportPattern: entry.airportPattern } : {}),
     };
+    if (figures.length) eventFigures[event.id] = figures;
   }
   const checked = spawnSync(
     "python3",
@@ -135,5 +182,5 @@ export async function loadEventMedia(snapshot, filename) {
     throw new Error(
       "Generated SVG contains invalid or unsupported diagram content",
     );
-  return { media, files };
+  return { media, figures: eventFigures, files };
 }

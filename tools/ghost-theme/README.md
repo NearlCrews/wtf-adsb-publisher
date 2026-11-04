@@ -280,6 +280,14 @@ about 1.4 miles." The town comes from `src/wtf_adsb_publisher/places.py`, which 
 facts use too, so text and map agree.
 Public assets contain aircraft geometry and allowed event details only.
 
+A formation or TCAS map also draws each other aircraft's saved track, when its
+evidence carries one (`participants[].track`), in a second color with a legend.
+TCAS advisories, stratospheric balloons, thermal soaring, and aerobatic practice
+add a 1200 by 400 altitude profile: barometric altitude against minutes from the
+first report, split where the map's track splits, with the other aircraft for an
+advisory. The media manifest lists it under the event's `figures` with the role
+`profile`, and the site model passes it to the page as `profileImage`.
+
 ```sh
 .venv/bin/python tools/run_autopilot.py --dry-run \
   --config .private/autopilot/config.json \

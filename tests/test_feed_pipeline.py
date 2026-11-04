@@ -580,6 +580,112 @@ class SubjectlessMediaTests(unittest.TestCase):
             self.assertNotIn(name, image)
 
 
+class RareKindMediaTests(unittest.TestCase):
+    """Formation and TCAS maps draw the other aircraft; four kinds add an altitude profile."""
+
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location(
+            "publisher_runner_media", ROOT / "tools/run_autopilot.py"
+        )
+        cls.runner = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.runner)
+        cls.colors = cls.runner.media_module().COLORS
+
+    @staticmethod
+    def barometric(points, *, climb=0, offset=0.0):
+        """The fixture positions with pressure altitudes, climbing `climb` ft per report."""
+        return [
+            {
+                **{key: value for key, value in point.items() if key != "alt"},
+                "lat": point["lat"] + offset,
+                "alt_baro": point.get("alt", point.get("alt_baro")) + index * climb,
+            }
+            for index, point in enumerate(points)
+        ]
+
+    def render(self, raw):
+        import story_fixtures as fixtures
+
+        evidence = fixtures.packet(raw)
+        event = {**public_events._projection(evidence, public_events.PLACEHOLDER_EDITORIAL), "id": "rare"}
+        ledger = {"records": [{"id": "rare", "automation": {"source": raw}}]}
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = self.runner.generate_media(
+                {"snapshot_id": "s", "events": [event]}, ledger, Path(directory)
+            )
+            item = json.loads(manifest.read_text())["events"]["rare"]
+            read = lambda src: (Path(directory) / src.lstrip("/")).read_text()  # noqa: E731
+            figures = [(figure, read(figure["src"])) for figure in item.get("figures", [])]
+            return item, read(item["src"]), figures
+
+    def test_formation_map_draws_the_other_aircraft_with_a_legend(self):
+        import story_fixtures as fixtures
+
+        raw = fixtures.kind_event("formation_flight")
+        own = raw["evidence"]["pattern_samples"]
+        raw["evidence"]["pattern_samples"] = self.barometric(own)
+        raw["evidence"]["participants"][0]["track"] = self.barometric(own, offset=0.004)
+        item, image, figures = self.render(raw)
+        self.assertEqual(item["kind"], "track")
+        self.assertEqual(image.count(f'fill="none" stroke="{self.colors["line"]}" stroke-width="7"'), 1)
+        self.assertEqual(image.count(f'fill="none" stroke="{self.colors["other"]}" stroke-width="7"'), 1)
+        self.assertIn("Other aircraft", image)
+        self.assertIn("05-5140", image)
+        self.assertIn("other aircraft", item["caption"])
+        # The replay follows the primary aircraft only.
+        self.assertEqual(figures, [])
+        # Without a saved track for the participant the map draws one aircraft and no legend.
+        del raw["evidence"]["participants"][0]["track"]
+        item, image, _ = self.render(raw)
+        self.assertNotIn(f'stroke="{self.colors["other"]}"', image)
+        self.assertNotIn("Other aircraft", image)
+
+    def test_tcas_profile_plots_both_aircraft(self):
+        import story_fixtures as fixtures
+
+        raw = fixtures.kind_event("tcas_ra")
+        own = raw["evidence"]["pattern_samples"]
+        raw["evidence"]["pattern_samples"] = self.barometric(own, climb=-150)
+        raw["evidence"]["participants"][0]["track"] = self.barometric(own, climb=100, offset=0.01)
+        item, image, figures = self.render(raw)
+        self.assertEqual(item["kind"], "track")
+        self.assertIn(self.colors["other"], image)
+        [(figure, svg)] = figures
+        self.assertEqual(
+            (figure["role"], figure["width"], figure["height"], figure["evidence_version"]),
+            ("profile", 1200, 400, item["evidence_version"]),
+        )
+        self.assertRegex(figure["src"], r"^/event-media/[0-9a-f]{64}\.svg$")
+        self.assertIn('width="1200" height="400" viewBox="0 0 1200 400"', svg)
+        for label in ("Pressure altitude (ft)", "Minutes from the first report", "Other aircraft"):
+            self.assertIn(label, svg)
+        self.assertEqual(svg.count('fill="none" stroke-linejoin="round"'), 2)
+        self.assertTrue(figure["alt"].strip() and figure["caption"].strip())
+
+    def test_profile_kinds(self):
+        import story_fixtures as fixtures
+
+        for kind, expected in (
+            ("stratospheric_balloon", True),
+            ("thermal_soaring", True),
+            ("aerobatic_practice", True),
+            ("formation_flight", False),
+            ("circling", False),
+        ):
+            with self.subTest(kind=kind):
+                raw = fixtures.kind_event(kind)
+                key = next(
+                    name for name in ("maneuver_samples", "pattern_samples") if raw["evidence"].get(name)
+                )
+                raw["evidence"][key] = self.barometric(raw["evidence"][key], climb=40)
+                item, _, figures = self.render(raw)
+                self.assertEqual([figure["role"] for figure, _ in figures], ["profile"] if expected else [])
+                if expected:
+                    self.assertNotIn("Other aircraft", figures[0][1])
+                    self.assertIn("Pressure altitude (ft)", figures[0][1])
+
+
 class BudgetMigrationTests(unittest.TestCase):
     def test_failed_migration_keeps_new_destination_paused(self):
         for failure in ("schema", "metadata"):

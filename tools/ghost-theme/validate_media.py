@@ -97,8 +97,17 @@ def _embedded_png(element):
     kinds[prefix](raw)
 
 
-def validate(svg):
-    """Reject active content, URL references, foreign namespaces and XML entities."""
+# Accepted figure heights at the full 1200 px width: a map or chart, and an altitude profile.
+HEIGHTS = (800, 400)
+
+
+def validate(svg, height=800):
+    """Reject active content, URL references, foreign namespaces and XML entities.
+
+    ``height`` is the figure's declared height; only a 1200 by 800 figure may hold a map image.
+    """
+    if height not in HEIGHTS:
+        raise ValueError("Unsupported diagram height")
     if not isinstance(svg, str) or len(svg) > MAX_SVG_BYTES or len(svg.encode("utf8")) > MAX_SVG_BYTES:
         raise ValueError("Diagram is too large")
     if "<!" in svg or "<?" in svg:
@@ -106,7 +115,7 @@ def validate(svg):
     root = ElementTree.fromstring(svg)
     if root.tag != NAMESPACE + "svg" or any(
         root.get(key) != value
-        for key, value in {"width": "1200", "height": "800", "viewBox": "0 0 1200 800"}.items()
+        for key, value in {"width": "1200", "height": str(height), "viewBox": f"0 0 1200 {height}"}.items()
     ):
         raise ValueError("Invalid diagram root or dimensions")
     images = 0
@@ -121,7 +130,7 @@ def validate(svg):
             raise ValueError("Diagram contains a private name or receiver field")
         if element.tag == NAMESPACE + "image":
             images += 1
-            if images > 1 or element not in root or root.get("transform") is not None:
+            if images > 1 or height != 800 or element not in root or root.get("transform") is not None:
                 raise ValueError("A diagram may have one untransformed map image")
             _embedded_png(element)
             continue
@@ -134,7 +143,7 @@ def validate(svg):
 
 def main():
     for record in json.load(sys.stdin):
-        validate(record["svg"])
+        validate(record["svg"], record.get("height", 800))
 
 
 if __name__ == "__main__":

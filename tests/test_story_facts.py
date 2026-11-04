@@ -1390,6 +1390,22 @@ class NewKindFacts(unittest.TestCase):
                 self.assertEqual((racetrack[fact_id]["value"], racetrack[fact_id]["unit"]), (value, unit))
         self.assertFalse([key for key in racetrack if key.startswith("aer.")])
 
+    def test_separation_in_feet_for_formation_and_tcas(self):
+        # 0.034 NM is 206.6 ft, given to the nearest 10 ft; the NM measurement row stays.
+        for kind in ("formation_flight", "tcas_ra"):
+            with self.subTest(kind=kind):
+                raw = fixtures.kind_event(kind)
+                raw["evidence"]["maneuver"]["min_separation_nm"] = 0.034
+                built = fixtures.facts(raw)
+                ids = values(built)
+                fact = ids["sep.horizontal_ft"]
+                self.assertEqual((fact["value"], fact["unit"], fact["basis"]), (210, "ft", "derived"))
+                self.assertEqual(ids["m.min_separation_nm"]["value"], 0.034)
+                self.assertEqual(public_prose.prose_checker(built)("They flew 210 feet apart."), [])
+        del raw["evidence"]["maneuver"]["min_separation_nm"]
+        self.assertNotIn("sep.horizontal_ft", values(fixtures.facts(raw)))
+        self.assertNotIn("sep.horizontal_ft", values(fixtures.facts(fixtures.kind_event("circling"))))
+
     def test_unregistered_address_facts(self):
         block = {"callsign": "TEST12", "category": "A1", "source": "adsb_icao"}
         raw = fixtures.kind_event("unregistered_address")

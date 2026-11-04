@@ -249,7 +249,7 @@ export function cardVisual(lead, classPhoto) {
 
 export function storyModel(
   event,
-  { topics, html = "", leadMedia, photo, classPhoto },
+  { topics, html = "", leadMedia, photo, classPhoto, profileImage },
 ) {
   const story = event.story || null;
   const context = event.context || {};
@@ -337,6 +337,8 @@ export function storyModel(
     exceptional: Boolean(event.priority_evidence),
     leadMedia: leadMedia || null,
     cardMedia: cardVisual(leadMedia, classPhoto),
+    // The altitude profile figure (media role "profile"), which the page places below the map.
+    profileImage: profileImage || null,
     photo: photo || null,
     html,
   };
@@ -473,6 +475,7 @@ export function siteModel(
     lead = {},
     photos = {},
     classPhotos = {},
+    profiles = {},
     retired = [],
   },
 ) {
@@ -484,6 +487,7 @@ export function siteModel(
         leadMedia: lead[event.id],
         photo: photos[event.id],
         classPhoto: classPhotos[event.id],
+        profileImage: profiles[event.id],
       }),
     )
     .sort(byNewest);

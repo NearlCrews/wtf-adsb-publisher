@@ -165,7 +165,7 @@ const airframePhotos = airframeFile
   : new Map();
 const generated = options.media
   ? await loadEventMedia(snapshot, path.resolve(root, options.media))
-  : { media: {}, files: new Map() };
+  : { media: {}, figures: {}, files: new Map() };
 // The lead visual is the track map or chart when one exists, otherwise the
 // representative type photo, otherwise any other figure. A type photo that
 // does not lead moves to "About the type". A card shows the lead, except that
@@ -176,11 +176,17 @@ const lead = {};
 const photos = {};
 const classPhotos = {};
 const cards = {};
+// The altitude profile goes by its role, whichever figure leads.
+const profiles = {};
 // Cards fall back to an event's own media, so the journal (and its
 // presentation digest) receives only generated figures and photos.
 const journalMedia = {};
 for (const event of snapshot.events) {
   const figure = generated.media[event.id] || event.media;
+  const profile = generated.figures[event.id]?.find(
+    (item) => item.role === "profile",
+  );
+  if (profile) profiles[event.id] = profile;
   const photo = imported ? aircraftPhoto(event) : null;
   const stock = imported ? classPhoto(event) : null;
   if (photo) photos[event.id] = photo;
@@ -225,6 +231,7 @@ const model = siteModel(snapshot.events, {
   lead,
   photos,
   classPhotos,
+  profiles,
   retired: snapshot.retired || [],
 });
 const journal = createJournal(snapshot, {
