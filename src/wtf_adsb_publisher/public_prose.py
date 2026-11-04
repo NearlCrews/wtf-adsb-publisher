@@ -126,6 +126,7 @@ PACKET_UNITS = {
     "nm": ("distance", 1),
     "NM": ("distance", 1),
     "degrees": ("angle", 1),
+    "deg/s": ("turn_rate", 1),
     "Mach": ("mach", 1),
     "years": ("years", 1),
     "hPa": ("pressure", 1),
@@ -185,6 +186,8 @@ PROSE_UNITS = [
     (r"years|year|yrs|yr", [("years", 1)]),
     (r"decades|decade", [("years", 10)]),
     (r"centuries|century", [("years", 100)]),
+    # A turn rate, before the bare angle so "degrees per second" reads as one unit.
+    (r"degrees[ -]per[ -]second|degree[ -]per[ -]second|deg/s|\u00b0/s", [("turn_rate", 1)]),
     (r"degrees|degree|deg|\u00b0", [("angle", 1)]),
     (r"percent|per[ -]cent|%", [("percent", 1)]),
     (r"hectopascals|hectopascal|hpa|millibars|millibar|mbar|mb", [("pressure", 1)]),

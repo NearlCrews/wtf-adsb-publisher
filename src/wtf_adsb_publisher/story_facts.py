@@ -44,7 +44,7 @@ from .public_prose import number
 from .rules import IDENTIFIERS, identifier
 
 DATA = Path(__file__).resolve().parent / "data"
-FACTS_VERSION = 3
+FACTS_VERSION = 4
 # An airframe younger than this has no age fact: its age is not a story.
 MIN_AGE_YEARS = 50
 # A registration or address block from home says nothing; both writers leave such a fact out.
@@ -178,8 +178,8 @@ HYPOTHESES = {
 KIND_CONTEXT = {
     "descending_spiral": "A descending spiral is a standard maneuver, practiced to lose height over one spot.",
     "stratospheric_balloon": "Callsigns beginning HBAL are used for high-altitude balloon flights.",
-    "rapid_descent": "Airliners usually descend at 2,000 to 3,500 feet a minute; faster descents are brisk but "
-    "not rare.",
+    "rapid_descent": "Descent rates vary with aircraft class, so a rapid descent is best read against the "
+    "usual rates for its class.",
     "tcas_ra": "A TCAS resolution advisory tells a crew how to change their vertical motion to keep clear of "
     "another aircraft; Level Off tells a climbing or descending crew to stop.",
     "formation_flight": "Two aircraft holding position within a few hundred feet for minutes is the signature of "
@@ -224,6 +224,12 @@ TYPICAL_DESCENT_FPM = {
     "turboprop": "1,500 to 2,500 ft/min",
     "light_piston": "500 to 1,500 ft/min",
 }
+# Each range's slower and faster ends (desc.typical_fpm_low and _high) as quotable rates, signed
+# as descents like the observed rate, so "descend at 2,000 to 3,500 feet a minute" is supported.
+TYPICAL_DESCENT_RANGES = {
+    name: tuple(-int(end.replace(",", "")) for end in text.removesuffix(" ft/min").split(" to "))
+    for name, text in TYPICAL_DESCENT_FPM.items()
+}
 # Curated type categories (type_names.json) that set the descent class: business jets always,
 # the rest only for a designator the Doc 8643 table lacks.
 BUSINESS_JET_CATEGORIES = frozenset({"business jet", "light jet"})
@@ -255,6 +261,80 @@ SHAPE_FACTS = {
 # What qualified an aerobatic-style episode (aer.basis), in story words.
 AEROBATIC_BASIS_WORDS = {"type": "an aerobatic type", "turn_rate": "a sustained hard turn"}
 RECORD_KINDS = kinds.where(record=True)
+# A display title for each published kind, for a story that names an earlier one with no title.
+KIND_TITLES = {
+    "above_rated_altitude": "Above the rated ceiling",
+    "above_rated_speed": "Above the rated speed",
+    "aerobatic_practice": "Aerobatic practice",
+    "altitude_gap": "Altitude gap",
+    "altitude_oscillation": "Altitude oscillation",
+    "circling": "Circling",
+    "confined_activity": "Confined flight",
+    "correlated_data_anomaly": "Data anomaly",
+    "course_reversal": "Course reversal",
+    "database_watch": "Military listing",
+    "departure_return": "Departure and return",
+    "descending_spiral": "Descending spiral",
+    "emitter_type_mismatch": "Emitter mismatch",
+    "extreme_turn_rate": "Tight turn",
+    "fast": "Ground speed",
+    "first_country_here": "First sighting",
+    "first_operator_here": "First sighting",
+    "first_type_here": "First sighting",
+    "foreign_military": "Foreign military aircraft",
+    "formation_flight": "Formation flight",
+    "gnss_integrity_cluster": "GPS integrity",
+    "gnss_integrity_loss": "GPS integrity",
+    "high": "High altitude",
+    "holding_stack": "Circling group",
+    "hovering": "Hovering",
+    "identity_conflict": "Identity conflict",
+    "loitering": "Loitering",
+    "military": "Military aircraft",
+    "notable_variant": "Notable variant",
+    "outlier_alt_baro": "Altitude spike",
+    "outlier_archive_alt": "Altitude spike",
+    "outlier_baro_rate": "Vertical rate spike",
+    "outlier_gs": "Ground speed spike",
+    "parallel_passes": "Parallel passes",
+    "position_jump": "Position jump",
+    "possible_go_around": "Go-around",
+    "prolonged_holding": "Holding",
+    "racetrack_orbit": "Racetrack orbit",
+    "rapid_climb": "Rapid climb",
+    "rapid_descent": "Rapid descent",
+    "rare_here": "Type sighting",
+    "repeated_passes": "Repeated passes",
+    "seasonal_speed_record": "Ground speed record",
+    "selected_altitude_overshoot": "Selected altitude overshoot",
+    "space_category": "Emitter category",
+    "special_squawk_downed": "Transponder status",
+    "special_squawk_general": "Squawk 7700",
+    "special_squawk_lifeguard": "Transponder status",
+    "special_squawk_minfuel": "Transponder status",
+    "special_squawk_nordo": "Squawk 7600",
+    "special_squawk_unlawful": "Squawk 7500",
+    "special_use_code": "Special code",
+    "stratospheric_balloon": "High-altitude balloon",
+    "survey_grid": "Grid of straight lines",
+    "tcas_ra": "TCAS advisory",
+    "thermal_soaring": "Soaring",
+    "type_altitude_mismatch": "Altitude mismatch",
+    "type_speed_mismatch": "Speed mismatch",
+    "unregistered_address": "Unlisted address",
+    "unusual_emitter": "Emitter category",
+    "vertical": "Vertical rate",
+    "vintage": "Vintage aircraft",
+    "watch_type": "Watched type",
+    "watchlist_match": "Watchlist entry",
+    "wind_boost": "Speed difference",
+    "winds_aloft_day": "Winds aloft",
+    **{
+        f"{family}_squawk_{code}": f"Squawk {code}"
+        for family in ("special", "archive")
+        for code in ("7400", "7500", "7600", "7700")
+    },
+}
 # An earlier story of the same registration counts as a repeat (repeat.previous) for this long.
 REPEAT_DAYS = 60
 ARTICLE_PATH = re.compile(r"/stories/(?P<slug>[a-z0-9-]{1,120})/")
@@ -1153,8 +1233,10 @@ def _season(facts, packet, observed):
     # How far the record passed the previous best: a margin of a few knots is the wind's to give.
     observation = _dict(packet, "observation")
     record = number(observation.get("metric_value"))
-    if record is not None and previous and observation.get("metric_unit") == "kn" and record > previous:
-        _fact(facts, "rec.margin_kn", round(record - previous, 1), "telemetry", unit="kn", field="gs")
+    if record is not None and previous and observation.get("metric_unit") == "kn":
+        margin = round(record - previous, 1)
+        if margin > 0:
+            _fact(facts, "rec.margin_kn", margin, "telemetry", unit="kn", field="gs")
 
 
 # The flight phases a norm is kept for, as the story says each.
@@ -1208,9 +1290,10 @@ def _winds(facts, sources, packet, identity):
     wind = _dict(block, "wind_250_hpa")
     speed, direction = number(wind.get("speed_kn")), number(wind.get("direction_deg"))
     if speed is not None and direction is not None:
-        cited = {"source": OPEN_METEO["id"], "level_hpa": 250, "at": wind.get("hour")}
+        cited = {"source": OPEN_METEO["id"], "at": wind.get("hour")}
         _fact(facts, "wind.open_meteo_speed", speed, "reference", unit="kn", **cited)
         _fact(facts, "wind.open_meteo_direction", direction, "reference", unit="degrees", **cited)
+        _fact(facts, "wind.open_meteo_level", 250, "reference", unit="hPa", **cited)
         sources.append(dict(OPEN_METEO))
     _fact(facts, "p.1.registration", identity["registration"], "database", field="registration")
     _fact(facts, "p.1.callsign", identity["callsign"], "telemetry", field="callsign")
@@ -1308,7 +1391,7 @@ def _descent_class(code, entry):
 
 def _repeat(facts, related, observed):
     """The latest earlier story of this registration inside REPEAT_DAYS (repeat.previous): its
-    kind's name, or the story's title for a kind with none, and its date; and its path."""
+    title, or its kind's display title when it has none, and its date; and its path."""
     if not observed:
         return
     latest = None
@@ -1323,15 +1406,14 @@ def _repeat(facts, related, observed):
             continue
         if not 0 <= (observed.date() - date.fromisoformat(day)).days <= REPEAT_DAYS:
             continue
-        phenomenon = story_urls.PHENOMENA.get(kind)
-        title = phenomenon[0].replace("-", " ").capitalize() if phenomenon else _text(item.get("title"), 120)
+        title = _text(item.get("title"), 120) or KIND_TITLES.get(kind)
         if title and (latest is None or (day, path) > (latest[0], latest[1])):
             latest = (day, path, kind, title)
     if latest:
         day, path, kind, title = latest
         when = date.fromisoformat(day)
         value_ = f"{title} on {when.day} {story_urls.MONTH_NAMES[when.month - 1]} {when.year}"
-        _fact(facts, "repeat.previous", value_, "derived", kind=kind, date=day)
+        _fact(facts, "repeat.previous", value_, "derived", kind=kind, dates=[day])
         _fact(facts, "repeat.path", path, "derived")
 
 
@@ -1747,9 +1829,13 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
     if kind in RECORD_KINDS:
         _season(facts, packet, observed)
     if kind == "rapid_descent" and not conflict:
-        typical = TYPICAL_DESCENT_FPM.get(_descent_class(identity["type_code"], entry))
-        # A range in words ("2,000 to 3,500 ft/min"), not one measurement, so it carries no unit.
-        _fact(facts, "desc.typical_fpm", typical, "reference")
+        descent_class = _descent_class(identity["type_code"], entry)
+        if descent_class:
+            # The range in words for display, and its two ends as quotable rates.
+            low, high = TYPICAL_DESCENT_RANGES[descent_class]
+            _fact(facts, "desc.typical_fpm", TYPICAL_DESCENT_FPM[descent_class], "reference")
+            _fact(facts, "desc.typical_fpm_low", low, "reference", unit="ft/min")
+            _fact(facts, "desc.typical_fpm_high", high, "reference", unit="ft/min")
     if kind == "winds_aloft_day":
         _winds(facts, sources, packet, identity)
     if kind == "foreign_military":

@@ -1297,6 +1297,11 @@ class NewKindFacts(unittest.TestCase):
             (ids["wind.open_meteo_speed"]["value"], ids["wind.open_meteo_speed"]["unit"]), (140.0, "kn")
         )
         self.assertEqual(ids["wind.open_meteo_direction"]["value"], 260.0)
+        self.assertEqual(
+            (ids["wind.open_meteo_level"]["value"], ids["wind.open_meteo_level"]["unit"]), (250, "hPa")
+        )
+        check = public_prose.prose_checker(built)
+        self.assertEqual(check("Open-Meteo modelled 140 knots at 250 hPa on 5 November 2026."), [])
         self.assertEqual(ids["wind.open_meteo_speed"]["basis"], "reference")
         self.assertIn(story_facts.OPEN_METEO["id"], {source["id"] for source in built["sources"]})
 
@@ -1343,6 +1348,11 @@ class NewKindFacts(unittest.TestCase):
             with self.subTest(fact=fact_id):
                 self.assertEqual((aerobatic[fact_id]["value"], aerobatic[fact_id]["unit"]), (value, unit))
         self.assertEqual(aerobatic["aer.basis"]["value"], "a sustained hard turn")
+        check = public_prose.prose_checker(fixtures.facts(fixtures.kind_event("aerobatic_practice")))
+        for unit in ("degrees per second", "deg/s", "\u00b0/s"):
+            with self.subTest(unit=unit):
+                self.assertEqual(check(f"It turned at 24 {unit}."), [])
+        self.assertTrue(check("It turned at 31 degrees per second."))
         raw = fixtures.kind_event("aerobatic_practice")
         del raw["evidence"]["maneuver"]["max_turn_rate_dps"]
         self.assertNotIn("aer.turn_rate", values(fixtures.facts(raw)))
@@ -1376,6 +1386,13 @@ class NewKindFacts(unittest.TestCase):
         ids = {item["id"]: item for item in facts["facts"]}
         self.assertEqual(ids["desc.typical_fpm"]["value"], "2,000 to 3,500 ft/min")
         self.assertEqual(ids["desc.typical_fpm"]["basis"], "reference")
+        for fact_id, value in (("desc.typical_fpm_low", -2000), ("desc.typical_fpm_high", -3500)):
+            self.assertEqual(
+                (ids[fact_id]["value"], ids[fact_id]["unit"], ids[fact_id]["basis"]),
+                (value, "ft/min", "reference"),
+            )
+        check = public_prose.prose_checker(facts)
+        self.assertEqual(check("Airliners usually descend at 2,000 to 3,500 feet a minute."), [])
 
     def test_typical_descent_follows_the_type_class(self):
         for code, expected in (
@@ -1422,6 +1439,10 @@ class NewKindFacts(unittest.TestCase):
         self.assertEqual((ids["rec.margin_kn"]["value"], ids["rec.margin_kn"]["unit"]), (29.0, "kn"))
         self.assertEqual(ids["rec.margin_kn"]["basis"], "telemetry")
         self.assertNotIn("rec.margin_kn", values(fixtures.facts(fixtures.kind_event("fast"))))
+        # A margin that rounds to nothing is no margin.
+        raw = fixtures.kind_event("seasonal_speed_record")
+        raw["value"] = 622.04
+        self.assertNotIn("rec.margin_kn", values(fixtures.facts(raw)))
 
     def test_an_earlier_story_of_the_registration_is_a_repeat(self):
         packet = fixtures.packet(fixtures.kind_event("vintage"))
@@ -1448,12 +1469,16 @@ class NewKindFacts(unittest.TestCase):
         ]
         ids = values(story_facts.build(packet, related=related))
         self.assertTrue(start > "2026-09-01")
-        self.assertEqual(ids["repeat.previous"]["value"], "Rapid descent on 1 September 2026")
+        self.assertEqual(ids["repeat.previous"]["value"], "A descent on 1 September 2026")
         self.assertEqual(ids["repeat.previous"]["basis"], "derived")
+        self.assertEqual(ids["repeat.previous"]["dates"], ["2026-09-01"])
         self.assertEqual(ids["repeat.path"]["value"], "/stories/n8704-descent-1-sep-2026/")
-        # A kind with no phenomenon name keeps the story's own title.
-        ids = values(story_facts.build(packet, related=related[:1]))
-        self.assertEqual(ids["repeat.previous"]["value"], "Older on 1 August 2026")
+        # Without a story title, the kind's display title names it.
+        untitled = [{key: value for key, value in related[1].items() if key != "title"}]
+        built = story_facts.build(packet, related=untitled)
+        self.assertEqual(values(built)["repeat.previous"]["value"], "Rapid descent on 1 September 2026")
+        check = public_prose.prose_checker(built)
+        self.assertEqual(check("Its previous story was on 1 September 2026."), [])
         for bad in (
             [],
             related[2:],
@@ -1462,6 +1487,23 @@ class NewKindFacts(unittest.TestCase):
         ):
             with self.subTest(related=bad):
                 self.assertNotIn("repeat.previous", values(story_facts.build(packet, related=bad)))
+
+
+class KindTitleTests(unittest.TestCase):
+    def test_every_published_kind_has_a_plain_display_title(self):
+        self.assertEqual(set(story_facts.KIND_TITLES), set(public_events.KIND_TYPES))
+        self.assertEqual(story_facts.KIND_TITLES["tcas_ra"], "TCAS advisory")
+        self.assertEqual(story_facts.KIND_TITLES["gnss_integrity_loss"], "GPS integrity")
+        for kind, title in story_facts.KIND_TITLES.items():
+            with self.subTest(kind=kind):
+                self.assertIsNone(public_prose.DASH.search(title))
+                self.assertNotIn("&", title)
+                self.assertIsNone(public_prose.SPECULATION.search(title))
+                self.assertIsNone(public_prose.MISSION_CLAIM.search(title))
+
+    def test_the_facts_version_marks_the_new_schema(self):
+        self.assertEqual(story_facts.FACTS_VERSION, 4)
+        self.assertEqual(fixtures.facts(fixtures.kind_event("circling"))["version"], 4)
 
 
 class DisplayNameTests(unittest.TestCase):
