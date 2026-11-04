@@ -6,10 +6,13 @@ import {
   BRAND,
   PER_PAGE,
   RELATED_AIRFRAME_STORIES,
+  PROFILE_ALT,
   cardVisual,
+  explainerPages,
   pageDigest,
   pageLinks,
   paginate,
+  profileFigure,
   siteModel,
   storyPhotos,
   topicIndex,
@@ -1068,6 +1071,160 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
   assert.equal(cardVisual(undefined, type), type);
   assert.equal(cardVisual(map, type), map);
 }
+// "More about this aircraft" lists the publisher's related links (event
+// `related`): its stories with their dates, then the explainer pages, each
+// labeled "Background". A story with that list leaves the airframe group out
+// of "Related stories", and the stories it lists appear in no other group. A
+// subjectless story lists none.
+{
+  const a380 = { code: "A388", name: "Airbus A380-800", slug: "airbus-a380" };
+  const older = event({ registration: "N77", type: a380, day: "2026-09-10" });
+  const middle = event({ registration: "N77", type: a380, day: "2026-09-14" });
+  const latest = event({ registration: "N77", type: a380, day: "2026-09-18" });
+  const page = {
+    path: "/explainers/canadian-addresses/",
+    title: "When a Canadian address and its listed type disagree",
+    observed_start: null,
+  };
+  latest.related = [
+    {
+      path: middle.article_path,
+      title: middle.title,
+      observed_start: middle.observed_start,
+    },
+    page,
+  ];
+  const winds = {
+    ...event({ kind: "winds_aloft_day", primary: "performance" }),
+    aircraft: {},
+    subjectless: true,
+    related: [
+      {
+        path: older.article_path,
+        title: older.title,
+        observed_start: older.observed_start,
+      },
+    ],
+  };
+  const model = siteModel([older, middle, latest, winds], { topics });
+  const byId = new Map(model.stories.map((story) => [story.id, story]));
+  const story = byId.get(latest.id);
+  assert.deepEqual(story.aircraftRelated, [
+    {
+      url: middle.article_path,
+      title: middle.title,
+      observedStart: middle.observed_start,
+      dateLabel: "14 Sep 2026",
+      background: false,
+    },
+    {
+      url: page.path,
+      title: page.title,
+      observedStart: null,
+      dateLabel: null,
+      background: true,
+    },
+  ]);
+  assert.ok(
+    !story.related.groups.some((group) => group.title === "More about N77"),
+  );
+  assert.ok(
+    !story.related.groups
+      .flatMap((group) => group.stories)
+      .some((other) => other.id === middle.id),
+  );
+  // Without the list, the airframe group stays.
+  assert.equal(byId.get(middle.id).aircraftRelated.length, 0);
+  assert.equal(byId.get(middle.id).related.groups[0].title, "More about N77");
+  // A subjectless story shows no list, whatever its event carries.
+  assert.equal(byId.get(winds.id).subjectless, true);
+  assert.deepEqual(byId.get(winds.id).aircraftRelated, []);
+  assert.equal(byId.get(latest.id).subjectless, false);
+
+  // Explainer pages: their sections with numbered sources, the facts as short
+  // lines, and the stories whose related list links to them, newest first.
+  const explainer = {
+    key: "explainer:canadian-addresses",
+    path: page.path,
+    title: page.title,
+    summary: "ICAO assigns each State a block of 24-bit aircraft addresses.",
+    sections: [
+      { heading: "First", text: "One.", sources: ["b"] },
+      { heading: "Second", text: "Two.", sources: ["a", "b"] },
+    ],
+    sources: [
+      { id: "a", title: "A", url: "https://a.example/", publisher: "A Org" },
+      { id: "b", title: "B", url: "https://b.example/", publisher: "B Org" },
+    ],
+    limitations: ["General, not about one aircraft."],
+    facts: {
+      stories: 3,
+      registries: ["adsbdb", "hexdb"],
+      hypotheses: ["a stale registry entry", "a re-registration", "a typo"],
+    },
+    written_at: "2026-10-04T12:30:00Z",
+  };
+  const [built] = explainerPages([explainer], model.stories);
+  assert.equal(built.url, page.path);
+  assert.deepEqual(
+    built.sections.map((section) => section.sources),
+    [[2], [1, 2]],
+  );
+  assert.deepEqual(
+    built.sources.map((source) => source.number),
+    [1, 2],
+  );
+  assert.deepEqual(built.facts, [
+    "Written from 3 stories in this journal.",
+    "Registries consulted: ADSBdb and HexDB.",
+    "Explanations it weighs: a stale registry entry, a re-registration, or a typo.",
+  ]);
+  assert.deepEqual(
+    built.stories.map((item) => item.id),
+    [latest.id],
+  );
+  assert.equal(built.writtenAt, explainer.written_at);
+  assert.deepEqual(explainerPages(undefined, model.stories), []);
+  assert.deepEqual(
+    siteModel([older], { topics, explainers: [explainer] }).explainers.length,
+    1,
+  );
+
+  // The altitude profile: fixed alt text, and a caption that names both
+  // aircraft only for an advisory whose profile draws the other one.
+  const figure = {
+    role: "profile",
+    src: "/event-media/p.svg",
+    width: 1200,
+    height: 400,
+    alt: "Chart of N1's pressure altitude over 4 minutes, from 3,000 to 3,400 ft.",
+    caption: "Pressure altitude reported by N1.",
+  };
+  assert.equal(PROFILE_ALT, "Altitude over time for this episode");
+  assert.deepEqual(profileFigure(figure, "stratospheric_balloon"), {
+    kind: "altitude-profile",
+    src: figure.src,
+    width: 1200,
+    height: 400,
+    alt: PROFILE_ALT,
+    caption: "Pressure altitude against time.",
+  });
+  assert.equal(
+    profileFigure(figure, "tcas_ra").caption,
+    "Pressure altitude against time.",
+  );
+  assert.equal(
+    profileFigure(
+      {
+        ...figure,
+        alt: "Chart of N1's pressure altitude over 4 minutes, from 3,000 to 3,400 ft, beside the other aircraft in the advisory.",
+      },
+      "tcas_ra",
+    ).caption,
+    "Pressure altitude against time for both aircraft in the advisory.",
+  );
+  assert.equal(profileFigure(null, "tcas_ra"), null);
+}
 console.log(
-  "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, story photo rules, and list page links.",
+  "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, story photo rules, list page links, aircraft related lists, explainer pages, and altitude profiles.",
 );

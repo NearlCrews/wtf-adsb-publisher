@@ -278,6 +278,38 @@ export function storyPhotos(event, { registration, type, stock } = {}) {
   };
 }
 
+// One link of the publisher's related list (event `related`): a story of the
+// same aircraft with its date, or an explainer page (null observed_start),
+// which the page labels "Background" in place of a date.
+const relatedLink = (item) => ({
+  url: item.path,
+  title: item.title,
+  observedStart: item.observed_start,
+  dateLabel:
+    item.observed_start === null ? null : shortDate(item.observed_start),
+  background: item.observed_start === null,
+});
+
+// The altitude profile figure (media role "profile") as the page shows it,
+// below the track map or in its place. Its caption names both aircraft only
+// for an advisory whose profile draws the other one, as its own alt text says.
+export const PROFILE_ALT = "Altitude over time for this episode";
+const OTHER_AIRCRAFT = /beside the other aircraft in the advisory/;
+export function profileFigure(profile, kind) {
+  if (!profile) return null;
+  const both = kind === "tcas_ra" && OTHER_AIRCRAFT.test(profile.alt || "");
+  return {
+    kind: "altitude-profile",
+    src: profile.src,
+    width: profile.width,
+    height: profile.height,
+    alt: PROFILE_ALT,
+    caption: both
+      ? "Pressure altitude against time for both aircraft in the advisory."
+      : "Pressure altitude against time.",
+  };
+}
+
 export function storyModel(
   event,
   { topics, html = "", leadMedia, photo, cardPhoto, profileImage },
@@ -372,6 +404,14 @@ export function storyModel(
     cardPhoto: cardPhoto || null,
     // The altitude profile figure (media role "profile"), which the page places below the map.
     profileImage: profileImage || null,
+    // A story about a day, not an aircraft (winds_aloft_day): no photo, type
+    // box, map, or related list.
+    subjectless: event.subjectless === true,
+    // "More about this aircraft": the publisher's related links, the stories
+    // first, then the explainer pages.
+    aircraftRelated: event.subjectless
+      ? []
+      : (event.related || []).map(relatedLink),
     photo: photo || null,
     html,
   };
@@ -510,6 +550,7 @@ export function siteModel(
     cardPhotos = {},
     profiles = {},
     retired = [],
+    explainers = [],
   },
 ) {
   const stories = events
@@ -737,10 +778,17 @@ export function siteModel(
   // Related links: the airframe, the type, then the topic, never repeating.
   // The airframe hub lists every story, so a story page links the five newest.
   // Each list is read only until it yields enough unused stories.
+  // A story with the publisher's related list ("More about this aircraft")
+  // shows it in place of the airframe group, and its stories join no other
+  // group; the airframe hub's link still lists every story.
   const byAirframe = groupBy(stories, (story) => story.airframeKey);
   const byType = groupBy(stories, (story) => story.typeKey);
+  const byUrl = new Map(stories.map((story) => [story.url, story]));
   for (const story of stories) {
     const used = new Set([story.id]);
+    const listed = story.aircraftRelated.filter((item) => !item.background);
+    for (const item of listed)
+      if (byUrl.has(item.url)) used.add(byUrl.get(item.url).id);
     const take = (list, limit) => {
       const picked = [];
       for (const other of list || []) {
@@ -751,10 +799,9 @@ export function siteModel(
       }
       return picked;
     };
-    const airframe = take(
-      byAirframe.get(story.airframeKey),
-      RELATED_AIRFRAME_STORIES,
-    );
+    const airframe = listed.length
+      ? []
+      : take(byAirframe.get(story.airframeKey), RELATED_AIRFRAME_STORIES);
     const sameType = take(byType.get(story.typeKey), 3);
     const sameTopic = take(byTopic.get(story.topic), 2);
     const topic = topicsBySlug.get(story.topic);
@@ -833,8 +880,61 @@ export function siteModel(
     operators: operatorList,
     withdrawn: withdrawn.pages,
     withdrawnCollisions: withdrawn.collisions,
+    explainers: explainerPages(explainers, stories),
     lastmod: latest(stories.map((story) => story.dateModified)),
   };
+}
+
+// The registries an explainer's facts name, as their sites name themselves.
+const REGISTRY_NAMES = { adsbdb: "ADSBdb", hexdb: "HexDB" };
+// "a, b, and c" (or "or"), with the serial comma.
+const listText = (items, word = "and") =>
+  items.length < 3
+    ? items.join(` ${word} `)
+    : `${items.slice(0, -1).join(", ")}, ${word} ${items.at(-1)}`;
+
+// The snapshot's explainer pages (its `explainers` key, written once by the
+// weekly research): the sections with their numbered sources, the facts the
+// page was written from as short lines, and the stories whose related list
+// links to it, in the order given (newest first in the site model).
+export function explainerPages(explainers = [], stories = []) {
+  return explainers.map((page) => {
+    const numbers = new Map(
+      page.sources.map((source, index) => [source.id, index + 1]),
+    );
+    const { facts } = page;
+    return {
+      key: page.key,
+      url: page.path,
+      title: page.title,
+      summary: page.summary,
+      sections: page.sections.map((section) => ({
+        heading: section.heading,
+        text: section.text,
+        sources: section.sources
+          .map((id) => numbers.get(id))
+          .sort((a, b) => a - b),
+      })),
+      sources: page.sources.map((source, index) => ({
+        title: source.title,
+        url: source.url,
+        publisher: source.publisher,
+        number: index + 1,
+      })),
+      limitations: [...page.limitations],
+      facts: [
+        `Written from ${facts.stories} ${facts.stories === 1 ? "story" : "stories"} in this journal.`,
+        `Registries consulted: ${listText(facts.registries.map((name) => REGISTRY_NAMES[name] || name))}.`,
+        `Explanations it weighs: ${listText(facts.hypotheses, "or")}.`,
+      ],
+      writtenAt: page.written_at,
+      stories: stories.filter((story) =>
+        story.aircraftRelated.some(
+          (item) => item.background && item.url === page.path,
+        ),
+      ),
+    };
+  });
 }
 
 // The pages for withdrawn stories' old URLs (a published snapshot's `retired`

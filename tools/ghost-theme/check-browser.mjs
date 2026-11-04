@@ -136,6 +136,24 @@ const olderSite = await startPreview({
     ),
   ),
 });
+// The story page fixture: a subjectless winds day, a mismatch story that
+// links to its explainer page, a related link from the later HL7635 story to
+// the earlier one, and the balloon's altitude profile under its map.
+const pagesFolder = buildFixture(
+  await fixtureSnapshot("pages", "--no-extra", "--story-pages"),
+);
+const pagesSite = await startPreview({ directory: pagesFolder });
+const windsStory = "/stories/strong-winds-aloft-1-oct-2026/";
+const mismatchStory = "/stories/type-speed-mismatch-c01234-18-sep-2026/";
+const balloonStory = "/stories/hbal837-high-altitude-balloon-2-oct-2026/";
+const explainerPage = "/explainers/canadian-addresses/";
+const pagesRoutes = [
+  mappedStory,
+  windsStory,
+  mismatchStory,
+  balloonStory,
+  explainerPage,
+];
 // More circling stories page the archive and their topic three times over:
 // the static lists' Previous and Next, and the journal's archive pages.
 const pagedSite = await startPreview({
@@ -455,6 +473,15 @@ async function checkWidth(width) {
       "fixture",
     );
     await checkReadingAxis(page, fixtureSite.base, mappedStory, width);
+    await auditRoutes(
+      page,
+      context,
+      pagesSite.base,
+      pagesRoutes,
+      width,
+      "pages",
+    );
+    await checkReadingAxis(page, pagesSite.base, mappedStory, width);
   }
 
   await page.goto(base);
@@ -995,6 +1022,129 @@ try {
   assert.deepEqual(await searchIds(), [mlatId]);
   assert.equal(new URL(parts.page.url()).searchParams.get("source"), "mlat");
   report.interactions.push({ fixtureTemplates: true, sourceBadges: true });
+
+  // The publisher's related links: "More about this aircraft" lists the
+  // earlier HL7635 story with its date, and "Related stories" leaves out its
+  // own airframe group, so no story is listed twice.
+  await parts.page.goto(pagesSite.base + mappedStory);
+  assert.deepEqual(await text(".aircraft-related h2"), [
+    "More about this aircraft",
+  ]);
+  assert.deepEqual(await text(".aircraft-related li a"), [
+    "Asiana A380 HL7635 passes high over Battle Creek, Michigan",
+  ]);
+  assert.equal(
+    await parts.page.locator(".aircraft-related li a").getAttribute("href"),
+    "/stories/airbus-a380-hl7635-16-sep-2026/",
+  );
+  assert.deepEqual(await text(".aircraft-related li time"), ["16 Sep 2026"]);
+  assert.ok(!(await text(".related-group h3")).includes("More about HL7635"));
+  assert.ok(
+    !(await text(".related-group a")).includes(
+      "Asiana A380 HL7635 passes high over Battle Creek, Michigan",
+    ),
+  );
+  // An explainer link is labeled "Background" in place of a date.
+  await parts.page.goto(pagesSite.base + mismatchStory);
+  assert.deepEqual(await text(".aircraft-related li"), [
+    "When a Canadian address and its listed type disagree Background",
+  ]);
+  assert.equal(
+    await parts.page.locator(".aircraft-related li a").getAttribute("href"),
+    explainerPage,
+  );
+  // A subjectless day: no photo, type box, or map, and the day summary card
+  // as its only figure; the evidence block still shows its key facts.
+  await parts.page.goto(pagesSite.base + windsStory);
+  for (const selector of [
+    "figure.airframe-photo",
+    ".type-background",
+    ".type-photo",
+    'figure[data-media-kind="track"]',
+    "figure[data-geographic-replay]",
+    ".aircraft-related",
+  ])
+    assert.equal(
+      await parts.page.locator(selector).count(),
+      0,
+      `${selector} on a subjectless page`,
+    );
+  assert.deepEqual(
+    await parts.page
+      .locator("article figure")
+      .evaluateAll((figures) => figures.map((item) => item.dataset.mediaKind)),
+    ["observation-summary"],
+  );
+  assert.deepEqual(await text(".story-eyebrow a"), ["Winds aloft"]);
+  assert.equal(await parts.page.locator(".event-key-facts").count(), 1);
+  // The altitude profile follows the track map.
+  await parts.page.goto(pagesSite.base + balloonStory);
+  const profile = parts.page.locator(
+    'figure[data-media-kind="altitude-profile"]',
+  );
+  assert.equal(await profile.count(), 1);
+  assert.equal(
+    await profile.locator("img").getAttribute("alt"),
+    "Altitude over time for this episode",
+  );
+  assert.equal(
+    await profile.locator("figcaption").innerText(),
+    "Pressure altitude against time.",
+  );
+  assert.ok(
+    await parts.page.evaluate(() =>
+      document
+        .querySelector('figure[data-media-kind="track"]')
+        ?.nextElementSibling?.matches(
+          'figure[data-media-kind="altitude-profile"]',
+        ),
+    ),
+  );
+  const profileImage = profile.locator("img");
+  await profileImage.scrollIntoViewIfNeeded();
+  await profileImage.evaluate((image) => image.decode());
+  assert.ok(await profileImage.evaluate((image) => image.naturalWidth > 0));
+  // The explainer page: its sections, facts, the story it explains, its
+  // sources and limitations, between the site's header and footer; no image.
+  await parts.page.goto(pagesSite.base + explainerPage);
+  assert.equal(
+    await parts.page.locator("h1").innerText(),
+    "When a Canadian address and its listed type disagree",
+  );
+  assert.deepEqual(await text("article h2"), [
+    "How an address reaches an airframe",
+    "When the registry and the broadcasts disagree",
+    "What this page is based on",
+    "Stories this page explains",
+    "Sources",
+    "Limitations",
+  ]);
+  assert.equal(await parts.page.locator(".explainer-facts li").count(), 3);
+  assert.deepEqual(
+    await parts.page
+      .locator(".explainer-stories a")
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
+    [mismatchStory],
+  );
+  assert.equal(await parts.page.locator(".explainer-sources li").count(), 2);
+  assert.equal(await parts.page.locator("article img").count(), 0);
+  assert.equal(await parts.page.locator(".site-header").count(), 1);
+  assert.equal(await parts.page.locator(".site-footer").count(), 1);
+  assert.deepEqual(await text(".breadcrumbs li"), [
+    "Home",
+    "When a Canadian address and its listed type disagree",
+  ]);
+  // The theme's search finds it.
+  const searchEntries = JSON.parse(
+    await fs.readFile(path.join(pagesFolder, "search-index/index.txt"), "utf8"),
+  );
+  assert.ok(searchEntries.some((item) => item.url === explainerPage));
+  report.interactions.push({
+    relatedLists: true,
+    subjectlessPage: true,
+    altitudeProfile: true,
+    explainerPage: true,
+  });
   await parts.done();
 
   // Paged lists, the story archive and a topic: Previous and Next above and
@@ -1432,6 +1582,7 @@ try {
   await fixtureSite.close();
   await olderSite.close();
   await pagedSite.close();
+  await pagesSite.close();
   await fs.rm(fixtureDirectory, { recursive: true, force: true });
   await fs.rm(scratch, { recursive: true, force: true });
 }

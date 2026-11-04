@@ -10,7 +10,10 @@ the story engine did; every event still has a ``/stories/{slug}/`` path, the
 only article path the exporter accepts. The two certified-limit stories are
 written by the story engine itself from detector-shaped findings, so the build
 renders exactly what the publisher would. A published snapshot also lists two
-withdrawn stories' paths, which the build turns into redirect pages.
+withdrawn stories' paths, which the build turns into redirect pages. With
+``--story-pages`` the snapshot also has a subjectless winds aloft day, a Canadian
+address mismatch story linked to the explainer page that covers it, and a
+related link between the two HL7635 stories; its media add altitude profiles.
 
     python3 tools/ghost-theme/site_fixtures.py --mode published > snapshot.json
 """
@@ -19,9 +22,11 @@ import argparse
 import hashlib
 import json
 import sys
+from contextlib import nullcontext
 from copy import deepcopy
 from datetime import timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parents[1]
@@ -34,6 +39,7 @@ from import_snapshot import load  # noqa: E402
 from wtf_adsb_publisher import public_events as public  # noqa: E402
 from wtf_adsb_publisher import (
     publication,  # noqa: E402
+    reference,  # noqa: E402
     stories,  # noqa: E402
 )
 
@@ -488,6 +494,107 @@ RETIRED_HUBS = {
 }
 
 
+# Story page fixtures (--story-pages). A winds aloft day is subjectless: its event names
+# no aircraft. A type speed mismatch from an address in Canada's allocation links to the
+# Canadian address explainer, which the ledger holds as the weekly research writes it.
+# The later HL7635 story lists the earlier one as related, as autopilot.related_stories does.
+WINDS_SPEC = {
+    "key": "fixture-winds-1001",
+    "kind": "winds_aloft_day",
+    "start": "2026-10-01T14:00:00Z",
+    "slug": "strong-winds-aloft-1-oct-2026",
+    "title": "Strong winds aloft on 1 October 2026",
+    "summary": "Eastbound jets crossed the region far faster than westbound ones at cruise height.",
+}
+MISMATCH_SPEC = {
+    "key": "fixture-c01234-0918",
+    "kind": "type_speed_mismatch",
+    "start": "2026-09-18T16:13:15Z",
+    "hex": "c01234",
+    "slug": "type-speed-mismatch-c01234-18-sep-2026",
+    "title": "A Canadian address reports a speed its listed type cannot reach",
+    "summary": "The registry lists a slow type for this address, but its broadcasts reported jet speed.",
+}
+RELATED = {"fixture-hl7635-0927": ["fixture-hl7635-0916"]}
+EXPLAINER = {
+    "key": "explainer:canadian-addresses",
+    "path": "/explainers/canadian-addresses/",
+    "title": "When a Canadian address and its listed type disagree",
+    "summary": (
+        "ICAO assigns each State a block of 24-bit aircraft addresses, and Canada's registry ties one "
+        "to each registered airframe."
+    ),
+    "sections": [
+        {
+            "heading": "How an address reaches an airframe",
+            "text": (
+                "This synthetic section explains that ICAO gives each State a block of 24-bit addresses "
+                "and that the national registry assigns one to each registered aircraft."
+            ),
+            "sources": ["source-1"],
+        },
+        {
+            "heading": "When the registry and the broadcasts disagree",
+            "text": (
+                "This synthetic section explains how a stale registry entry, a re-registration, a "
+                "transponder set to the wrong address, or a database typo could each pair an address "
+                "with the wrong type."
+            ),
+            "sources": ["source-2"],
+        },
+    ],
+    "sources": [
+        {
+            "id": f"source-{index}",
+            "title": f"Synthetic page {index}",
+            "url": url,
+            "publisher": publisher,
+            "retrieved_at": "2026-10-04T12:00:00Z",
+            "applies_to": "How aircraft addresses are assigned.",
+            "primary": index == 1,
+        }
+        for index, (url, publisher) in enumerate(
+            (
+                ("https://www.icao.int/airnavigation/aircraft-addresses/", "ICAO"),
+                ("https://www.canada.ca/en/transport-canada/aircraft-registry.html", "Transport Canada"),
+            ),
+            1,
+        )
+    ],
+    "limitations": ["The page explains the address system in general, not any one aircraft's history."],
+    "facts": {"stories": 3, "registries": ["adsbdb", "hexdb"], "hypotheses": None},
+    "written_at": "2026-10-04T12:30:00Z",
+}
+
+
+def story_page_events():
+    """The winds day and the mismatch story, with their evidence packets."""
+    from story_fixtures import kind_event
+
+    for spec in (WINDS_SPEC, MISMATCH_SPEC):
+        raw = kind_event(spec["kind"], stamp(spec["start"]).timestamp())
+        if "hex" in spec:
+            raw["hex"] = raw["evidence"]["aircraft"]["hex"] = spec["hex"]
+        yield spec, stories.evidence_packet(raw)
+
+
+def allocation(address):
+    """The ICAO allocation lookup for the story page fixtures: Canada's block, C00000 to C3FFFF,
+    and unknown elsewhere, as without reference data. The identity table does not ship."""
+    if 0xC00000 <= int(address, 16) <= 0xC3FFFF:
+        return {"country": "CA", "name": "Canada"}
+    return None
+
+
+def explainer_page():
+    """The Canadian address explainer, normalized as the weekly research saves it."""
+    from wtf_adsb_publisher import story_facts, weekly_spotlight
+
+    page = deepcopy(EXPLAINER)
+    page["facts"]["hypotheses"] = list(story_facts.MISMATCH_HYPOTHESES)
+    return weekly_spotlight.validate_explainer(page)
+
+
 # Story-less circling events (also under /stories/ paths) on separate days fill a
 # second archive page. The last is the newest event of all, so the home page
 # has a tile whose type (the R44) has no photo and shows its class photo.
@@ -595,20 +702,35 @@ def rated_story(spec):
     return {**spec, "story": story, "context": facts["context"], "facts": facts}
 
 
-def editorial(spec):
+def editorial(spec, related=()):
+    """The spec's editorial fields; `related` lists the specs of its related stories, newest first."""
     path = f"/stories/{spec['slug']}/"
     content = spec.get("story")
-    return {
+    result = {
         "title": content["headline"] if content else spec["title"],
         "summary": content["dek"] if content else spec["summary"],
         "article_path": path,
         "ghost_id": hashlib.sha256(path.encode()).hexdigest()[:24],
         "secondary_labels": [],
     }
+    if related:
+        # The export rebuilds each link from the event it names.
+        result["related"] = [
+            {
+                "path": f"/stories/{other['slug']}/",
+                "title": editorial(other)["title"],
+                "observed_start": other["start"],
+            }
+            for other in related
+        ]
+    return result
 
 
-def site_snapshot(mode="published", as_of=None, *, extra=True, extra_count=EXTRA_COUNT):
-    """A published or review snapshot with story, context, and legacy events."""
+def site_snapshot(mode="published", as_of=None, *, extra=True, extra_count=EXTRA_COUNT, story_pages=False):
+    """A published or review snapshot with story, context, and legacy events.
+
+    With `story_pages`, also the winds day, the mismatch story, its explainer, and the related link.
+    """
     from test_weekly_spotlight import NOW
     from test_weekly_spotlight import fixture as weekly_fixture
 
@@ -617,10 +739,20 @@ def site_snapshot(mode="published", as_of=None, *, extra=True, extra_count=EXTRA
     ledger["available_from"] = AVAILABLE_FROM
     prepared = [rated_story(spec) for spec in SPECS]
     extras = extra_specs(extra_count) if extra else []
+    keyed = {spec["key"]: spec for spec in prepared}
     for spec in [*prepared, *extras]:
-        identifier = put(ledger, spec, editorial(spec), as_of)
+        related = [keyed[key] for key in RELATED.get(spec["key"], ())] if story_pages else ()
+        identifier = put(ledger, spec, editorial(spec, related), as_of)
         public.set_review_state(ledger, identifier, "approved", at=as_of)
-    snapshot = public.export_snapshot(ledger, mode="review", as_of=as_of)
+    if story_pages:
+        for spec, evidence in story_page_events():
+            identifier = public.put_event(ledger, spec["key"], evidence, editorial(spec), at=as_of)
+            public.set_review_state(ledger, identifier, "approved", at=as_of)
+        page = explainer_page()
+        ledger["explainers"] = {page["key"]: page}
+    # The explainer covers a story by its address's allocation State.
+    with patch.object(reference, "allocation", side_effect=allocation) if story_pages else nullcontext():
+        snapshot = public.export_snapshot(ledger, mode="review", as_of=as_of)
     specs = {f"/stories/{spec['slug']}/": spec for spec in [*prepared, *extras]}
     for event in snapshot["events"]:
         spec = specs.get(event["article_path"])
@@ -665,8 +797,11 @@ MEDIA = {
 }
 
 
-def site_media(snapshot, destination):
-    """Write a media manifest and its assets for every event, as the publisher does."""
+def site_media(snapshot, destination, *, profiles=False):
+    """Write a media manifest and its assets for every event, as the publisher does.
+
+    With `profiles`, a mapped event of a profile kind also gets its altitude profile figure.
+    """
     from wtf_adsb_publisher.places import dataset
 
     destination = Path(destination).resolve()
@@ -685,7 +820,7 @@ def site_media(snapshot, destination):
     for event in snapshot["events"]:
         plan = MEDIA.get(event["article_path"])
         start, end = module.instant(event["observed_start"]), module.instant(event["observed_end"])
-        image = None
+        image = profile = None
         if plan and plan[0] == "track":
             lon, lat = towns[plan[1]]
             step = min(20, (end - start) / 11)
@@ -700,7 +835,10 @@ def site_media(snapshot, destination):
                 }
                 for index in range(12)
             ]
-            image = module.track_image(event, module.segments(points, start, end), analysis_window=False)
+            parts = module.segments(points, start, end)
+            image = module.track_image(event, parts, analysis_window=False)
+            if profiles:
+                profile = module.profile_image(event, parts)
         elif plan:
             peak = start + (end - start) / 2
             samples = [
@@ -709,9 +847,10 @@ def site_media(snapshot, destination):
             ]
             finding = {"value": 1063.9, "evidence": {"observed_at": peak, "context_samples": samples}}
             image = module.speed_image(event, finding)
-        manifest["events"][event["id"]] = module.store_image(
-            image or module.summary_image(event), assets, event
-        )
+        entry = module.store_image(image or module.summary_image(event), assets, event)
+        if profile:
+            entry["figures"] = [module.store_image(profile, assets, event)]
+        manifest["events"][event["id"]] = entry
     path = destination / "manifest.json"
     path.write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
     return path
@@ -741,14 +880,25 @@ def main():
         default=EXTRA_COUNT,
         help=f"How many extra circling stories (default {EXTRA_COUNT}; more page the archive and their topic)",
     )
+    parser.add_argument(
+        "--story-pages",
+        action="store_true",
+        help="Add the winds day, the mismatch story and its explainer, related links, and profiles",
+    )
     args = parser.parse_args()
     value = (
         legacy_snapshot()
         if args.legacy
-        else site_snapshot(args.mode, args.as_of, extra=not args.no_extra, extra_count=args.extra_count)
+        else site_snapshot(
+            args.mode,
+            args.as_of,
+            extra=not args.no_extra,
+            extra_count=args.extra_count,
+            story_pages=args.story_pages,
+        )
     )
     if args.media:
-        site_media(value, args.media)
+        site_media(value, args.media, profiles=args.story_pages)
     json.dump(value, sys.stdout, ensure_ascii=False)
 
 

@@ -1887,6 +1887,7 @@ figcaption {
 }
 
 .type-background,
+.aircraft-related,
 .related-stories {
   margin-block: 48px;
   padding-top: 28px;
@@ -1894,6 +1895,7 @@ figcaption {
 }
 
 .type-background h2,
+.aircraft-related h2,
 .related-stories h2 {
   margin: 0 0 18px;
   font-size: 30px;
@@ -1962,6 +1964,7 @@ figcaption {
   font-weight: 600;
 }
 
+.aircraft-related ul,
 .related-group ul,
 .related-hubs ul,
 .hub-list,
@@ -1971,12 +1974,14 @@ figcaption {
   list-style: none;
 }
 
+.aircraft-related li,
 .related-group li {
   padding-block: 8px;
   border-bottom: 1px solid var(--line);
   font-size: 15px;
 }
 
+.aircraft-related :is(time, .related-label),
 .related-group time,
 .hub-list span,
 .topic-count {

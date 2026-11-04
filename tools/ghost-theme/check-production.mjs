@@ -21,6 +21,11 @@ import { indexCopy, topicCopy } from "./topics.mjs";
 const directory = await fs.mkdtemp(path.join(output, "production-check-"));
 const media = await fs.mkdtemp(path.join(output, "production-media-"));
 const legacyDirectory = await fs.mkdtemp(path.join(output, "production-old-"));
+// The story page fixture (explainer pages) builds apart from the main one.
+const pagesDirectory = await fs.mkdtemp(path.join(output, "production-pages-"));
+const pagesMedia = await fs.mkdtemp(
+  path.join(output, "production-pages-media-"),
+);
 const privateDir = await privateScratch("production-check-");
 const network = `wtf-production-check-${process.pid}`;
 const backend = `${network}-site`;
@@ -1400,14 +1405,70 @@ print(json.dumps({'review':json.dumps(review),'published':json.dumps(export(ledg
     assert.deepEqual(errors, []);
     await context.close();
   }
+
+  // An explainer page in production: indexed, in the pages sitemap with its
+  // write time, in the theme's search, and not a story in the feed.
+  const pagesJson = run("python3", [
+    "-B",
+    path.join(tools, "site_fixtures.py"),
+    "--mode",
+    "published",
+    "--no-extra",
+    "--story-pages",
+    "--media",
+    pagesMedia,
+  ]);
+  const pagesInput = path.join(privateDir, "pages-snapshot.json");
+  await fs.writeFile(pagesInput, pagesJson, { mode: 0o600 });
+  run(
+    "node",
+    build(
+      pagesInput,
+      pagesDirectory,
+      "--production",
+      "--media",
+      path.join(pagesMedia, "manifest.json"),
+    ),
+  );
+  const [explainer] = JSON.parse(pagesJson).explainers;
+  const pagesFile = (route) =>
+    fs.readFile(
+      path.join(pagesDirectory, route, route.endsWith("/") ? "index.html" : ""),
+      "utf8",
+    );
+  const explainerHtml = await pagesFile(explainer.path);
+  assert.ok(indexed(explainerHtml));
+  assert.equal(h1(explainerHtml), explainer.title);
+  assert.equal(node(explainerHtml, "WebPage").name, explainer.title);
+  assert.ok(
+    (await pagesFile("/sitemap-pages.xml")).includes(
+      `<url><loc>${ORIGIN}${explainer.path}</loc><lastmod>${explainer.written_at}</lastmod></url>`,
+    ),
+  );
+  assert.ok(
+    JSON.parse(await pagesFile("/search-index/index.txt")).some(
+      (item) => item.url === explainer.path,
+    ),
+  );
+  assert.ok(!(await pagesFile("/rss/index.xml")).includes(explainer.path));
+  assert.ok(
+    JSON.parse(await pagesFile("/routes.json")).includes(explainer.path),
+  );
   console.log(
-    `Production checks passed: ${pages.size} pages, ${indexable.size} indexable, ${listed.size} in sitemaps; titles, heads, JSON-LD, gates, hubs, archive page links and data, crawl depth, feed, robots, root icons, fonts, caching, the access log, privacy, withdrawn-story redirects, and the old snapshot shape.`,
+    `Production checks passed: ${pages.size} pages, ${indexable.size} indexable, ${listed.size} in sitemaps; titles, heads, JSON-LD, gates, hubs, archive page links and data, crawl depth, feed, robots, root icons, fonts, caching, the access log, privacy, withdrawn-story redirects, explainer pages, and the old snapshot shape.`,
   );
 } finally {
   if (close) await close();
   for (const name of [frontend, backend, ...broken])
     spawnSync("docker", ["rm", "--force", name], { stdio: "ignore" });
   spawnSync("docker", ["network", "rm", network], { stdio: "ignore" });
-  for (const folder of [directory, media, legacyDirectory, privateDir])
+  for (const folder of [
+    directory,
+    media,
+    legacyDirectory,
+    pagesDirectory,
+    pagesMedia,
+    privateDir,
+  ])
     await fs.rm(folder, { recursive: true, force: true });
 }

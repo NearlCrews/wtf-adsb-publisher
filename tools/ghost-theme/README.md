@@ -293,7 +293,11 @@ TCAS advisories, stratospheric balloons, thermal soaring, and aerobatic practice
 add a 1200 by 400 altitude profile: barometric altitude against minutes from the
 first report, split where the map's track splits, with the other aircraft for an
 advisory. The media manifest lists it under the event's `figures` with the role
-`profile`, and the site model passes it to the page as `profileImage`.
+`profile`, and the site model passes it to the page as `profileImage`. The
+page shows it directly below the track map, or in the map's place when there is
+none, with the alt text "Altitude over time for this episode" and the caption
+"Pressure altitude against time.", which adds "for both aircraft in the
+advisory" when an advisory's profile draws the other aircraft.
 
 ```sh
 .venv/bin/python tools/run_autopilot.py --dry-run \
@@ -346,6 +350,7 @@ slugs) or from `topics.json`; the build never derives a slug from free text.
 | Airframe | `/aircraft/{type}/{registration}/` | built only with two or more stories; indexed when one of them is |
 | Operators | `/operators/`, `/operators/{operator}/` | an operator with three or more stories of which one is indexed; the index when it lists an indexed operator |
 | Weekly picks | `/weekly/` (the first ten; later pages stay in the snapshot's `/event-pages/` archive) | yes |
+| Explainers | each page the snapshot's `explainers` key lists, at its `/explainers/{slug}/` path | yes |
 | Pages | `/field-guide/`, `/about/`, `/about/image-credits/`, `/author/<author slug>/` | yes |
 | Feed, sitemaps | `/rss/`, `/sitemap.xml` and five `/sitemap-*.xml` files | production only |
 | Journal data | `/event-data/`, `/event-pages/`, `/search-index/` | no; robots.txt disallows them |
@@ -359,7 +364,12 @@ one and a template about another aircraft is not new prose. Story pages carry
 breadcrumbs, a topic, and type eyebrow with the reception-source badge (its
 long label as the title; cards and tiles carry the same badge beside their
 date), the observed and published dates, the lead visual, the story prose, "About the {type}" with sourced profile facts,
-the evidence card, and related stories (at most five more about the airframe).
+the evidence card, "More about this aircraft", and related stories.
+"More about this aircraft" lists the event's `related` links: its earlier
+stories with their dates, then the explainer pages, each labeled "Background".
+A story with that list leaves the airframe group out of "Related stories", and
+the stories it lists appear in no other group there; a story without it keeps
+the airframe group (at most five more about the airframe).
 A track map or chart leads, else the Planespotters photo of the airframe, else
 the representative type photo. A story page shows one photo of its aircraft:
 the type photo appears only when the story has no airframe photo. Cards never
@@ -372,7 +382,9 @@ rules in one place. A story about a disputed identity (`identity_conflict`,
 or one whose identity checks found a conflict (the snapshot event's
 `identity_conflict` flag) gets no airframe photo, since the photo of the listed
 registration may show another aircraft. A subjectless story, such as a winds
-aloft day, gets no photo at all.
+aloft day, gets no photo at all: its page shows no type box, map, or "More
+about this aircraft" list, its day summary card leads, and the evidence block
+still lists the winds numbers.
 
 Search metadata dates a story by its release time (`released_at`): JSON-LD
 `datePublished` and `article:published_time`. A story exported without a
@@ -443,7 +455,13 @@ top-level `explainers` key, in path order, with its key, path, title, summary,
 sections, sources, limitations, facts, and write time; the validator requires
 every explainer link to match a page there by path and title. The Canadian
 address explainer is `explainer:canadian-addresses` at
-`/explainers/canadian-addresses/`.
+`/explainers/canadian-addresses/`. The build renders each explainer at its path
+in the page layout, with no photo or map: its sections as headings and
+paragraphs with numbered source links, the facts it was written from as a short
+list, the stories whose related list links to it, its sources, and its
+limitations. It is indexed, listed in the pages sitemap with its write time,
+and in the theme's search; it is not a story, so it stays out of the feed,
+lists, and counts. A snapshot without the key builds no explainer page.
 
 Each build writes `routes.json`, one sorted JSON list of every generated route:
 each HTML page, each file (`/robots.txt`, `/rss/`, `/search-index/`, the
@@ -454,7 +472,10 @@ checks audit. Caddy serves neither file.
 
 `site_fixtures.py` writes invented review or published snapshots through the
 real ledger and validators, with story, context, and story-less events, and
-`--media DIR` adds tracks, a speed chart, and summary cards. `--extra-count N`
+`--media DIR` adds tracks, a speed chart, and summary cards. `--story-pages`
+adds a subjectless winds aloft day, a Canadian address mismatch story with the
+explainer that covers it, a related link between the two HL7635 stories, and
+the balloon's altitude profile. `--extra-count N`
 writes N story-less circling stories in place of 15, which pages the archive
 and their topic. The production, weekly, and browser checks use it. Their scratch inputs go to
 `WTF_CHECK_SCRATCH`, the ignored `.private/` when it exists, or the system

@@ -43,6 +43,7 @@ import {
   pageLinks,
   pageUrl,
   paginate,
+  profileFigure,
   shortDate,
   siteModel,
   storyPhotos,
@@ -244,6 +245,7 @@ const model = siteModel(snapshot.events, {
   cardPhotos,
   profiles,
   retired: snapshot.retired || [],
+  explainers: snapshot.explainers || [],
 });
 const journal = createJournal(snapshot, {
   references: imported?.references,
@@ -929,8 +931,16 @@ for (const story of model.stories) {
   // story's other lead (the type photo or a summary). An airframe photo below
   // a map keeps its own size; a type photo that does not lead joins "About
   // the type". Cards, feeds, and social images keep the story's lead.
+  // The altitude profile sits below the map, or takes its place when there
+  // is none. A subjectless page shows no map: its lead is the day summary.
   const airframe = airframePhotos.get(story.id);
-  const visual = airframe && !charted(story.leadMedia) ? null : story.leadMedia;
+  const lead =
+    story.subjectless && story.leadMedia?.kind === "track"
+      ? null
+      : story.leadMedia;
+  const profile = profileFigure(story.profileImage, story.kind);
+  const map = charted(lead) ? lead : null;
+  const visual = map || profile || (airframe ? null : lead);
   const caption = visual?.caption
     ? escape(visual.caption) +
       (visual.creditPath
@@ -941,7 +951,10 @@ for (const story of model.stories) {
   const typePhoto = story.photo && story.photo !== visual ? story.photo : null;
   const sources = story.profile.sources;
   const typeBackground =
-    typeName && !story.typeInBody && (story.profile.facts.length || typePhoto)
+    typeName &&
+    !story.subjectless &&
+    !story.typeInBody &&
+    (story.profile.facts.length || typePhoto)
       ? {
           name: typeName,
           hubUrl: story.typeHub.url,
@@ -1016,11 +1029,16 @@ for (const story of model.stories) {
     breadcrumbs: story.breadcrumbs.slice(0, -1),
     feature_media: visual ? { ...visual, event_id: story.id } : undefined,
     feature_image_caption: caption,
+    profile_image: map && profile ? profile : undefined,
+    subjectless: story.subjectless,
     airframe_photo: airframe
       ? airframeFigure(airframe, story.registration)
       : undefined,
     type_background: typeBackground,
     type_background_first: story.proseInBody,
+    aircraft_related: story.aircraftRelated.length
+      ? { items: story.aircraftRelated }
+      : null,
     related:
       story.related.groups.length || story.related.hubs.length
         ? {
@@ -1433,6 +1451,17 @@ for (const chunk of paginate(weekly.picks, weeklyBase, WEEKLY_PER_PAGE)) {
   );
 }
 
+// The structured data of a site page or an explainer.
+const webPage = (url, name, description) => ({
+  "@type": "WebPage",
+  "@id": absolute(origin, url),
+  url: absolute(origin, url),
+  name,
+  description,
+  inLanguage: "en",
+  isPartOf: { "@id": `${origin}/#website` },
+});
+
 // Site pages: the field guide, About, and its image credits.
 const notes =
   !imported || journal.events.some((event) => event.synthetic)
@@ -1466,15 +1495,45 @@ for (const page of [...pages, imageCreditsPage]) {
       lastmod: post.updated,
       image: siteImage,
       jsonLd: graph(
+        webPage(post.url, post.title, post.custom_excerpt),
+        breadcrumbList(origin, crumbs),
+      ),
+    },
+  });
+}
+
+// Explainer pages, written once by the weekly research: sections, the facts
+// they were written from, the stories they explain, sources, and limitations,
+// in the site's page layout with no photo or map.
+const explainerBody = partialTemplate("explainer-body");
+for (const page of model.explainers) {
+  const crumbs = trail({ name: page.title, url: page.url });
+  const description = truncate(page.summary);
+  await render("page", page.url, {
+    post: {
+      title: page.title,
+      custom_excerpt: page.summary,
+      url: page.url,
+      html: explainerBody(
         {
-          "@type": "WebPage",
-          "@id": absolute(origin, post.url),
-          url: absolute(origin, post.url),
-          name: post.title,
-          description: post.custom_excerpt,
-          inLanguage: "en",
-          isPartOf: { "@id": `${origin}/#website` },
+          ...page,
+          stories: page.stories.map((story) => entry(story, true)),
         },
+        { data },
+      ),
+      ...visibleCrumbs(crumbs),
+    },
+    seo: {
+      url: page.url,
+      title: pageTitle(page.title),
+      socialTitle: page.title,
+      description,
+      indexable: true,
+      sitemap: "pages",
+      lastmod: page.writtenAt,
+      image: siteImage,
+      jsonLd: graph(
+        webPage(page.url, page.title, description),
         breadcrumbList(origin, crumbs),
       ),
     },
@@ -1568,14 +1627,20 @@ for (const route of collisions)
 
 // The theme's own search reads this JSON index (see routes.yaml). The static
 // preview stores it as a directory index its file server can return.
-const searchIndex = JSON.stringify(
-  model.stories.map((story) => ({
+const searchIndex = JSON.stringify([
+  ...model.stories.map((story) => ({
     title: encodeURIComponent(story.headline),
     excerpt: encodeURIComponent(story.dek),
     topic: encodeURIComponent(story.topicHub.title),
     url: story.url,
   })),
-);
+  ...model.explainers.map((page) => ({
+    title: encodeURIComponent(page.title),
+    excerpt: encodeURIComponent(page.summary),
+    topic: encodeURIComponent("Explainer"),
+    url: page.url,
+  })),
+]);
 JSON.parse(searchIndex);
 await fs.mkdir(path.join(target, "search-index"));
 await fs.writeFile(path.join(target, "search-index/index.txt"), searchIndex);

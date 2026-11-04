@@ -1,0 +1,4 @@
+<section class="aircraft-related column" aria-labelledby="aircraft-related-title">
+  <h2 id="aircraft-related-title">More about this aircraft</h2>
+  <ul>{{#foreach items}}<li><a href="{{url}}">{{title}}</a> {{#if background}}<span class="related-label">Background</span>{{else}}<time datetime="{{observedStart}}">{{dateLabel}}</time>{{/if}}</li>{{/foreach}}</ul>
+</section>

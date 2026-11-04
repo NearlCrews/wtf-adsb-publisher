@@ -1,0 +1,14 @@
+{{#foreach sections}}
+<h2>{{heading}}</h2>
+<p>{{text}}{{#foreach sources}} <a href="#explainer-source-{{this}}" aria-label="Source {{this}}">[{{this}}]</a>{{/foreach}}</p>
+{{/foreach}}
+<h2>What this page is based on</h2>
+<ul class="explainer-facts">{{#foreach facts}}<li>{{this}}</li>{{/foreach}}</ul>
+{{#if stories}}
+<h2>Stories this page explains</h2>
+<ul class="explainer-stories">{{#foreach stories}}<li><a href="{{url}}">{{headline}}</a> <time datetime="{{observedStart}}">{{observedLabel}}</time></li>{{/foreach}}</ul>
+{{/if}}
+<h2>Sources</h2>
+<ol class="explainer-sources">{{#foreach sources}}<li id="explainer-source-{{number}}"><a href="{{url}}" rel="external noopener noreferrer">{{title}}</a>, {{publisher}}</li>{{/foreach}}</ol>
+<h2>Limitations</h2>
+<ul class="explainer-limitations">{{#foreach limitations}}<li>{{this}}</li>{{/foreach}}</ul>
