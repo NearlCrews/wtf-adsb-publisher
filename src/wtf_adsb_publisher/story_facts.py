@@ -493,21 +493,38 @@ def display_name(text, *, registration=None):
     """
     if not isinstance(text, str):
         return text
-    names = (table("display_names") or {}).get("names", {})
-    for wrong in sorted(names, key=len, reverse=True):
-        right = names[wrong]
-        if isinstance(right, dict):
-            prefix = right.get("when_registration_prefix")
-            if not (
-                isinstance(prefix, str) and isinstance(registration, str) and registration.startswith(prefix)
-            ):
-                continue
-            right = right.get("name")
-        if isinstance(right, str):
-            text = re.sub(
-                rf"(?<![A-Za-z0-9]){re.escape(wrong)}(?![A-Za-z0-9])", lambda _match, name=right: name, text
-            )
+    for pattern, name, prefix in _display_rules():
+        if prefix is not None and not (isinstance(registration, str) and registration.startswith(prefix)):
+            continue
+        text = pattern.sub(lambda _match, name=name: name, text)
     return text
+
+
+# The display rules compiled from the table object they came from (table() is cached, so the
+# same object comes back until its cache is cleared or a test replaces it).
+_DISPLAY_RULES = [None, ()]
+
+
+def _display_rules():
+    """display_names.json as (whole-name pattern, display name, registration prefix or None),
+    longest misspelling first."""
+    data = table("display_names")
+    if _DISPLAY_RULES[0] is not data:
+        names = (data or {}).get("names", {})
+        rules = []
+        for wrong in sorted(names, key=len, reverse=True):
+            right, prefix = names[wrong], None
+            if isinstance(right, dict):
+                prefix = right.get("when_registration_prefix")
+                if not isinstance(prefix, str):
+                    continue
+                right = right.get("name")
+            if isinstance(right, str):
+                rules.append(
+                    (re.compile(rf"(?<![A-Za-z0-9]){re.escape(wrong)}(?![A-Za-z0-9])"), right, prefix)
+                )
+        _DISPLAY_RULES[:] = [data, tuple(rules)]
+    return _DISPLAY_RULES[1]
 
 
 def _text(value, limit=200):

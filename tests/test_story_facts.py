@@ -1552,6 +1552,25 @@ class KindTitleTests(unittest.TestCase):
 
 
 class DisplayNameTests(unittest.TestCase):
+    def test_the_display_table_is_read_and_compiled_once(self):
+        story_facts.table.cache_clear()
+        reads = []
+        original = Path.read_bytes
+
+        def counting(path):
+            reads.append(path.name)
+            return original(path)
+
+        try:
+            with patch.object(Path, "read_bytes", counting):
+                for _ in range(20):
+                    story_facts.display_name("BEECH 18 Expetitor")
+                rules = story_facts._display_rules()
+                self.assertIs(story_facts._display_rules(), rules)
+        finally:
+            story_facts.table.cache_clear()
+        self.assertEqual(reads.count("display_names.json"), 1)
+
     def test_display_names_replace_database_typos(self):
         self.assertEqual(story_facts.display_name("BEECH 18 Expetitor"), "Beech 18 Expeditor")
         self.assertEqual(story_facts.display_name("Russel Wilson"), "Russell Wilson")
@@ -1575,8 +1594,15 @@ class DisplayNameTests(unittest.TestCase):
         raw = fixtures.kind_event("watchlist_match")
         raw["evidence"]["watchlist"]["association"] = "Russel Wilson"
         self.assertEqual(values(fixtures.facts(raw))["wl.association"]["value"], "Russell Wilson")
-        with patch.dict(story_facts.table("display_names")["names"], {"Qantas": "Qantas Airways"}):
+        # The compiled rules follow a replaced table (they are keyed by the table object).
+        original = story_facts.table
+        names = original("display_names")
+        changed = {**names, "names": {**names["names"], "Qantas": "Qantas Airways"}}
+        with patch.object(
+            story_facts, "table", lambda name: changed if name == "display_names" else original(name)
+        ):
             ids = values(fixtures.facts(fixtures.kind_event("first_operator_here")))
+        self.assertEqual(story_facts.display_name("Qantas"), "Qantas")
         self.assertEqual(ids["op.callsign"]["value"], "Qantas Airways")
         self.assertEqual(ids["fs.operator"]["value"], "Qantas Airways")
 

@@ -1330,6 +1330,38 @@ class StoryPublicationTests(unittest.TestCase):
         ledger["records"][0]["evidence"]["kind"] = "winds_aloft_day"
         self.assertEqual(len(autopilot.related_stories(ledger, packet, later["key"])), 6)
 
+    def test_the_related_index_lists_what_a_full_scan_lists(self):
+        ledger = public.new_ledger("2026-07-01")
+        items = []
+        for identifier in range(1, 6):
+            item = candidate(identifier, "watch_type", 1, day=-identifier)
+            item["source"]["evidence"]["aircraft"].update(t="B52", r="N3774" if identifier % 2 else "N1111")
+            items.append(item)
+        autopilot.stage(ledger, items[:4], at=NOW)
+        later = candidate(9, "vintage")
+        later["source"]["evidence"]["aircraft"]["r"] = "N3774"
+        packet = autopilot.evidence(later["source"], later["interval"])
+        index = autopilot.RelatedIndex(ledger)
+        scanned = autopilot.related_stories(ledger, packet, later["key"])
+        self.assertEqual(len(scanned), 2)
+        self.assertEqual(autopilot.related_stories(ledger, packet, later["key"], index), scanned)
+        self.assertEqual(index.count, len(ledger["records"]))
+        # A record the pass adds is indexed before the next lookup.
+        autopilot.stage(ledger, items[4:], at=NOW)
+        scanned = autopilot.related_stories(ledger, packet, later["key"])
+        self.assertEqual(len(scanned), 3)
+        self.assertEqual(autopilot.related_stories(ledger, packet, later["key"], index), scanned)
+        # An indexed record whose registration changed in place never matches the old one.
+        ledger["records"][0]["evidence"]["aircraft"]["registration"] = "N9999"
+        self.assertEqual(
+            autopilot.related_stories(ledger, packet, later["key"], index),
+            autopilot.related_stories(ledger, packet, later["key"]),
+        )
+        self.assertEqual(
+            autopilot.editorial_inputs(ledger, packet, later["key"], related_index=index)["related"],
+            autopilot.editorial_inputs(ledger, packet, later["key"])["related"],
+        )
+
     def test_a_pass_works_out_each_storys_fact_ids_once(self):
         autopilot.stage(self.ledger, [candidate(index) for index in (1, 2, 3)], at=NOW)
         records = self.ledger["records"]
@@ -1617,9 +1649,9 @@ class StoryPublicationTests(unittest.TestCase):
         calls = []
         original = autopilot.editorial_inputs
 
-        def inputs(ledger, packet, key, *, points=None, inputs=autopilot.NO_INPUTS, facts=None):
+        def inputs(ledger, packet, key, *, points=None, inputs=autopilot.NO_INPUTS, facts=None, **rest):
             calls.append((key, points, *inputs))
-            return original(ledger, packet, key, points=points, inputs=inputs, facts=facts)
+            return original(ledger, packet, key, points=points, inputs=inputs, facts=facts, **rest)
 
         item = candidate(1)
         item["source"]["evidence"]["track"] = [

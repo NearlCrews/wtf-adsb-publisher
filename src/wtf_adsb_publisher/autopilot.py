@@ -530,7 +530,35 @@ def _story_facts(packet, points, inputs=NO_INPUTS, related=()):
     )
 
 
-def related_stories(ledger, packet, key):
+class RelatedIndex:
+    """A ledger's records by registration, for related_stories over one pass.
+
+    It indexes the records once and again only when the ledger gains or loses a record.
+    related_stories still checks each record's own registration, so an indexed record whose
+    evidence changed in the pass never matches the wrong airframe; a change to related is
+    never a correction, so one gained in place waits for the next pass.
+    """
+
+    def __init__(self, ledger):
+        self.ledger = ledger
+        self.count = None
+        self.by_registration = {}
+
+    def candidates(self, registration):
+        records = self.ledger.get("records", [])
+        if self.count != len(records):
+            self.by_registration = {}
+            for record in records:
+                evidence = record.get("evidence") if isinstance(record, dict) else None
+                aircraft = evidence.get("aircraft") if isinstance(evidence, dict) else None
+                listed = aircraft.get("registration") if isinstance(aircraft, dict) else None
+                if isinstance(listed, str):
+                    self.by_registration.setdefault(listed, []).append(record)
+            self.count = len(records)
+        return self.by_registration.get(registration, ())
+
+
+def related_stories(ledger, packet, key, index=None):
     """The live stories of the packet's registration observed by its start and at most
     story_facts.REPEAT_DAYS before it, newest first, as
     [{"date", "kind", "path", "title", "observed_start"}].
@@ -538,16 +566,18 @@ def related_stories(ledger, packet, key):
     The story's own record (episode `key`) is never among them. A subjectless story's
     aircraft are examples, so it has none and is none. story_facts.build reads the list for
     repeat.previous; editorial() keeps the newest public.KEPT_RELATED, and each export
-    lists the newest public.MAX_RELATED of those it publishes.
+    lists the newest public.MAX_RELATED of those it publishes. `index`, a RelatedIndex of
+    the same ledger, saves the scan of every record when a pass asks for many stories.
     """
     registration = (packet.get("aircraft") or {}).get("registration")
     start = _quiet(lambda: public.instant(packet["observation"]["start_utc"]))
     if packet.get("kind") in public.SUBJECTLESS_KINDS or not registration or start is None:
         return []
     found = []
-    for record in ledger.get("records", []):
+    records = index.candidates(registration) if index is not None else ledger.get("records", [])
+    for record in records:
         evidence = record.get("evidence") or {}
-        # The cheap registration test first: a pass calls this once for every record.
+        # The cheap registration test first: without an index, every record is scanned.
         if (
             not isinstance(evidence, dict)
             or (evidence.get("aircraft") or {}).get("registration") != registration
@@ -605,7 +635,18 @@ def _with_related(metadata, related):
     return metadata
 
 
-def editorial_inputs(ledger, packet, key, *, points=None, inputs=NO_INPUTS, recent_until=None, facts=None):
+def editorial_inputs(
+    ledger,
+    packet,
+    key,
+    *,
+    points=None,
+    inputs=NO_INPUTS,
+    recent_until=None,
+    facts=None,
+    related=None,
+    related_index=None,
+):
     """Keyword arguments for editorial(): earlier stories, typed facts and slugs in use.
 
     stage() and the bootstrap both call this, so every story is written from the
@@ -615,9 +656,12 @@ def editorial_inputs(ledger, packet, key, *, points=None, inputs=NO_INPUTS, rece
     when a caller has built them from the same arguments, are used as given. `recent`
     holds the stories observed by this one's start, or by `recent_until` (an aware
     datetime) when a caller, such as the AI writer, compares against later stories too.
+    `related`, when a caller has already listed them (related_stories), is used as given;
+    `related_index` (RelatedIndex) serves the lookup otherwise.
     """
     others = [record for record in ledger.get("records", []) if record.get("episode_key") != key]
-    related = related_stories(ledger, packet, key)
+    if related is None:
+        related = related_stories(ledger, packet, key, related_index)
     if facts is None:
         facts = _story_facts(packet, points, inputs, related)
     # Withdrawn records keep their Ghost drafts, so their slugs stay taken.
@@ -664,13 +708,33 @@ def editorial(packet, key, *, recent=None, facts=None, taken=None, exceptional=N
     return _with_related(metadata, related)
 
 
-def written(ledger, packet, key, *, points=None, inputs=NO_INPUTS, exceptional=None, facts=None):
+def written(
+    ledger,
+    packet,
+    key,
+    *,
+    points=None,
+    inputs=NO_INPUTS,
+    exceptional=None,
+    facts=None,
+    related=None,
+    related_index=None,
+):
     """The story metadata for a packet, written from editorial_inputs(), and its facts.
 
     Every production path writes stories through here, so none can leave out the
     earlier stories, place, type profiles, or entry organizations a story is written from.
     """
-    parts = editorial_inputs(ledger, packet, key, points=points, inputs=inputs, facts=facts)
+    parts = editorial_inputs(
+        ledger,
+        packet,
+        key,
+        points=points,
+        inputs=inputs,
+        facts=facts,
+        related=related,
+        related_index=related_index,
+    )
     return editorial(packet, key, exceptional=exceptional, **parts), parts["facts"]
 
 
@@ -1023,6 +1087,7 @@ def stage(ledger, candidates, *, at, inputs=NO_INPUTS):
     """
     rejected, changed, failures = 0, 0, []
     index = _Index(ledger["records"])
+    related_index = RelatedIndex(ledger)
     for candidate in candidates:
         source, key = candidate["source"], candidate["key"]
         identity = source_association(source, candidate)
@@ -1087,6 +1152,7 @@ def stage(ledger, candidates, *, at, inputs=NO_INPUTS):
                     points=_points(source),
                     inputs=inputs,
                     exceptional=exceptional,
+                    related_index=related_index,
                 )
                 if existing:
                     metadata = _carried(existing["editorial"], metadata, facts)
@@ -1149,6 +1215,7 @@ def refresh_prose(ledger, at, *, inputs=NO_INPUTS):
     tag that still passes. The next publication pass releases the revision.
     """
     revised = 0
+    related_index = RelatedIndex(ledger)
     for record in list(ledger["records"]):
         story = record["editorial"].get("story") if isinstance(record.get("editorial"), dict) else None
         if record.get("state") == "withdrawn" or not isinstance(story, dict) or not record_valid(record):
@@ -1156,14 +1223,17 @@ def refresh_prose(ledger, at, *, inputs=NO_INPUTS):
         try:
             packet, key = record["evidence"], record["episode_key"]
             points = record_points(record)
-            facts = _story_facts(packet, points, inputs, related_stories(ledger, packet, key))
+            related = related_stories(ledger, packet, key, related_index)
+            facts = _story_facts(packet, points, inputs, related)
             if story.get("version", 0) >= engine.PROSE_POLICY:
                 # New facts can require a qualification even when cited values stay the same.
                 if facts["digest"] == story.get("facts_digest") or _holds(story, facts):
                     continue
             elif story.get("source") == "ai" and _holds(story, facts):
                 continue
-            fresh, facts = written(ledger, packet, key, points=points, inputs=inputs, facts=facts)
+            fresh, facts = written(
+                ledger, packet, key, points=points, inputs=inputs, facts=facts, related=related
+            )
             replacement = _carried(record["editorial"], fresh, facts)["story"]
             metadata = {
                 **{name: value for name, value in record["editorial"].items() if name != "related"},
