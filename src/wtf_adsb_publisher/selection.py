@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from . import curation, kinds
+from . import curation, kinds, reference
 from .curation import ENVELOPE_KINDS, IDENTITY_KINDS, RECORD_KINDS, _mapping
 from .rules import (
     ARCHIVE_SQUAWK_PREFIX,
@@ -101,6 +101,23 @@ FIXED_SCORES = kinds.table(
         "unregistered_address",
     ),
 )
+# Shape kinds and their scores. The episode kinds keep their block under "maneuver"
+# rather than "pattern"; their confirmation window stands for the saved shape check.
+PATTERN_SCORES = {
+    "circling": 80,
+    "repeated_passes": 78,
+    "loitering": 75,
+    "confined_activity": 45,
+    "aerobatic_practice": 80,
+    "racetrack_orbit": 80,
+}
+# A rare type seen here on at most this many earlier days, by this airframe and by the type,
+# is a story.
+RARE_STORY_DAYS = 1
+# A holding pattern of at least this long is a story rather than context (curation.context_only).
+HOLDING_STORY_SECONDS = curation.HOLDING_STORY_SECONDS
+# An emitter category is a story when the listed type's class agrees with it.
+EMITTER_CLASSES = {"B1": frozenset({"glider"}), "B2": frozenset({"balloon", "airship"})}
 # A novelty claim (first sighting, notable variant) needs two reports at least 8 s apart.
 NOVELTY_MIN_HITS = 2
 NOVELTY_MIN_SECONDS = 8
@@ -127,6 +144,8 @@ def assess(event, profiles=None, *, independent=False, now=None):
     kind, value = event["kind"], number(event.get("value"))
     reasons, review, private = [], False, False
     score = 40
+    # An episode kind scored by its own rule keeps that score below.
+    own_score = False
     speed, altitude = performance_thresholds(aircraft, profiles)
     if kind in {"fast", "high"}:
         threshold = speed if kind == "fast" else altitude
@@ -148,6 +167,12 @@ def assess(event, profiles=None, *, independent=False, now=None):
         if _brief(event):
             score, review = 50, True
             reasons.append("A novelty claim needs two reports at least 8 seconds apart")
+    elif kind == "unusual_emitter":
+        category = aircraft.get("category")
+        agrees = reference.type_class(aircraft.get("t")) in EMITTER_CLASSES.get(category, ())
+        score = 75 if agrees else FIXED_SCORES[kind][0]
+        if not agrees:
+            reasons.append("The listed type's class does not confirm the declared category")
     elif kind in FIXED_SCORES:
         score, reason = FIXED_SCORES[kind]
         if reason:
@@ -182,7 +207,10 @@ def assess(event, profiles=None, *, independent=False, now=None):
         aircraft_days, type_days = number(rarity.get("aircraft_days")), number(rarity.get("type_days"))
         review = aircraft_days is None or type_days is None
         resident = (aircraft_days or 0) > 2 or (type_days or 0) > 3
-        score = 35 if resident else 70
+        if (aircraft_days or 0) <= RARE_STORY_DAYS and (type_days or 0) <= RARE_STORY_DAYS:
+            score = 75
+        else:
+            score = 35 if resident else 70
         reasons.append("Repeat days matter as well as the number of aircraft addresses")
     elif kind.startswith(SQUAWK_PREFIXES):
         # Only a confirmed live episode below can make a status story-eligible.
@@ -190,16 +218,25 @@ def assess(event, profiles=None, *, independent=False, now=None):
         reasons.append(
             "A transponder status needs a confirmed live episode; archived labels never confirm one"
         )
-    elif kind in {"circling", "repeated_passes", "loitering", "confined_activity"}:
-        pattern = _mapping(evidence.get("pattern"))
+    elif kind in PATTERN_SCORES:
+        saved = _mapping(evidence.get("pattern"))
+        pattern = saved or _mapping(evidence.get("maneuver"))
         review = pattern.get("quality_review_required") is not False
-        score = {"circling": 80, "repeated_passes": 78, "loitering": 75, "confined_activity": 45}[kind]
+        score = PATTERN_SCORES[kind]
         if review:
             score = min(score, 60)
             reasons.append("Source or geometry needs review before promotion")
-        if pattern.get("shape_verified") is not True:
+        if not pattern or (saved and saved.get("shape_verified") is not True):
             score, review = min(score, 60), True
             reasons.append("Saved pattern predates the closure/corridor checks")
+    elif kind == "possible_go_around":
+        # The approach alignment is a detection rule; its hypothesis is a context tag.
+        flags = _mapping(evidence.get("maneuver")).get("quality_flags")
+        low = isinstance(flags, list) and "low_position_quality" in flags
+        score, own_score = (60 if low else 75), True
+    elif kind == "prolonged_holding":
+        duration = number(_mapping(evidence.get("maneuver")).get("duration_seconds")) or 0
+        score, own_score = (76 if duration >= HOLDING_STORY_SECONDS else 40), True
     elif (
         kind in RECORD_KINDS
         or kind in RATED_KINDS
@@ -256,7 +293,8 @@ def assess(event, profiles=None, *, independent=False, now=None):
         ):
             review = True
             reasons.append("Consecutive above-threshold reports have not been established")
-        score = 95 if kind.startswith(LIVE_SQUAWK_PREFIX) else 80
+        if not own_score:
+            score = 95 if kind.startswith(LIVE_SQUAWK_PREFIX) else 80
         private = private and review
         if review:
             score = min(score, 60)

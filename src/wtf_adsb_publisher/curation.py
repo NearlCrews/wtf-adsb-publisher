@@ -198,6 +198,8 @@ def _code(evidence):
     return code if isinstance(code, str) else None
 
 
+# A holding pattern this long is an independent story; a shorter one is context.
+HOLDING_STORY_SECONDS = 1200
 # Aerobatic-style practice near an airport or over a runway circuit is context only:
 # training circuits and approaches also reverse altitude often.
 AEROBATIC_CONTEXT_TAGS = frozenset({"terminal_area_context", "runway_circuit_context"})
@@ -208,8 +210,9 @@ def context_only(kind, evidence=None):
     # establishes a descent; missing direction cannot bypass the climb policy.
     evidence = _mapping(evidence)
     rate = number(_mapping(evidence.get("aircraft")).get("baro_rate"))
+    holding = number(_mapping(evidence.get("maneuver")).get("duration_seconds")) or 0
     return (
-        kind in CONTEXT_KINDS
+        (kind in CONTEXT_KINDS and not (kind == "prolonged_holding" and holding >= HOLDING_STORY_SECONDS))
         or (kind == "vertical" and (rate is None or rate >= 0))
         or (kind == "special_use_code" and _code(evidence) in CONTEXT_CODES)
         or (kind == "aerobatic_practice" and bool(context_tags(evidence) & AEROBATIC_CONTEXT_TAGS))
