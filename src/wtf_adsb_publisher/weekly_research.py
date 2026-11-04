@@ -486,10 +486,12 @@ def dossier(response, event, at):
             numbers=[item["value"] for item in brief["measurements"] if public_prose.finite(item["value"])],
         ):
             raise ValueError("Weekly research prose fails its checks: " + "; ".join(issues[:6]))
-    # Every saved section, the type sentence among them, writes no em or en dash and no ampersand.
+    # Every saved section, the type sentence among them, writes no em or en dash and no ampersand;
+    # prose_issues above has already checked the event sections.
     if any(
         weekly.DASH_OR_AMPERSAND.search(str(section[key]))
         for section in sections
+        if not (scoped and section["scope"] == "event_background")
         for key in ("heading", "text")
     ):
         raise ValueError("Weekly research prose has a dash or an ampersand")

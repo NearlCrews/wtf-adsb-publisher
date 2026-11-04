@@ -35,6 +35,12 @@ AIRFRAME_SCOPES = frozenset({"interpretation", "airframe_history", "event_backgr
 # The research prompt forbids calling the sighting a "match"; an older reason that
 # does is replaced when its dossier is carried over.
 MATCH_PHRASE = re.compile(r"\bmatch(?:es|ed|ing)?\b", re.I)
+# An explainer refused this many times is given up for a while; it is tried again, once, each
+# time this long has passed since it was given up.
+EXPLAINER_ATTEMPTS = 3
+GIVE_UP_SECONDS = 30 * 86400
+# The failures one research attempt records rather than raises.
+ATTEMPT_ERRORS = (OSError, ValueError, TypeError, KeyError, sqlite3.Error)
 
 
 def receipt_file(directory, start, event):
@@ -324,6 +330,10 @@ def plan(config, *, count=13, at=None, carry_over=None):
         elif saved.exists() or saved.with_suffix(".response.json").exists():
             # A saved receipt is attached without a new request.
             entry["state"] = "recover"
+        elif (previous := status.get("explainers", {}).get(key, {})).get("status") == "given_up" and waiting(
+            previous, None, at
+        ):
+            entry.update(state="given_up", given_up_at=previous.get("given_up_at"))
         else:
             cost = weekly.request_reservation(len(weekly.explainer_request_data(key, brief)))
             entry.update(state="research", stories=brief["stories"], reserved_usd=round(cost, 6))
@@ -411,6 +421,79 @@ def carry_over(config, path, *, count=13, at=None):
     return result
 
 
+def _elapsed(at, since):
+    return (public._instant(at) - public._instant(since)).total_seconds()
+
+
+def waiting(previous, receipt, at):
+    """Whether a researched item waits instead of paying for an attempt: none with a saved
+    receipt; else one given up waits GIVE_UP_SECONDS from then, and any other one
+    weekly.RETRY_SECONDS from its last attempt."""
+    if receipt is not None:
+        return False
+    if previous.get("status") == "given_up":
+        since = previous.get("given_up_at") or previous.get("last_attempt")
+        return bool(since) and _elapsed(at, since) < GIVE_UP_SECONDS
+    last = previous.get("last_attempt")
+    return bool(last) and _elapsed(at, last) < weekly.RETRY_SECONDS
+
+
+def research_item(
+    status,
+    entries,
+    name,
+    *,
+    status_path,
+    previous,
+    details,
+    receipt,
+    request,
+    validate,
+    save,
+    finish,
+    at,
+    on_error=None,
+    max_attempts=None,
+):
+    """One researched item, a weekly pick or an explainer; returns "stopped", "failed", or the
+    status finish() gave.
+
+    The status entry `entries[name]` is saved as researching before any paid request, so a
+    crash never repeats the spending. Without a recovered `receipt`, request() buys one;
+    (None, outcome) means a busy writer or an exhausted budget, which ends the pass and is no
+    failed attempt. A bought receipt is validated and privacy checked once (validate()); a
+    recovered one was checked when it was recovered. save() keeps it before finish() attaches
+    it, as (status, extra fields). A failed attempt records research_failed, with on_error()'s
+    fields; with max_attempts, the attempt that reaches it records given_up and its date
+    instead (waiting()).
+    """
+    try:
+        entries[name] = {**details, "status": "researching"}
+        public.write_json_atomic(status_path, status, private=True)
+        if receipt is None:
+            receipt, outcome = request()
+            if receipt is None:
+                entries[name] = {**previous, "status": outcome}
+                return "stopped"
+            receipt = validate(receipt)
+        save(receipt)
+        state, extra = finish(receipt)
+        entries[name] = {**details, "status": state, **extra}
+    except ATTEMPT_ERRORS as error:
+        entry = {
+            **details,
+            "status": "research_failed",
+            "error_type": type(error).__name__,
+            **(on_error(error) if on_error else {}),
+        }
+        if max_attempts is not None and details["attempts"] >= max_attempts:
+            entry.update(status="given_up", given_up_at=at)
+        entries[name] = entry
+        state = "failed"
+    public.write_json_atomic(status_path, status, private=True)
+    return state
+
+
 def recover(path, event, check_private):
     """Recover paid work after any crash between response, validation and attach."""
     raw_path = path.with_suffix(".response.json")
@@ -442,17 +525,24 @@ def recover_explainer(path, key, brief, check_private):
         receipt["page"] = weekly.explainer(receipt["response"], key, receipt["brief"], receipt["at"])
     else:
         return None
-    weekly_spotlight.validate_explainer(receipt["page"], as_of=public.now_utc())
-    check_private(json.dumps(receipt["page"], ensure_ascii=False).encode())
-    return receipt
+    return checked_explainer(receipt, check_private)
+
+
+def checked_explainer(receipt, check_private):
+    """The receipt with its page validated (normalized) and privacy checked."""
+    page = weekly_spotlight.validate_explainer(receipt["page"], as_of=public.now_utc())
+    check_private(json.dumps(page, ensure_ascii=False).encode())
+    return {**receipt, "page": page}
 
 
 def write_explainers(config, status, *, writer, at, check_private, budget):
     """Write each one-off explainer once its stories exist; returns (written, failed).
 
     A saved receipt is used before any paid request, and a failed attempt waits
-    weekly.RETRY_SECONDS. A busy writer or an exhausted budget ends the pass. `writer`
-    None loads the configured writer plugin when an explainer is due.
+    weekly.RETRY_SECONDS. After EXPLAINER_ATTEMPTS refusals the explainer is given up
+    and tried again only once GIVE_UP_SECONDS have passed (waiting). A busy writer or
+    an exhausted budget ends the pass. `writer` None loads the configured writer plugin
+    when an explainer is due.
     """
     state = Path(config["state_dir"])
     directory, ledger_path = state / "weekly", state / "ledger.json"
@@ -469,50 +559,54 @@ def write_explainers(config, status, *, writer, at, check_private, budget):
             receipt = recover_explainer(path, key, brief, check_private)
         except (OSError, ValueError, TypeError, KeyError):
             receipt = None
-        last_attempt = previous.get("last_attempt")
-        if (
-            receipt is None
-            and last_attempt
-            and (public._instant(at) - public._instant(last_attempt)).total_seconds() < weekly.RETRY_SECONDS
-        ):
+        if waiting(previous, receipt, at):
             continue
-        details = {
-            "last_attempt": at,
-            "attempts": previous.get("attempts", 0) + 1,
-            "stories": brief["stories"],
-        }
-        try:
-            explainers[key] = {**details, "status": "researching"}
-            public.write_json_atomic(directory / "status.json", status, private=True)
-            if receipt is None:
-                writer = writer or partial(weekly.one_off, requester=plugins.load("writer", config).send)
-                receipt, outcome = writer(
-                    config["budget_database"],
-                    key,
-                    brief,
-                    key_file=config["weekly_key_file"],
-                    save_response=lambda value, path=path, brief=brief: public.write_json_atomic(
-                        path.with_suffix(".response.json"), {**value, "brief": brief}, private=True
-                    ),
-                    **({"budget": budget} if budget is not None else {}),
-                )
-            if receipt is None:
-                explainers[key] = {**previous, "status": outcome}
-                break
-            page = weekly_spotlight.validate_explainer(receipt["page"], as_of=public.now_utc())
-            check_private(json.dumps(page, ensure_ascii=False).encode())
-            public.write_json_atomic(path, receipt, private=True)
+
+        def request(key=key, brief=brief, path=path):
+            send = writer or partial(weekly.one_off, requester=plugins.load("writer", config).send)
+            return send(
+                config["budget_database"],
+                key,
+                brief,
+                key_file=config["weekly_key_file"],
+                save_response=lambda value: public.write_json_atomic(
+                    path.with_suffix(".response.json"), {**value, "brief": brief}, private=True
+                ),
+                **({"budget": budget} if budget is not None else {}),
+            )
+
+        def finish(receipt):
+            page = receipt["page"]
             with public.ledger_lock(ledger_path):
                 current = public.read_json(ledger_path)
                 public._validate_ledger(current)
                 if weekly.add_explainer(current, page):
                     public.write_json_atomic(ledger_path, current, private=True)
-            explainers[key] = {**details, "status": "written", "written_at": page["written_at"]}
-            written += 1
-        except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as error:
-            explainers[key] = {**details, "status": "research_failed", "error_type": type(error).__name__}
-            failed += 1
-        public.write_json_atomic(directory / "status.json", status, private=True)
+            return "written", {"written_at": page["written_at"]}
+
+        outcome = research_item(
+            status,
+            explainers,
+            key,
+            status_path=directory / "status.json",
+            previous=previous,
+            details={
+                "last_attempt": at,
+                "attempts": previous.get("attempts", 0) + 1,
+                "stories": brief["stories"],
+            },
+            receipt=receipt,
+            request=request,
+            validate=lambda receipt: checked_explainer(receipt, check_private),
+            save=lambda receipt, path=path: public.write_json_atomic(path, receipt, private=True),
+            finish=finish,
+            at=at,
+            max_attempts=EXPLAINER_ATTEMPTS,
+        )
+        if outcome == "stopped":
+            break
+        written += outcome == "written"
+        failed += outcome == "failed"
     return written, failed
 
 
@@ -561,7 +655,6 @@ def run(config, *, count=13, researcher=None, explainer=None, at=None, budget=No
                 result["existing"] += 1
                 continue
             previous = status["weeks"].get(start, {})
-            last_attempt = previous.get("last_attempt")
             shortlist = weekly.candidates(ledger, snapshot, start)
             if not shortlist:
                 status["weeks"][start] = {"status": "no_eligible_observation", "checked_at": at}
@@ -582,12 +675,7 @@ def run(config, *, count=13, researcher=None, explainer=None, at=None, budget=No
                 if saved:
                     candidate, receipt = option, saved
                     break
-            if (
-                receipt is None
-                and last_attempt
-                and (public._instant(at) - public._instant(last_attempt)).total_seconds()
-                < weekly.RETRY_SECONDS
-            ):
+            if waiting(previous, receipt, at):
                 result["waiting"] += 1
                 continue
             event = candidate["event"]
@@ -601,53 +689,63 @@ def run(config, *, count=13, researcher=None, explainer=None, at=None, budget=No
                 "candidate_count": len(shortlist),
                 "policy_version": weekly.VERSION,
             }
-            try:
-                # Persist before a paid request; a crash cannot cause immediate
-                # repeat spending. Completed receipts survive attachment failure.
-                status["weeks"][start] = {**details, "status": "researching"}
-                public.write_json_atomic(status_path, status, private=True)
-                if receipt is None:
-                    receipt, outcome = researcher(
-                        config["budget_database"],
-                        event,
-                        key_file=config["weekly_key_file"],
-                        save_response=lambda value, path=receipt_path: public.write_json_atomic(
-                            path.with_suffix(".response.json"), value, private=True
-                        ),
-                        # Recent reasons' openings, so a new one does not start the same way.
-                        avoid=weekly.reason_openings(snapshot),
-                        **({"budget": budget} if budget is not None else {}),
-                    )
-                if receipt is None:
-                    # A busy writer or exhausted budget is not a failed topic.
-                    status["weeks"][start] = {**previous, "status": outcome}
-                    result["waiting"] += 1
-                    stopped = True
-                    break
+
+            def request(event=event, receipt_path=receipt_path, snapshot=snapshot):
+                return researcher(
+                    config["budget_database"],
+                    event,
+                    key_file=config["weekly_key_file"],
+                    save_response=lambda value: public.write_json_atomic(
+                        receipt_path.with_suffix(".response.json"), value, private=True
+                    ),
+                    # Recent reasons' openings, so a new one does not start the same way.
+                    avoid=weekly.reason_openings(snapshot),
+                    **({"budget": budget} if budget is not None else {}),
+                )
+
+            def validate(receipt, event=event):
                 research = receipt["research"]
                 weekly_spotlight.validate_research(research, event, as_of=public.now_utc())
                 check_private(json.dumps(research, ensure_ascii=False).encode())
-                public.write_json_atomic(receipt_path, receipt, private=True)
+                return receipt
+
+            def finish(receipt, candidate=candidate):
                 with public.ledger_lock(ledger_path):
                     current = public.read_json(ledger_path)
                     current_snapshot = public.read_json(state / "snapshot.json")
                     attached = weekly.attach(
-                        current, candidate, research, public.now_utc(), snapshot=current_snapshot
+                        current, candidate, receipt["research"], public.now_utc(), snapshot=current_snapshot
                     )
                     if attached:
                         public.write_json_atomic(ledger_path, current, private=True)
-                status["weeks"][start] = {**details, "status": "attached" if attached else "evidence_changed"}
-                result["attached" if attached else "waiting"] += 1
-            except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as error:
-                status["weeks"][start] = {
-                    **details,
-                    "status": "research_failed",
-                    "error_type": type(error).__name__,
-                    "candidate_index": candidate_index
-                    + int(isinstance(error, (ValueError, TypeError, KeyError))),
-                }
-                result["failed"] += 1
-            public.write_json_atomic(status_path, status, private=True)
+                return ("attached" if attached else "evidence_changed"), {}
+
+            # A failed topic moves the next attempt to the next candidate.
+            outcome = research_item(
+                status,
+                status["weeks"],
+                start,
+                status_path=status_path,
+                previous=previous,
+                details=details,
+                receipt=receipt,
+                request=request,
+                validate=validate,
+                save=lambda receipt, path=receipt_path: public.write_json_atomic(path, receipt, private=True),
+                finish=finish,
+                at=at,
+                on_error=lambda error, index=candidate_index: {
+                    "candidate_index": index + int(isinstance(error, (ValueError, TypeError, KeyError)))
+                },
+            )
+            if outcome == "stopped":
+                # A busy writer or exhausted budget is not a failed topic.
+                result["waiting"] += 1
+                stopped = True
+                break
+            result[
+                "attached" if outcome == "attached" else "failed" if outcome == "failed" else "waiting"
+            ] += 1
         if not stopped:
             written, failed = write_explainers(
                 config, status, writer=explainer, at=at, check_private=check_private, budget=budget

@@ -8,6 +8,7 @@ import time
 import unittest
 from contextlib import closing
 from copy import deepcopy
+from datetime import timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
@@ -925,7 +926,10 @@ class ExplainerTests(unittest.TestCase):
             return_value=({"research": worker.dossier(response(), snapshot["events"][0], NOW)}, "researched")
         )
         writer = Mock(side_effect=AssertionError("Duplicate paid call"))
-        result = run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
+        # The recovered page is validated and privacy checked once, when it is recovered.
+        with patch.object(run_weekly, "checked_explainer", wraps=run_weekly.checked_explainer) as checked:
+            result = run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
+        checked.assert_called_once()
         self.assertEqual(result["explainers"], 1)
         writer.assert_not_called()
         self.assertEqual(public.read_json(self.path / "ledger.json")["explainers"][EXPLAINER], self.page())
@@ -949,6 +953,44 @@ class ExplainerTests(unittest.TestCase):
         )
         run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
         writer.assert_called_once()
+        self.assertNotIn("explainers", public.read_json(self.path / "ledger.json"))
+
+    def test_an_explainer_refused_three_times_waits_thirty_days(self):
+        ledger, snapshot = ordinary()
+        add_mismatches(ledger, ["c01234", "c01235", "c01236"])
+        public.write_json_atomic(self.path / "ledger.json", ledger, private=True)
+        public.write_json_atomic(self.path / "snapshot.json", snapshot, private=True)
+        config = {
+            "state_dir": str(self.path),
+            "budget_database": str(self.db),
+            "weekly_key_file": str(self.key),
+        }
+        researcher = Mock(
+            return_value=({"research": worker.dossier(response(), snapshot["events"][0], NOW)}, "researched")
+        )
+        writer = Mock(side_effect=ValueError("unusable explainer"))
+
+        def run(days):
+            at = public.utc((public._instant(NOW) + timedelta(days=days)).isoformat())
+            run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=at)
+            return public.read_json(self.path / "weekly/status.json")["explainers"][EXPLAINER], at
+
+        # One attempt a day: the third refusal gives the explainer up, with its date.
+        for day in range(3):
+            entry, at = run(day * 2)
+        self.assertEqual(writer.call_count, 3)
+        self.assertEqual((entry["status"], entry["attempts"], entry["given_up_at"]), ("given_up", 3, at))
+        planned = run_weekly.plan(config, count=1, at=at)["explainers"]
+        self.assertEqual([(item["key"], item["state"]) for item in planned], [(EXPLAINER, "given_up")])
+        # Inside the thirty days nothing is spent.
+        run(4 + 29)
+        self.assertEqual(writer.call_count, 3)
+        # After them it is tried once more, and a refusal gives it up again from that date.
+        entry, at = run(4 + 31)
+        self.assertEqual(writer.call_count, 4)
+        self.assertEqual((entry["status"], entry["given_up_at"]), ("given_up", at))
+        run(4 + 33)
+        self.assertEqual(writer.call_count, 4)
         self.assertNotIn("explainers", public.read_json(self.path / "ledger.json"))
 
     def test_export_links_canadian_mismatch_stories_to_the_explainer(self):

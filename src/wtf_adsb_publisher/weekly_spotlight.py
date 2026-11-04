@@ -275,23 +275,22 @@ def validate_research(raw, event, *, as_of=None):
         raise ValueError("Weekly research must not call the sighting a match")
     normalized_sources = _sources(raw["sources"], as_of)
     ids = {source["id"] for source in normalized_sources}
-    sections = raw["sections"]
-    if not isinstance(sections, list) or not 2 <= len(sections) <= 8:
-        raise ValueError("Weekly research needs two to eight substantive sections")
-    normalized_sections, cited = [], set()
-    for section in sections:
-        public._keys(section, ("heading", "scope", "text", "sources"))
+
+    def scoped(section):
         if section["scope"] not in SCOPES:
             raise ValueError("Unknown research claim scope")
         if section["scope"] == "airframe_history" and not any(
             event["aircraft"].get(key) for key in ("registration", "icao_address")
         ):
             raise ValueError("Individual aircraft history requires an aircraft identity")
-        checked = _section(section, ids)
-        normalized_sections.append({**checked, "scope": section["scope"]})
-        cited.update(checked["sources"])
-    if cited != ids:
-        raise ValueError("Every research source must support a section")
+
+    checked = _cited_sections(
+        raw["sections"], ids, ("heading", "scope", "text", "sources"), "Weekly research", check=scoped
+    )
+    normalized_sections = [
+        {**section, "scope": raw_section["scope"]}
+        for section, raw_section in zip(checked, raw["sections"], strict=True)
+    ]
     return {
         "week_start": start,
         "evidence_version": event["evidence_version"],
@@ -340,6 +339,25 @@ def _sources(sources, as_of):
     ):
         raise ValueError("Use distinct sources, including at least one primary source")
     return normalized_sources
+
+
+def _cited_sections(sections, ids, keys, label, *, check=None):
+    """Two to eight sections with exactly `keys`, each normalized (_section), that together cite
+    every source in `ids`. `label` names the page in the errors ("Weekly research", "An
+    explainer"); `check`, when given, refuses a section before it is normalized."""
+    from . import public_events as public
+
+    if not isinstance(sections, list) or not 2 <= len(sections) <= 8:
+        raise ValueError(f"{label} needs two to eight substantive sections")
+    normalized = []
+    for section in sections:
+        public._keys(section, keys)
+        if check is not None:
+            check(section)
+        normalized.append(_section(section, ids))
+    if {key for section in normalized for key in section["sources"]} != ids:
+        raise ValueError(f"Every {label.split()[-1].lower()} source must support a section")
+    return normalized
 
 
 def _section(section, ids):
@@ -424,15 +442,7 @@ def validate_explainer(raw, *, as_of=None):
         raise ValueError("Explainer hypotheses must be the ones its stories list")
     sources = _sources(raw["sources"], as_of)
     ids = {source["id"] for source in sources}
-    sections = raw["sections"]
-    if not isinstance(sections, list) or not 2 <= len(sections) <= 8:
-        raise ValueError("An explainer needs two to eight substantive sections")
-    normalized = []
-    for section in sections:
-        public._keys(section, ("heading", "text", "sources"))
-        normalized.append(_section(section, ids))
-    if {key for section in normalized for key in section["sources"]} != ids:
-        raise ValueError("Every explainer source must support a section")
+    normalized = _cited_sections(raw["sections"], ids, ("heading", "text", "sources"), "An explainer")
     return {
         "key": raw["key"],
         "path": spec["path"],
