@@ -194,15 +194,15 @@ HYPOTHESES = {
 # was: the writer may restate it once as context (ctx.kind).
 KIND_CONTEXT = {
     "descending_spiral": "A descending spiral is a standard maneuver, practiced to lose height over one spot.",
-    "stratospheric_balloon": "Callsigns beginning HBAL are used for high-altitude balloon flights.",
+    "stratospheric_balloon": "Callsigns beginning HBAL are typical of high-altitude balloon flights.",
     "rapid_descent": "Descent rates vary with aircraft class, so a rapid descent is best read against the "
     "usual rates for its class.",
     "tcas_ra": "A TCAS resolution advisory tells a crew how to change their vertical motion to keep clear of "
     "another aircraft; Level Off tells a climbing or descending crew to stop.",
-    "formation_flight": "Two aircraft holding position within a few hundred feet for minutes is the signature of "
+    "formation_flight": "Two aircraft holding position within a few hundred feet for minutes is typical of "
     "formation flight, which is routine for military trainers and some civil groups.",
-    "winds_aloft_day": "Ground speed is airspeed plus wind, so a jet stream shows up as eastbound aircraft running "
-    "far faster over the ground than westbound ones.",
+    "winds_aloft_day": "Ground speed is airspeed plus wind, so a jet stream may show up as eastbound aircraft "
+    "running far faster over the ground than westbound ones.",
     "foreign_military": "Military aircraft from allied States regularly cross this region; the data show the "
     "airframe, not the reason for the flight.",
     "first_operator_here": "An operator designator is the three-letter code that starts an airline-style callsign.",
@@ -1955,6 +1955,11 @@ def context(facts, *, place=None):
         if kind_type.get("same_as") and SAME_AS.fullmatch(kind_type["same_as"]):
             # The type's verified encyclopedia article: the site names it as the subject's sameAs.
             type_value["same_as"] = kind_type["same_as"]
+        # The type's profile facts, which the page's type box lists less the ones the text quotes
+        # (publication.type_box); every story lists their values.
+        profile = [item["id"] for item in facts.get("facts", []) if item.get("id", "").startswith("tp.")]
+        if profile:
+            type_value["profile"] = profile
     registration = values.get("id.registration", {}).get("value")
     operator = values.get("op.callsign")
     operator_value = None

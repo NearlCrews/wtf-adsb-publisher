@@ -781,7 +781,7 @@ CONTEXT_OPTIONAL = ("type", "registration_slug", "operator", "place", "country")
 # The fields of a type hub and an operator hub in the public routing, and their optional ones.
 TYPE_ROUTING = ("code", "name", "slug")
 OPERATOR_ROUTING = ("name", "slug", "basis", "designator")
-ROUTING_OPTIONAL = {"type": ("same_as",)}
+ROUTING_OPTIONAL = {"type": ("same_as", "profile")}
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 FACT_ID = re.compile(r"[a-z][a-z0-9_]*(?:\.[A-Za-z0-9_-]+)+")
 # The publisher treats an event with exception-grade evidence as ordinary.
@@ -892,6 +892,19 @@ def _routing(raw):
             if "same_as" in kind:
                 # The type's reference article, which the site names as the story's subject.
                 routed["same_as"] = public_url(kind["same_as"])
+            if "profile" in kind:
+                # The type's profile fact ids, which the story's type box reads.
+                profile = kind["profile"]
+                if (
+                    not isinstance(profile, list)
+                    or not 1 <= len(profile) <= MAX_STORY_FACTS
+                    or any(
+                        not isinstance(key, str) or not key.startswith("tp.") or not FACT_ID.fullmatch(key)
+                        for key in profile
+                    )
+                ):
+                    raise ValueError("Invalid aircraft type routing")
+                routed["profile"] = list(profile)
             kind = routed
         result["type"] = kind
     if "registration_slug" in raw:

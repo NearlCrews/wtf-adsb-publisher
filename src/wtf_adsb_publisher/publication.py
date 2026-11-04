@@ -381,20 +381,23 @@ def _linked(paragraphs):
     return output
 
 
-def type_box(story):
-    """The sourced type facts (tp.) a story's type box lists: those its text does not quote
-    (public_prose.quotes), so the box never repeats the story. A story whose text quotes every type
-    fact it lists was written when the box listed the facts the text used, and keeps them all."""
-    facts = [
-        value for key, value in story["facts"].items() if key.startswith("tp.") and isinstance(value, str)
-    ]
+def type_box(event):
+    """The sourced type facts (tp.) an event's type box lists: the type's profile facts (the routing's
+    type profile) that the story's text does not quote (public_prose.quotes), so the box never
+    repeats the story. A record staged before the routing named the profile, or whose story does not
+    list every profile fact, was written when the box listed the facts the text used, and keeps them."""
+    story = event["story"]
+    listed = story["facts"]
+    profile = ((event.get("context") or {}).get("type") or {}).get("profile")
+    if not isinstance(profile, list) or any(key not in listed for key in profile):
+        return [value for key, value in listed.items() if key.startswith("tp.") and isinstance(value, str)]
     texts = [
         text
         for text in (story.get("headline"), story.get("dek"), *(story.get("paragraphs") or ()))
         if isinstance(text, str)
     ]
-    left = [fact for fact in facts if not any(public_prose.quotes(text, fact) for text in texts)]
-    return left or facts
+    facts = [listed[key] for key in profile if isinstance(listed[key], str)]
+    return [fact for fact in facts if not any(public_prose.quotes(text, fact) for text in texts)]
 
 
 def _type_background(event, *, legacy=False):
@@ -405,7 +408,7 @@ def _type_background(event, *, legacy=False):
     """
     story, routing = event["story"], event.get("context") or {}
     aircraft = routing.get("type")
-    facts = type_box(story)
+    facts = type_box(event)
     lines = []
     if aircraft and facts:
         name = escape(aircraft["name"])

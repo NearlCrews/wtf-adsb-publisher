@@ -1462,8 +1462,8 @@ class NewProseRules(unittest.TestCase):
         foreign = story_fixtures.facts(story_fixtures.kind_event("foreign_military"))
         self.assertEqual(
             public_prose.required_sentence(foreign),
-            "The listing comes from the aircraft database and the address block, not from anything the flight "
-            "itself transmitted.",
+            "The listing comes from the aircraft database and the address block; the flight's own broadcasts do "
+            "not say why it flew.",
         )
         self.assertNotRegex(public_prose.REQUIRED_SENTENCES["foreign_military"], public_prose.MISSION_CLAIM)
         # A listing whose facts do not say what marked it has no required sentence to carry.
@@ -1521,24 +1521,45 @@ class NewProseRules(unittest.TestCase):
             with self.subTest(sentence=sentence):
                 reused = {"paragraphs": [f"It passed at 39,000 ft. {sentence}"]}
                 self.assertEqual(public_prose.box_issues(reused, facts), ["box:reused"])
+        # A fact under six words never counts as repeated.
+        self.assertFalse(public_prose.quotes("It passed. The A380 has two decks.", "The A380 has two decks."))
+        self.assertTrue(
+            public_prose.quotes("It passed. The A380 has two big decks.", "The A380 has two big decks.")
+        )
         # The story checks leave the box to the AI writer's check: template text quotes it.
         template = editorial.render(facts, "episode")
         self.assertNotIn("box:reused", public_prose.story_issues(template, facts))
 
-    def test_the_type_box_lists_the_facts_the_text_does_not_quote(self):
-        first = "Airbus built the A380 with two full-length passenger decks."
-        second = "The A380 first flew in April 2005 and entered airline service in 2007."
-        story = {
-            "headline": "Asiana A380 HL7635 passes near Coleman, Michigan",
-            "dek": "It reported 487 knots.",
-            "paragraphs": [f"HL7635 passed near Coleman. {first}"],
-            "facts": {"tp.A388.1": first, "tp.A388.2": second, "id.registration": "HL7635"},
+    def test_the_type_box_lists_the_profile_facts_the_text_does_not_quote(self):
+        texts = (
+            "Airbus built the A380 with two full-length passenger decks.",
+            "The A380 first flew in April 2005 and entered airline service two years later, in 2007.",
+            "Airbus delivered 251 A380s before the production line closed in 2021.",
+        )
+        profiles = story_fixtures.profile("A388", *texts, publisher="Airbus")
+        facts = story_fixtures.facts(
+            story_fixtures.watch_a380(), place=story_fixtures.PLACES["coleman"], profiles=profiles
+        )
+        context = editorial.context(facts)
+        self.assertEqual(context["type"]["profile"], ["tp.A388.1", "tp.A388.2", "tp.A388.3"])
+        self.assertEqual(public._routing(context)["type"]["profile"], context["type"]["profile"])
+        template = editorial.render(facts, "episode")
+        # A template story lists every profile fact, quoted or not, and cites each one's source.
+        self.assertLessEqual(set(context["type"]["profile"]), set(template["facts"]))
+        quoting = {
+            **template,
+            "paragraphs": [
+                f"{template['paragraphs'][0]} {texts[0]}",
+                f"{template['paragraphs'][-1]} {texts[1]}",
+            ],
         }
-        self.assertEqual(publication.type_box(story), [second])
-        self.assertEqual(publication.type_box({**story, "paragraphs": ["HL7635 passed."]}), [first, second])
-        # A story written when the box listed the facts its text used keeps them all.
-        legacy = {**story, "paragraphs": [f"HL7635 passed near Coleman. {first} {second}"]}
-        self.assertEqual(publication.type_box(legacy), [first, second])
+        self.assertEqual(publication.type_box({"story": quoting, "context": context}), [texts[2]])
+        plain = {**template, "paragraphs": ["HL7635 passed near Coleman, Michigan."]}
+        self.assertEqual(publication.type_box({"story": plain, "context": context}), list(texts))
+        # A record staged before the routing named the profile keeps the facts its story lists.
+        legacy = {**quoting, "facts": {"tp.A388.1": texts[0], "tp.A388.2": texts[1]}}
+        self.assertEqual(publication.type_box({"story": legacy, "context": {}}), [texts[0], texts[1]])
+        self.assertEqual(publication.type_box({"story": legacy, "context": context}), [texts[0], texts[1]])
 
     def test_a_dek_adds_a_fact_the_headline_lacks(self):
         facts, story = kind_story("watch_type")
@@ -1551,13 +1572,19 @@ class NewProseRules(unittest.TestCase):
         }
         self.assertIn("dek:adds_nothing", public_prose.story_issues(echo, facts))
         self.assertNotIn("dek:adds_nothing", public_prose.story_issues(echo, facts, new=False))
-        self.assertTrue(
-            public_prose.adds_to(f"{registration} passes", f"{registration} reported 487 knots.", facts)
-        )
-        self.assertTrue(
-            public_prose.adds_to(f"{registration} passes", "It flew near Coleman, Michigan.", facts)
-        )
-        self.assertFalse(public_prose.adds_to(f"{registration} passes", "It passed in the evening.", facts))
+        headline = f"{registration} passes"
+        altitude = story_facts.value(facts, "m.alt_baro") or story_facts.value(facts, "m.archive_alt")
+        # A figure, date, or name from the facts counts; another figure or a capitalized word does not.
+        for dek, adds in (
+            (f"It reported {altitude:,.0f} ft.", True),
+            ("It flew near Coleman, Michigan.", True),
+            ("It flew on 20 September.", True),
+            ("It reported 123,456 ft.", False),
+            ("Spotters Watched It Pass.", False),
+            ("It passed in the evening.", False),
+        ):
+            with self.subTest(dek=dek):
+                self.assertEqual(public_prose.adds_to(headline, dek, facts), adds)
 
     def test_every_kind_context_line_passes_quoted_verbatim_in_a_story_of_its_kind(self):
         for kind, line in story_facts.KIND_CONTEXT.items():
@@ -1573,12 +1600,17 @@ class NewProseRules(unittest.TestCase):
 
     def test_a_light_rephrase_of_the_context_line_counts_and_keeps_its_figures(self):
         line = story_facts.KIND_CONTEXT["thermal_soaring"]
+        rephrase = "By circling in rising air, gliders and motor gliders gain height."
         self.assertTrue(public_prose.restates_context(line, line))
-        self.assertTrue(
+        self.assertTrue(public_prose.restates_context(rephrase, line))
+        # A word the line lacks, or a dropped hedge or negation, is no light rephrase.
+        self.assertFalse(
             public_prose.restates_context(
                 "Gliders and motor gliders gain height by circling in air that rises.", line
             )
         )
+        mismatch = story_facts.KIND_CONTEXT["type_speed_mismatch"]
+        self.assertFalse(public_prose.restates_context(mismatch.replace(" usually", ""), mismatch))
         # A claim about this flight wrapped around the line is no rephrase.
         self.assertFalse(
             public_prose.restates_context(
@@ -1593,13 +1625,7 @@ class NewProseRules(unittest.TestCase):
             )
         )
         facts, story = kind_story("thermal_soaring")
-        rephrased = {
-            **story,
-            "paragraphs": [
-                text.replace(line, "Gliders and motor gliders gain height by circling in air that rises.")
-                for text in story["paragraphs"]
-            ],
-        }
+        rephrased = {**story, "paragraphs": [text.replace(line, rephrase) for text in story["paragraphs"]]}
         self.assertNotIn("context:missing", public_prose.story_issues(rephrased, facts))
 
     def test_house_headline_forms(self):
@@ -1619,8 +1645,9 @@ class NewProseRules(unittest.TestCase):
             **story,
             "headline": f"Cessna Citation CJ4 {registration} flies for {association} near Coleman",
         }
+        # The watchlist forms, old and new, hold for published text too.
         self.assertIn("headline:watchlist_form", public_prose.story_issues(loose, facts))
-        self.assertNotIn("headline:watchlist_form", public_prose.story_issues(loose, facts, new=False))
+        self.assertIn("headline:watchlist_form", public_prose.story_issues(loose, facts, new=False))
         facts, story = kind_story("foreign_military")
         country = story_facts.value(facts, "fm.country")
         self.assertRegex(story["headline"], rf", listed as military from {country}, spotted")
@@ -1629,7 +1656,55 @@ class NewProseRules(unittest.TestCase):
             "headline": story["headline"].replace(", listed as military from", ", a military aircraft of"),
         }
         self.assertIn("headline:foreign_military_form", public_prose.story_issues(loose, facts))
+        # Published text keeps only the names: the aircraft, its type, and the State.
         self.assertNotIn("headline:foreign_military_form", public_prose.story_issues(loose, facts, new=False))
+        registration = story_facts.value(facts, "id.registration")
+        nameless = {**story, "headline": f"Military aircraft {registration} passes near Coleman, Michigan"}
+        self.assertIn("headline:foreign_military_form", public_prose.story_issues(nameless, facts, new=False))
+        untyped = {**story, "headline": f"{registration}, listed as military from {country}, spotted"}
+        self.assertIn("headline:foreign_military_form", public_prose.story_issues(untyped, facts))
+
+    def test_a_context_line_with_a_claim_wrapped_around_it_is_refused(self):
+        cases = (
+            ("watchlist_match", "and the governor was aboard"),
+            ("identity_conflict", "and this disagreement is a database error"),
+            ("vintage", "and this one flew to an air show from a private strip"),
+            ("racetrack_orbit", "as with tankers refueling fighters"),
+        )
+        for kind, claim in cases:
+            with self.subTest(kind=kind):
+                facts, story = kind_story(kind)
+                line = story_facts.KIND_CONTEXT[kind]
+                wrapped = f"{line[:-1]}, {claim}."
+                changed = {
+                    **story,
+                    "paragraphs": [text.replace(line, wrapped) for text in story["paragraphs"]],
+                }
+                self.assertFalse(public_prose.restates_context(wrapped, line))
+                issues = public_prose.story_issues(changed, facts)
+                self.assertTrue([issue for issue in issues if issue != "context:missing"], (wrapped, issues))
+        # A line as written still answers to the occupant, purpose, and hypothesis checks.
+        facts, _story = kind_story("watchlist_match")
+        indexed, failure = public_prose._facts_for(facts)
+        self.assertTrue(
+            public_prose._context_claim_issues(["The governor was aboard."], indexed, failure, facts)
+        )
+
+    def test_a_likeness_compound_hedges_only_its_own_hypothesis(self):
+        facts, story = kind_story("aerobatic_practice")
+        practice = with_sentence(story, "It flew six reversals of aerobatic-style practice.")
+        self.assertEqual(public_prose.story_issues(practice, facts), [])
+        facts, story = kind_story("racetrack_orbit")
+        hold = with_sentence(story, "It flew a long racetrack hold in an airline-style pattern.")
+        self.assertIn("claim:unhedged_hypothesis", public_prose.story_issues(hold, facts))
+        # A refueling-style track stated as fact is a mission claim, as before; offered hedged, it is
+        # one of the kind's listed possibilities.
+        stated = with_sentence(story, "It flew a refueling-style track.")
+        self.assertTrue(
+            [issue for issue in public_prose.story_issues(stated, facts) if "Unhedged mission claim" in issue]
+        )
+        offered = with_sentence(story, "One explanation may be a refueling-style track.")
+        self.assertEqual(public_prose.story_issues(offered, facts), [])
 
     def test_house_headlines_share_their_skeleton_without_a_variety_issue(self):
         for kind in ("watchlist_match", "foreign_military"):

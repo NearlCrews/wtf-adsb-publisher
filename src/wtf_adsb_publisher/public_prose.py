@@ -3908,7 +3908,7 @@ REQUIRED_SENTENCES = {
     ),
     "above_rated_speed": "The airspeed is {airspeed_origin}, so a faulty reading can't be ruled out.",
     "winds_aloft_day": "The wind itself was not measured; the difference in ground speeds is what the data show.",
-    "foreign_military": "The listing comes from {fm_basis}, not from anything the flight itself transmitted.",
+    "foreign_military": "The listing comes from {fm_basis}; the flight's own broadcasts do not say why it flew.",
 }
 AIRSPEED_ORIGINS = {
     "derived": "an estimate from ground speed and modelled wind",
@@ -4046,7 +4046,7 @@ HEADING_SCOPE = re.compile(
 )
 HEDGE = re.compile(
     r"\b(?:(?-i:may)|might|could|likely|possibly|perhaps|" + LIKENESS_HEDGES + r"|looks? like|like an?"
-    r"|one possible|fits?|suggests?|appears? to|[a-z]+-(?:like|style))\b",
+    r"|one possible|fits?|suggests?|appears? to)\b",
     re.I,
 )
 LIMIT_SENTENCE = re.compile(
@@ -4065,11 +4065,41 @@ FILLER_FRAMES = re.compile(
 )
 # The page shows the type box (tp. facts) beside the story, so a sentence that shares this many
 # words in a row with one repeats it; a shorter fact repeats when a sentence carries all of its
-# words in order (box:reused, and the box itself in publication).
+# words in order, and a fact under BOX_SHORTEST words never counts (box:reused, and the box itself
+# in publication).
 BOX_RUN = 10
-# A sentence restates the kind's context line (ctx.kind) when its figures are the line's and at
-# least this share of the line's content words and of its own are shared (context:missing).
+BOX_SHORTEST = 6
+# A sentence restates the kind's context line (ctx.kind) when its figures are the line's, every
+# content word it uses is the line's, it keeps at least this share of the line's content words, and
+# it keeps the line's hedges and negations (context:missing).
 CONTEXT_REPHRASE = 0.8
+CONTEXT_GUARDS = frozenset(
+    {
+        "usually",
+        "often",
+        "rarely",
+        "sometimes",
+        "typically",
+        "may",
+        "might",
+        "can",
+        "cannot",
+        "not",
+        "no",
+        "nothing",
+        "never",
+        "none",
+        "only",
+    }
+)
+# The claims a restated context line is still checked for: it is backed for its figures, scope,
+# rarity, and attribution, never for who was aboard, a purpose or mission, an emergency, a
+# destination, a cause, or a possibility it does not list.
+CONTEXT_CLAIMS = re.compile(
+    r"^(?:\w+ (?:occupant|destination or landing|hijacking|unlawful interference|emergency|mission)"
+    r" claim|Speculative purpose|Watchlist story names|Unlisted (?:cause|possibility))",
+    re.I,
+)
 
 
 def is_caveat(sentence, profiles=()):
@@ -4486,19 +4516,30 @@ def _names_ident(text, values):
     return any(isinstance(ident, str) and ident.lower() in text for ident in idents)
 
 
-def _foreign_military_headline_issue(headline, facts):
+def _foreign_military_headline_issue(headline, facts, *, form=True):
     """headline:foreign_military_form unless a foreign military headline takes the house form: the
-    aircraft by its registration or identifier, then "listed as military from" the State its
-    listing names, then "spotted". A story whose facts name no State has none to name."""
+    aircraft by its type, when the facts give one, and its registration or identifier, then "listed
+    as military from" the State its listing names, then "spotted". Without form, as for a published
+    story, the headline need only name the aircraft and the State. A story whose facts name no State
+    has none to name."""
     values = _story_values(facts)
     country = (values.get("fm.country") or {}).get("value")
     if not isinstance(country, str) or not country.strip():
         return None
-    match = FOREIGN_MILITARY_HEADLINE.match(headline) if isinstance(headline, str) else None
+    text = headline.lower() if isinstance(headline, str) else ""
+    match = FOREIGN_MILITARY_HEADLINE.match(headline) if form and isinstance(headline, str) else None
+    aircraft, state = (match["aircraft"].lower(), match["country"].lower()) if match else (text, text)
+    kind_type = values.get("id.type") or {}
+    names = [
+        name.lower()
+        for name in (kind_type.get("value"), kind_type.get("short"), *(kind_type.get("aliases") or ()))
+        if isinstance(name, str) and name.strip()
+    ]
     if (
-        not match
-        or not _names_ident(match["aircraft"].lower(), values)
-        or country.lower() not in match["country"].lower()
+        (form and not match)
+        or not _names_ident(aircraft, values)
+        or (names and not any(name in aircraft for name in names))
+        or country.lower() not in state
     ):
         return "headline:foreign_military_form"
     return None
@@ -4576,6 +4617,38 @@ def _shape_issues(story, names=(), listed=(), *, fixed_headline=False, question_
     seo = story.get("seo_title")
     if isinstance(seo, str) and seo.rstrip()[-1:] in FINAL_PUNCTUATION:
         issues.append("seo_title:final_punctuation")
+    return issues
+
+
+def _hypothesis_issues(sentences, facts):
+    """claim:unhedged_hypothesis for each sentence that offers one of the story's hypotheses with no
+    hedge. A likeness compound hedges only the hypothesis whose own term it carries: "aerobatic-style
+    practice" hedges aerobatic practice, and "an airline-style pattern" hedges nothing."""
+    type_fact = _story_values(facts).get("id.type", {})
+    type_words = " ".join(
+        str(part)
+        for part in (type_fact.get("value"), type_fact.get("category"), *(type_fact.get("aliases") or ()))
+        if part
+    ).lower()
+    issues = []
+    for hypothesis in facts.get("hypotheses", []):
+        if not isinstance(hypothesis, str):
+            continue
+        terms = [
+            term
+            for term in STORY_HEDGE_TERMS.findall(hypothesis.lower())
+            if term not in STOPWORDS and term not in HYPOTHESIS_GENERIC and term not in type_words
+        ]
+        if not terms:
+            continue
+        alternatives = "|".join(re.escape(term) for term in terms)
+        pattern = re.compile(r"\b(?:" + alternatives + r")\b", re.I)
+        likeness = re.compile(r"\b(?:" + alternatives + r")-(?:style|like)\b", re.I)
+        for sentence in sentences:
+            if likeness.search(sentence) or HEDGE.search(sentence) or EPISTEMIC.search(sentence):
+                continue
+            if pattern.search(sentence):
+                issues.append("claim:unhedged_hypothesis")
     return issues
 
 
@@ -4688,11 +4761,6 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
                 continue
             if not in_scope:
                 issues.append("claim:unscoped_first")
-    type_words = " ".join(
-        str(part)
-        for part in (type_fact.get("value"), type_fact.get("category"), *(type_fact.get("aliases") or ()))
-        if part
-    ).lower()
     # A fixed headline is the engine's ("Strong winds aloft on 5 November 2026"), not a hypothesis,
     # and so is a title tag that shortens it ("Strong winds aloft on 5 November").
     fixed = fixed_headline(facts)
@@ -4701,20 +4769,7 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
         for name, sentence in labelled
         if not (fixed and name in ("headline", "seo_title") and fixed[0].startswith(sentence.strip()))
     ]
-    for hypothesis in facts.get("hypotheses", []):
-        if not isinstance(hypothesis, str):
-            continue
-        terms = [
-            term
-            for term in STORY_HEDGE_TERMS.findall(hypothesis.lower())
-            if term not in STOPWORDS and term not in HYPOTHESIS_GENERIC and term not in type_words
-        ]
-        if not terms:
-            continue
-        pattern = re.compile(r"\b(?:" + "|".join(re.escape(term) for term in terms) + r")\b", re.I)
-        for sentence in claims:
-            if pattern.search(sentence) and not HEDGE.search(sentence) and not EPISTEMIC.search(sentence):
-                issues.append("claim:unhedged_hypothesis")
+    issues.extend(_hypothesis_issues(claims, facts))
     lowered = [sentence.lower() for sentence in sentences]
     watchlisted = any(key.startswith("wl.") for key in values)
     category = values.get("wl.category", {}).get("value")
@@ -5080,9 +5135,10 @@ def _box_runs(text):
 
 
 def quotes(text, fact):
-    """Whether text repeats a type box fact: a BOX_RUN-word run of it, or all of a shorter one."""
+    """Whether text repeats a type box fact: a BOX_RUN-word run of it, or all of a shorter one of
+    BOX_SHORTEST words or more."""
     size, runs = _box_runs(fact)
-    words = _plain_words(text) if size and isinstance(text, str) else []
+    words = _plain_words(text) if size >= BOX_SHORTEST and isinstance(text, str) else []
     return any(tuple(words[index : index + size]) in runs for index in range(len(words) - size + 1))
 
 
@@ -5098,41 +5154,97 @@ def box_issues(story, facts):
     return []
 
 
-# Facts written as sentences, whose capitalized first words are no names.
+# Facts written as sentences, whose words are no fact values of their own.
 SENTENCE_FACTS = ("tp.", "ctx.kind")
 
 
-def _fact_names(facts):
-    """Lowercase name tokens the story facts give: each word of a string fact that is capitalized or
-    carries a digit, from its value, list items, aliases, and short form."""
-    names = set()
+# A measurement's other prose forms, by its unit: seconds in minutes and hours, nautical miles in
+# statute miles.
+VALUE_FORMS = {"s": (1 / 60, 1 / 3600), "NM": (1 / STATUTE_MILE_NM,)}
+
+
+def _value_tokens(value, unit=None):
+    """The tokens a fact value reads as in prose: a number in its usual forms (spelled when small,
+    and converted as VALUE_FORMS gives), a date or time by its day, month, year, hour, and minute,
+    and a name by its capitalized or numbered words (a value written as a sentence by its words
+    after the first)."""
+    if isinstance(value, bool):
+        return set()
+    if isinstance(value, (int, float)):
+        if not finite(value):
+            return set()
+        tokens = set()
+        for scale in (1, *VALUE_FORMS.get(unit, ())):
+            figure = abs(value) * scale
+            forms = {f"{figure:,.0f}", f"{figure:.0f}", f"{figure:,.1f}", f"{figure:g}"}
+            tokens |= {token for form in forms for token in _plain_words(form)}
+            tokens |= {word for word, number in WORD_VALUES.items() if number == round(figure)}
+        return tokens
+    if not isinstance(value, str):
+        return set()
+    tokens = set()
+    stamp = moment(value) if re.match(r"\d{4}-\d{2}-\d{2}", value) else None
+    if stamp:
+        tokens |= {str(stamp.day), str(stamp.year), MONTH_NAMES[stamp.month - 1].lower()}
+        if "T" in value:
+            tokens |= {f"{stamp.hour:02d}", str(stamp.hour), f"{stamp.minute:02d}"}
+    words = re.findall(r"[A-Za-z0-9]+", value)
+    sentence = value.rstrip().endswith(".") or len(words) >= 6
+    for index, word in enumerate(words):
+        if sentence and index == 0:
+            continue
+        if (word[0].isupper() or any(char.isdigit() for char in word)) and word.lower() not in STOPWORDS:
+            tokens.add(word.lower())
+    return tokens
+
+
+@functools.lru_cache(maxsize=64)
+def _cached_fact_tokens(items):
+    return frozenset().union(*(_value_tokens(value, unit) for value, unit in items)) if items else frozenset()
+
+
+def _fact_tokens(facts):
+    """Every token a story-fact value reads as (_value_tokens), from its value, list items, aliases,
+    and short form; sentence facts (SENTENCE_FACTS) give none."""
+    items = []
+    for item in facts["facts"]:
+        if item["id"].startswith(SENTENCE_FACTS):
+            continue
+        value, unit = item.get("value"), item.get("unit")
+        items.extend((part, unit) for part in (value if isinstance(value, list) else [value]))
+        items.extend((alias, None) for alias in item.get("aliases") or ())
+        items.append((item.get("short"), None))
+    items = tuple(
+        (value, unit if isinstance(unit, str) else None)
+        for value, unit in items
+        if isinstance(value, (str, int, float))
+    )
+    return _cached_fact_tokens(items)
+
+
+def _fact_phrases(facts):
+    """Each string fact value of two words or more as plain words, sentence facts aside: a quoted
+    category ("You came here in that thing?") is a fact value whatever its case."""
+    phrases = set()
     for item in facts["facts"]:
         if item["id"].startswith(SENTENCE_FACTS):
             continue
         value = item.get("value")
-        texts = [
-            text
-            for text in (
-                *(value if isinstance(value, list) else [value]),
-                *(item.get("aliases") or ()),
-                item.get("short"),
-            )
-            if isinstance(text, str)
-        ]
-        for text in texts:
-            for word in re.findall(r"[A-Za-z0-9]+", text):
-                if (
-                    word[0].isupper() or any(char.isdigit() for char in word)
-                ) and word.lower() not in STOPWORDS:
-                    names.add(word.lower())
-    return names
+        for text in value if isinstance(value, list) else [value]:
+            words = _plain_words(text) if isinstance(text, str) else []
+            if len(words) >= 2:
+                phrases.add(" ".join(words))
+    return phrases
 
 
 def adds_to(headline, dek, facts):
-    """Whether a dek gives a figure, or a name from the story facts, that the headline lacks."""
+    """Whether a dek gives a fact value, a figure, date, or name from the story facts, or a whole
+    string value, that the headline lacks."""
     fresh = set(_plain_words(dek)) - set(_plain_words(headline))
-    names = _fact_names(facts)
-    return any(any(char.isdigit() for char in token) or token in names for token in fresh)
+    if fresh & _fact_tokens(facts):
+        return True
+    said, given = f" {' '.join(_plain_words(dek))} ", f" {' '.join(_plain_words(headline))} "
+    return any(f" {phrase} " in said and f" {phrase} " not in given for phrase in _fact_phrases(facts))
 
 
 def _dek_issues(story, facts):
@@ -5161,12 +5273,34 @@ def _figures(text):
 
 def restates_context(sentence, line):
     """Whether a sentence is the kind's context line as written or lightly rephrased: the same
-    figures, and CONTEXT_REPHRASE or more of the line's content words and of its own shared."""
+    figures, no content word the line lacks, CONTEXT_REPHRASE or more of the line's content words,
+    and every hedge or negation the line carries (CONTEXT_GUARDS)."""
     if not isinstance(sentence, str) or not line or _figures(sentence) != _figures(line):
         return False
     own, theirs = _context_words(sentence), _context_words(line)
-    shared = len(own & theirs)
-    return bool(own and theirs) and min(shared / len(own), shared / len(theirs)) >= CONTEXT_REPHRASE
+    guards = CONTEXT_GUARDS & set(re.findall(r"[a-z]+", line.lower()))
+    return (
+        bool(own and theirs)
+        and own <= theirs
+        and len(own) / len(theirs) >= CONTEXT_REPHRASE
+        and guards <= set(re.findall(r"[a-z]+", sentence.lower()))
+    )
+
+
+def _context_claim_issues(sentences, facts, failure, story_facts):
+    """The checks a restated context line still answers to (CONTEXT_CLAIMS and the hypothesis
+    hedge), as context: issues."""
+    if not sentences:
+        return []
+    check = _checker(facts, failure)
+    issues = [
+        f"context:{issue}"
+        for sentence in sentences
+        for issue in check(sentence)
+        if CONTEXT_CLAIMS.match(issue)
+    ]
+    issues.extend(f"context:{issue}" for issue in _hypothesis_issues(sentences, story_facts))
+    return issues
 
 
 def _context_sentences(story, line):
@@ -5200,11 +5334,13 @@ def story_issues(story, packet_or_facts, *, new=True):
         return issues
     if fixed and story.get("headline") != fixed[0]:
         issues.append("headline:not_fixed")
+    # A published headline keeps the names its form gives, the aircraft and its entry or State; only
+    # new text takes the newer forms (FOREIGN_MILITARY_HEADLINE).
     house = {
         "watchlist_match": _watchlist_headline_issue,
-        "foreign_military": _foreign_military_headline_issue,
+        "foreign_military": functools.partial(_foreign_military_headline_issue, form=new),
     }
-    if new and kind in house and (form := house[kind](story.get("headline"), packet_or_facts)):
+    if kind in house and (form := house[kind](story.get("headline"), packet_or_facts)):
         issues.append(form)
     # The kind's required sentence is found by equality, once, in a paragraph; every other
     # check then reads the story without it.
@@ -5233,6 +5369,7 @@ def story_issues(story, packet_or_facts, *, new=True):
             issues.append("context:missing")
         for sentence in restated:
             story = _without(story, sentence)
+        issues.extend(_context_claim_issues(restated, facts, failure, packet_or_facts))
         if new:
             issues.extend(_dek_issues(story, packet_or_facts))
     check = _masked(_checker(facts, failure), listed)

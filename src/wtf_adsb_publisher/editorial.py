@@ -1701,8 +1701,18 @@ class _Builder:
         # and so is its context line, a sourced fact.
         self.required = public_prose.required_sentence(facts)
         self.context = public_prose.context_line(facts)
+        # The slot values the required sentence quotes ("the aircraft database and the address
+        # block"), which another sentence may name without restating it.
+        self.required_values = tuple(
+            _longest_first_values(
+                value
+                for value in slots.values()
+                if isinstance(value, str) and " " in value and self.required and value in self.required
+            )
+        )
         # Sourced type facts as the checks read them: a restated one is never the story's caveat.
         self.profiles = public_prose.profile_texts(facts)
+        self.profile_ids = frozenset(item["id"] for item in facts["facts"] if item["id"].startswith("tp."))
         self.cache = {}
         self.kind = facts.get("kind", "")
         self.type_code = story_facts.value(facts, "id.type_code") or ""
@@ -1714,11 +1724,20 @@ class _Builder:
         self.union = corpus.body_union(self.day)
         self.recent = corpus.sentences(self.day)
 
-    def story_facts(self, used, *, cap=True):
-        """The facts behind the slots used, plus identity and date."""
+    def story_facts(self, used, *, cap=True, extra=()):
+        """The facts behind the slots used, plus identity and date, and any extra fact ids."""
         return story_fact_values(
-            self.facts, {fact_id for name in used for fact_id in self.slots.sources.get(name, ())}, cap=cap
+            self.facts,
+            {fact_id for name in used for fact_id in self.slots.sources.get(name, ())} | set(extra),
+            cap=cap,
         )
+
+    def restates_required(self, text):
+        """Whether text repeats a run of the required sentence's own words, its slot values aside."""
+        own, required = text, self.required
+        for value in self.required_values:
+            own, required = own.replace(value, " "), required.replace(value, " ")
+        return _restates(own, required)
 
     def clean(self, text):
         if text not in self.cache:
@@ -1958,10 +1977,10 @@ def _paragraphs(builder, body, opener, seed, opener_used=frozenset()):
             if (
                 builder.required
                 and text not in (builder.required, builder.context)
-                and _restates(text, builder.required)
+                and builder.restates_required(text)
             ):
                 return True
-            return name not in ("limit", CONTEXT_BUILDER) and repeats(text)
+            return name not in ("limit", CONTEXT_BUILDER) and text != builder.required and repeats(text)
 
         def stale(text):
             return overlap(text) or (name in FRESH_BUILDERS and _plain(text) in recent)
@@ -2074,6 +2093,10 @@ def _overlaps(first, second, names=()):
     return shared >= 3 and shared / min(len(a), len(b)) >= 0.6
 
 
+def _longest_first_values(values):
+    return sorted(set(values), key=lambda value: (-len(value), value))
+
+
 def _restates(text, other, run=4):
     """Whether text repeats a run of words from other: "the wind itself was not measured"."""
     words, theirs = re.findall(r"[a-z']+", text.lower()), re.findall(r"[a-z']+", other.lower())
@@ -2178,8 +2201,10 @@ def _story(builder, angle, variant, headline, seo, dek, paragraphs, used):
         "dek": dek,
         "paragraphs": paragraphs,
         "facts_digest": builder.facts["digest"],
-        "facts": builder.story_facts(used | {"date", "ident"}),
-        "sources": _sources(builder.facts, builder.story_facts(used, cap=False)),
+        # Every type profile fact, quoted or not: the page's type box lists the ones the text leaves
+        # out (publication.type_box), and the sources cite them.
+        "facts": builder.story_facts(used | {"date", "ident"}, extra=builder.profile_ids),
+        "sources": _sources(builder.facts, builder.story_facts(used, cap=False, extra=builder.profile_ids)),
     }
     story.update(skeletons(story))
     return {key: story[key] for key in STORY_KEYS if key in story}
@@ -2818,8 +2843,8 @@ BUILDERS = {
         "The {asymmetry_adj} gap between the directions comes from ground speeds, which include the wind.",
     ),
     "fm_basis": (
-        "The listing as a military aircraft of {fm_country_the} comes from {fm_basis}.",
-        "{fm_basis|cap} ties the aircraft to the military of {fm_country_the}.",
+        # Where the listing comes from is the required sentence's (public_prose.REQUIRED_SENTENCES).
+        "The aircraft is tied to the military of {fm_country_the} by {fm_basis}.",
     ),
     "fs_label": (
         "A callsign is a label, so the {fs_designator} prefix does not confirm who operates the aircraft.",
@@ -4865,20 +4890,20 @@ WINDS_ANGLES = (WINDS_GAP, WINDS_MEDIANS, WINDS_EXAMPLE)
 FOREIGN_HEADLINES = (
     "{type} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
     "{type_short} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
-    "{ident_named|cap}, listed as military from {fm_country}, spotted[ near {place}]",
+    "[{type} ]{ident}, listed as military from {fm_country}, spotted[ near {place}]",
 )
 FOREIGN_STATE = Angle(
     "state_and_basis",
     "Which State's military the listing names and where the listing comes from.",
     headlines=FOREIGN_HEADLINES,
     deks=(
-        "{fm_basis|cap} ties {ident} to the military of {fm_country_the}. It reported {alt}[ and {gs}] on "
+        "{ident} is tied to the military of {fm_country_the} by {fm_basis}. It reported {alt}[ and {gs}] on "
         "{day_month}.",
         "The listing as a military aircraft of {fm_country_the} comes from {fm_basis}.[ It flew near {place} on "
         "{day_month}.]",
     ),
     openers=(
-        "{fm_basis|cap} lists {ident_named} as a military aircraft of {fm_country_the}.",
+        "{ident_named|cap} is listed as a military aircraft of {fm_country_the} by {fm_basis}.",
         "On {date}, {ident_named}, listed as a military aircraft of {fm_country_the}, reported {alt_phrase}.",
     ),
     body=("fm_basis", "identity", "reading", "/", "track", "profile", "foreign_hedge", "limit"),
