@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checkedAt": "2026-10-07",
+  "checkedAt": "2026-11-04",
   "scope": "Representative aircraft-type photographs. Pictured aircraft identities and flights are not verified matches to observation cards.",
   "licenseNotice": "These files retain their individual licenses below; the theme code license does not apply to third-party photographs.",
   "typeDesignatorSource": "https://www.faa.gov/documentLibrary/media/Order/JO_7360.1G_Aircraft_Type_Designators_FINAL.pdf",
@@ -651,29 +651,6 @@
       "bytes": 80936,
       "wikidata": "Q1084919",
       "article": "https://en.wikipedia.org/wiki/Boeing_737_Next_Generation"
-    },
-    {
-      "id": "boeing-747",
-      "typeCodes": ["B742"],
-      "title": "Boeing 747",
-      "src": "/assets/images/aircraft/boeing-747-6176c029732a.webp",
-      "width": 1200,
-      "height": 900,
-      "alt": "Representative Boeing 747-200 in Iberia colors in flight above clouds.",
-      "caption": "Representative Boeing 747 photo (747-200 shown).",
-      "author": "Iberia Airlines",
-      "sourceTitle": "File:B-747 Iberia.jpg",
-      "sourceUrl": "https://commons.wikimedia.org/wiki/File:B-747_Iberia.jpg",
-      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b8/B-747_Iberia.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
-      "license": "CC BY 2.0",
-      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
-      "changes": "Resized and converted to WebP; embedded camera metadata removed. No crop or generated content.",
-      "originalSha1": "93a4188dd6e54f7b15062646c0d2b9e9bce669f4",
-      "originalSha256": "724ff4d61182fd433eea159fd6b3756fea44dc674bbec0ec21605d4ff3b94c89",
-      "sha256": "6176c029732ad25ec38f7ac74a02abc00b5309ab6cd810892aecad7744b291d6",
-      "bytes": 51864,
-      "wikidata": "Q179",
-      "article": "https://en.wikipedia.org/wiki/Boeing_747"
     },
     {
       "id": "boeing-747-400",
@@ -2793,6 +2770,29 @@
       "originalSha256": "a486c976e041b8474111b8aacd8b7ce1d5568226434b18332a634ff5c571c105",
       "sha256": "0ae9c660e70314cf3a043e2c6c2ce6bd7ff52fe8a4057d91318384fb0e06f2dd",
       "bytes": 87100
+    },
+    {
+      "id": "boeing-vc-25",
+      "typeCodes": ["B742"],
+      "title": "Boeing VC-25",
+      "src": "/assets/images/aircraft/boeing-vc-25-753f8f4ad691.webp",
+      "width": 1200,
+      "height": 965,
+      "alt": "Representative Boeing VC-25A, the presidential 747-200, in flight over Mount Rushmore.",
+      "caption": "Representative Boeing VC-25 photo (VC-25A shown).",
+      "author": "U.S. Air Force",
+      "sourceTitle": "File:Air Force One over Mt. Rushmore.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Air_Force_One_over_Mt._Rushmore.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/7/7d/Air_Force_One_over_Mt._Rushmore.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/File:Air_Force_One_over_Mt._Rushmore.jpg#Licensing",
+      "changes": "Resized and converted to WebP; embedded camera metadata removed. No crop or generated content.",
+      "originalSha1": "1d90a4859b412f788caa68c30d1660b963d114ed",
+      "originalSha256": "2541be8a4d5e111227662378fbb0bc146c348d40a50f68c72e7725b8725c4d81",
+      "sha256": "753f8f4ad691464984dfe9553f41f08c7c455b9b128e1fdf961fc7962caf73ff",
+      "bytes": 215748,
+      "wikidata": "Q645289",
+      "article": "https://en.wikipedia.org/wiki/Boeing_VC-25"
     }
   ]
 }

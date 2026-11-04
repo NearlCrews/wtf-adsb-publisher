@@ -1727,6 +1727,41 @@ class NewKindEvidenceTests(unittest.TestCase):
             event.pop("headline_measurements")
         self.assertEqual(public.validate_snapshot(redigest(older)), older)
 
+    def test_snapshot_events_flag_an_identity_conflict(self):
+        conflicted = packet(kind="watch_type")
+        conflicted["identity_checks"] = {"conflict": True}
+        add(self.ledger, evidence=conflicted, metadata=editorial(path=EVENT_PATH))
+        add(self.ledger, key="episode-b", evidence=packet())
+        good = published(self.ledger)
+        by_kind = {event["kind"]: event for event in good["events"]}
+        self.assertIs(by_kind["watch_type"]["identity_conflict"], True)
+        self.assertNotIn("identity_conflict", by_kind["circling"])
+        # The flag sits outside the evidence, so adding it is no revision.
+        self.assertEqual(
+            by_kind["watch_type"]["evidence_version"],
+            public.evidence_version(by_kind["watch_type"]),
+        )
+        flagged = good["events"].index(by_kind["watch_type"])
+        clear = good["events"].index(by_kind["circling"])
+
+        def redigest(value):
+            value["snapshot_id"] = public._digest({k: v for k, v in value.items() if k != "snapshot_id"})
+            return value
+
+        for index, change in (
+            (flagged, lambda item: item.update(identity_conflict=1)),
+            (flagged, lambda item: item.update(identity_conflict=False)),
+            (clear, lambda item: item.update(identity_conflict=True)),
+        ):
+            bad = deepcopy(good)
+            change(bad["events"][index])
+            with self.subTest(kind=bad["events"][index]["kind"]), self.assertRaises(ValueError):
+                public.validate_snapshot(redigest(bad))
+        # Older snapshots without the flag still validate.
+        older = deepcopy(good)
+        older["events"][flagged].pop("identity_conflict")
+        self.assertEqual(public.validate_snapshot(redigest(older)), older)
+
     def test_a_subjectless_event_names_no_aircraft(self):
         event = projection(winds_packet())
         self.assertEqual(event["aircraft"], {})

@@ -23,7 +23,7 @@ GENERATIONS = ("event-data", "event-pages")
 # before a release. Each holds a card per story, so the count stays bounded.
 RETAINED_GENERATIONS = 12
 # Event fields a release may add to an event that lacked them without correcting it.
-ADDABLE_FIELDS = ("weekly_spotlight", "headline_measurements")
+ADDABLE_FIELDS = ("weekly_spotlight", "headline_measurements", "identity_conflict")
 MAX_ARCHIVE_BYTES = 512 * 1024 * 1024
 MAX_SITE_BYTES = 2 * 1024**3
 MAX_FILES = 100000
@@ -177,10 +177,11 @@ def uncorrected(previous, incoming):
     """True when every earlier public event remains and nothing in it was corrected.
 
     Ghost's revision time and the content revision time move without a
-    correction, template prose may give way to AI prose, weekly research or
-    headline measurement keys may be added, and the related story list may
-    change in any way. Any other change, such as new evidence, other research,
-    or replaced AI prose, is treated as a correction, as is a withdrawal.
+    correction, template prose may give way to AI prose, weekly research,
+    headline measurement keys, or the identity conflict flag may be added, and
+    the related story list may change in any way. Any other change, such as
+    new evidence, other research, or replaced AI prose, is treated as a
+    correction, as is a withdrawal.
     """
 
     def source(event):

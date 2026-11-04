@@ -247,6 +247,37 @@ export function cardVisual(lead, classPhoto) {
     : lead || null;
 }
 
+// Kinds whose story is that the aircraft's identifiers disagree, so a photo
+// found by its listed registration may show another aircraft.
+export const NO_REGISTRATION_PHOTO = new Set([
+  "identity_conflict",
+  "type_speed_mismatch",
+  "type_altitude_mismatch",
+  "unregistered_address",
+]);
+
+// The photos a story may show, at most one of the aircraft: the registration
+// photo (Planespotters) unless the kind disputes the identity or the identity
+// checks found a conflict (the publisher's identity_conflict flag), else the
+// representative type photo. The class photo, for cards only, stands in for a
+// type with no photo of its own. A subjectless story names no aircraft, so it
+// shows none.
+export function storyPhotos(event, { registration, type, stock } = {}) {
+  if (event.subjectless)
+    return { registrationPhoto: null, typePhoto: null, classPhoto: null };
+  const registrationPhoto =
+    registration &&
+    !NO_REGISTRATION_PHOTO.has(event.kind) &&
+    event.identity_conflict !== true
+      ? registration
+      : null;
+  return {
+    registrationPhoto,
+    typePhoto: registrationPhoto ? null : type || null,
+    classPhoto: type ? null : stock || null,
+  };
+}
+
 export function storyModel(
   event,
   { topics, html = "", leadMedia, photo, classPhoto, profileImage },

@@ -633,7 +633,8 @@ try {
     1,
   );
   // The article body carries the owned prose block, with the "About" section
-  // and its sources inside it; the theme adds the credited type photo there.
+  // and its sources inside it. The story has an airframe photo, so the theme
+  // adds no type photo there: a story shows one photo of the aircraft.
   assert.equal(
     await parts.page.locator(".story-prose[data-story-version] > p").count(),
     2,
@@ -643,10 +644,7 @@ try {
     "About the Airbus A380-800",
   );
   assert.equal(await parts.page.locator(".type-background").count(), 1);
-  assert.equal(
-    await parts.page.locator(".type-background .type-photo img").count(),
-    1,
-  );
+  assert.equal(await parts.page.locator(".type-photo").count(), 0);
   // The airframe photo follows the map, credits its photographer beside the
   // image and links to its Planespotters page with plain anchors.
   const mapped = airframeByPath[mappedStory];
@@ -698,8 +696,7 @@ try {
   ]);
   assert.ok((await text(".related-hubs a")).includes("HL7635: every story"));
   await parts.page.goto(fixtureSite.base + leadingStory);
-  // Without a map the airframe photo leads, and the type photo joins "About
-  // the type".
+  // Without a map the airframe photo leads, and no type photo follows.
   assert.equal(
     await parts.page.locator("article figure").first().getAttribute("class"),
     "airframe-photo column",
@@ -709,10 +706,7 @@ try {
     airframeByPath[leadingStory].src,
   );
   assert.equal(await parts.page.locator("figure.article-cover").count(), 0);
-  assert.equal(
-    await parts.page.locator(".type-background .type-photo img").count(),
-    1,
-  );
+  assert.equal(await parts.page.locator(".type-photo").count(), 0);
   assert.equal(
     await parts.page
       .locator('.story-prose a[href="/field-guide/#ads-b"]')

@@ -45,6 +45,7 @@ import {
   paginate,
   shortDate,
   siteModel,
+  storyPhotos,
   topicIndex,
   truncate,
   utcTime,
@@ -160,9 +161,11 @@ const topics = topicIndex(JSON.parse(await fs.readFile(topicsPath, "utf8")));
 // Photos of the observed airframes, from the publisher's Planespotters step.
 // They go into article pages only: never cards, journal data, feeds, search
 // or social images.
-const airframePhotos = airframeFile
+const airframeInput = airframeFile
   ? await loadAirframePhotos(path.resolve(root, airframeFile), snapshot.events)
   : new Map();
+// The airframe photos the stories show (storyPhotos decides).
+const airframePhotos = new Map();
 const generated = options.media
   ? await loadEventMedia(snapshot, path.resolve(root, options.media))
   : { media: {}, figures: {}, files: new Map() };
@@ -187,8 +190,15 @@ for (const event of snapshot.events) {
     (item) => item.role === "profile",
   );
   if (profile) profiles[event.id] = profile;
-  const photo = imported ? aircraftPhoto(event) : null;
-  const stock = imported ? classPhoto(event) : null;
+  // One photo per story: the airframe photo, else the type photo.
+  const chosen = storyPhotos(event, {
+    registration: airframeInput.get(event.id),
+    type: imported ? aircraftPhoto(event) : null,
+    stock: imported ? classPhoto(event) : null,
+  });
+  const { typePhoto: photo, classPhoto: stock } = chosen;
+  if (chosen.registrationPhoto)
+    airframePhotos.set(event.id, chosen.registrationPhoto);
   if (photo) photos[event.id] = photo;
   if (stock) classPhotos[event.id] = stock;
   if (charted(figure)) lead[event.id] = figure;

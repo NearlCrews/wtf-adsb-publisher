@@ -11,6 +11,7 @@ import {
   pageLinks,
   paginate,
   siteModel,
+  storyPhotos,
   topicIndex,
   truncate,
   uniqueProseWords,
@@ -999,6 +1000,61 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     assert.equal(at > section, Boolean(photo.classes), photo.id);
   }
 }
+// One photo per story. A registration photo is left out when the story is
+// about a disputed identity or the identity checks found a conflict, since it
+// may show another aircraft; the representative type photo shows only when
+// no registration photo does; a class photo stands in on cards only for a
+// type without a photo; a subjectless story shows none.
+{
+  const registration = { src: "https://t.plnspttrs.net/1/1_280.jpg" };
+  const type = { kind: "aircraft-type-photo", src: "/assets/x.webp" };
+  const stock = { kind: "aircraft-class-photo", src: "/assets/y.webp" };
+  const photos = { registration, type, stock };
+  const none = { registrationPhoto: null, typePhoto: null, classPhoto: null };
+  assert.deepEqual(storyPhotos(event({ kind: "watch_type" }), photos), {
+    ...none,
+    registrationPhoto: registration,
+  });
+  for (const kind of [
+    "identity_conflict",
+    "type_speed_mismatch",
+    "type_altitude_mismatch",
+    "unregistered_address",
+  ])
+    assert.deepEqual(
+      storyPhotos(event({ kind }), photos),
+      { ...none, typePhoto: type },
+      kind,
+    );
+  assert.deepEqual(
+    storyPhotos({ ...event({}), identity_conflict: true }, photos),
+    { ...none, typePhoto: type },
+  );
+  assert.deepEqual(storyPhotos(event({}), { type, stock }), {
+    ...none,
+    typePhoto: type,
+  });
+  assert.deepEqual(storyPhotos(event({}), { registration, stock }), {
+    ...none,
+    registrationPhoto: registration,
+    classPhoto: stock,
+  });
+  assert.deepEqual(
+    storyPhotos(event({ kind: "type_speed_mismatch" }), {
+      registration,
+      stock,
+    }),
+    { ...none, classPhoto: stock },
+  );
+  assert.deepEqual(storyPhotos(event({}), {}), none);
+  assert.deepEqual(
+    storyPhotos(
+      { ...event({ kind: "winds_aloft_day" }), subjectless: true },
+      photos,
+    ),
+    none,
+  );
+}
 console.log(
-  "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, and list page links.",
+  "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, story photo rules, and list page links.",
 );

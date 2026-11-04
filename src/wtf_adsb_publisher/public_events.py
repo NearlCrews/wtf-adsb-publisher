@@ -2030,6 +2030,8 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
                 **publication,
                 "publication_status": "published" if mode == "published" else "unpublished",
                 "headline_measurements": list(stories.HEADLINE_MEASUREMENTS[event["kind"]]),
+                # The theme shows no photo of the listed registration for such an event.
+                **({"identity_conflict": True} if IDENTITY_CONFLICT in event["limitations"] else {}),
             }
         )
     # A related story links only to a page this export lists, so no link leads to a story
@@ -2602,6 +2604,9 @@ EVENT_OPTIONAL = (
     # events carry.
     "related",
     "subjectless",
+    # Set when the identity checks found a conflict (its limitation is listed); an export
+    # always writes it, and an older snapshot without it still validates.
+    "identity_conflict",
 )
 
 
@@ -2703,6 +2708,10 @@ def _snapshot_event(event, mode, status, as_of):
         subjectless and (event["subjectless"] is not True or event["aircraft"])
     ):
         raise ValueError("Only a subjectless kind's event names no aircraft, and it names none")
+    if "identity_conflict" in event and (
+        event["identity_conflict"] is not True or IDENTITY_CONFLICT not in event["limitations"]
+    ):
+        raise ValueError("Only an event with the identity conflict limitation carries the flag")
     if (
         "related" in event
         and _related(event["related"], event["article_path"], MAX_RELATED) != event["related"]

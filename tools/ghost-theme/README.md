@@ -115,8 +115,8 @@ fixture exercises journal pagination. The night appearance
 is audited on the homepage and on a story, and the saved choice must apply
 with `site.js` blocked. Each browser context fails on an uncaught page error
 and on any request to another origin. The fixture gives two stories an
-airframe photo, one under a map and one in place of the type photo; a local
-image stands in for Planespotters' host. No other page may load from another
+airframe photo, one under a map and one leading a story without one, and
+neither shows the type photo; a local image stands in for Planespotters' host. No other page may load from another
 origin, and no file other than a page may name Planespotters. The fixture's
 newest story is an R44, a type with no photo: its home tile and journal cards
 must show the local helicopter class photo, with the note, alt text, and
@@ -360,8 +360,16 @@ long label as the title; cards and tiles carry the same badge beside their
 date), the observed and published dates, the lead visual, the story prose, "About the {type}" with sourced profile facts,
 the evidence card, and related stories (at most five more about the airframe).
 A track map or chart leads, else the Planespotters photo of the airframe, else
-the representative type photo. A type photo that does not lead moves to
-"About the {type}"; an airframe photo under a map keeps its 420-pixel width.
+the representative type photo. A story shows one photo of its aircraft: the
+type photo appears only when the story has no airframe photo. A type photo
+that does not lead moves to "About the {type}"; an airframe photo under a map
+keeps its 420-pixel width. `storyPhotos` in `site-model.mjs` applies these
+rules in one place. A story about a disputed identity (`identity_conflict`,
+`type_speed_mismatch`, `type_altitude_mismatch`, and `unregistered_address`)
+or one whose identity checks found a conflict (the snapshot event's
+`identity_conflict` flag) gets no airframe photo, since the photo of the listed
+registration may show another aircraft. A subjectless story, such as a winds
+aloft day, gets no photo at all.
 
 Search metadata dates a story by its release time (`released_at`): JSON-LD
 `datePublished` and `article:published_time`. A story exported without a

@@ -178,9 +178,9 @@ export const imageCreditsPage = {
   slug: "image-credits",
   url: CREDITS_PATH,
   // The date of the last content change, and that content's pageDigest.
-  updated: "2026-10-07T00:00:00Z",
+  updated: "2026-11-04T00:00:00Z",
   contentSha256:
-    "0038f64cb689a9756a21b92fef618c602a8e10ecd79e95a59a8736ce7781ffc3",
+    "52dbe6098e386d67c9719a47b5af9c162b2b6a7a33171d2432ff642e35513e93",
   title: "Aircraft photo credits",
   custom_excerpt:
     "Sources, photographers, and licenses for the representative aircraft photos.",
