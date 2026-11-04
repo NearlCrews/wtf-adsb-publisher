@@ -315,15 +315,30 @@ def _point(raw):
 SAMPLE_KEYS = ("maneuver_samples", "pattern_samples", "track")
 
 
+# A TCAS advisory's own samples are its messages; its positions are the context samples around
+# them, which the media step draws first too (tools/run_autopilot.py).
+CONTEXT_SAMPLE_KINDS = frozenset({"tcas_ra"})
+
+
 def samples(source):
-    """A finding's saved samples, from the first of its sample lists that has any, or None."""
+    """A finding's saved samples, from the first of its sample lists that has any, or None; an
+    advisory's context samples come first (CONTEXT_SAMPLE_KINDS)."""
     found = (source or {}).get("evidence") or {}
-    return next((found[name] for name in SAMPLE_KEYS if found.get(name)), None)
+    keys = SAMPLE_KEYS
+    if (source or {}).get("kind") in CONTEXT_SAMPLE_KINDS:
+        keys = ("context_samples", *keys)
+    return next((found[name] for name in keys if found.get(name)), None)
+
+
+def _drawable(parts):
+    """Whether saved media parts hold a segment the map can draw: two positions or more."""
+    return isinstance(parts, list) and any(isinstance(part, list) and len(part) >= 2 for part in parts)
 
 
 def _points(source=None, parts=None):
-    """Aircraft positions for a place name: saved media parts first, else the finding's samples."""
-    if isinstance(parts, list) and parts:
+    """Aircraft positions for a place name: saved media parts with a drawable segment first, else
+    the finding's samples, as the media step draws them."""
+    if _drawable(parts):
         raw = [point for part in parts if isinstance(part, list) for point in part]
     else:
         raw = samples(source) or []

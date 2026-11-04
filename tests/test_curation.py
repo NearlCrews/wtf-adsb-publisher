@@ -5,6 +5,7 @@ import unittest
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -828,6 +829,18 @@ class NewCooldowns(unittest.TestCase):
             ],
             ["aaaaaa"],
         )
+
+    def test_a_winds_day_takes_one_of_the_days_story_slots(self):
+        winds = finding(1, "winds_aloft_day", value=None, address="abcdef")
+        winds["evidence"]["participants"] = [{"hex": "a00001"}, {"hex": "a00002"}]
+        winds["selection"] = selection.assess(winds, {})
+        others = [finding(index, "descending_spiral", value=6, address=f"b0000{index}") for index in (2, 3)]
+        with patch.object(curation, "MAX_PER_DAY", 2):
+            result = curation.choose([group(winds), *(group(item) for item in others)])
+        chosen = [row["finding_id"] for row in result["selected"]]
+        self.assertEqual(len(chosen), 2)
+        self.assertIn(1, chosen)
+        self.assertIn("daily_limit", {row["disposition"] for row in result["decisions"]})
 
     def test_the_curation_version_is_12(self):
         self.assertEqual(curation.VERSION, 12)

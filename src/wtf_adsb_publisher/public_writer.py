@@ -617,7 +617,9 @@ def assemble(raw, label, facts, template, *, headline=None):
     # Identity and date facts (editorial.BASE_FACTS) and the facts used, with the short
     # place and operator names the variety guard reads, listed as a template lists them.
     chosen = {**carried, **engine.story_fact_values(facts, used, cap=False)}
-    kept = engine.cap_story_facts({key: value for key, value in chosen.items() if value is not None})
+    kept = engine.cap_story_facts(
+        {key: value for key, value in chosen.items() if value is not None}, used=set(used)
+    )
     # Sources follow every fact the text used, even one the fact cap leaves off the list.
     referenced = {found[key].get("source") for key in chosen if key in found and key not in carried}
     # A carried type fact's source is the one story_facts gives it: src.<code>.<n> for tp.<code>.<n>.

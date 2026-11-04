@@ -84,6 +84,12 @@ class NewEvidenceValidates(unittest.TestCase):
             {"country": "Germany"},
             {"country_name": "<b>Germany</b>"},
             {"country_name": "Ger\nmany"},
+            # A bidi override, a zero-width joiner, a line separator, and a paragraph separator.
+            {"country_name": "Ger\u202emany"},
+            {"country_name": "Ger\u200dmany"},
+            {"country_name": "Ger\u2028many"},
+            {"country_name": "Ger\u2029many"},
+            {"country_name": "Ger\x85many"},
             {"country_name": " "},
             {"country_name": "G" * 61},
             {"country_name": None},

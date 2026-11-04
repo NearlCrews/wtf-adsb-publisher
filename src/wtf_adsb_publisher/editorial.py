@@ -106,8 +106,10 @@ class StoryUnavailable(ValueError):
     """No story for these facts passes the story checks, so there is nothing to publish."""
 
 
-def cap_story_facts(values, limit=MAX_STORY_FACTS):
-    """At most `limit` story facts: identity and date first, then type background, then the rest.
+def cap_story_facts(values, limit=MAX_STORY_FACTS, *, used=None):
+    """At most `limit` story facts: identity and date first, then the facts the text `used`
+    (any of them, a quoted type fact among them), then the rest, such as the type facts only
+    the box lists. Without `used`: identity and date, then type background, then the rest.
 
     A short form stays only beside the fact it shortens. The choice and the order are
     deterministic, so the same story always lists the same facts.
@@ -117,18 +119,22 @@ def cap_story_facts(values, limit=MAX_STORY_FACTS):
 
     def rank(key):
         parent = DERIVED_FACTS.get(key, key)
-        tier = 0 if parent in BASE_FACTS else 1 if parent.startswith("tp.") else 2
+        if used is not None:
+            tier = 0 if parent in BASE_FACTS else 1 if parent in used else 2
+        else:
+            tier = 0 if parent in BASE_FACTS else 1 if parent.startswith("tp.") else 2
         return (tier, parent, key)
 
     kept = set(sorted(values, key=rank)[:limit])
     return {key: values[key] for key in sorted(kept) if DERIVED_FACTS.get(key, key) in kept}
 
 
-def story_fact_values(facts, fact_ids, *, cap=True):
+def story_fact_values(facts, fact_ids, *, cap=True, used=None):
     """{fact id: value} for the given facts plus identity and date, as a story lists them.
 
     A place keeps its short form and state, an operator its short name. Template and AI
-    stories both list their facts this way; at most MAX_STORY_FACTS when capped.
+    stories both list their facts this way; at most MAX_STORY_FACTS when capped, the ones
+    the text `used` kept first (cap_story_facts).
     """
     values = story_facts.fact_map(facts)
     result = {}
@@ -143,7 +149,7 @@ def story_fact_values(facts, fact_ids, *, cap=True):
         elif fact_id == "op.callsign":
             result["op.callsign.short"] = values[fact_id].get("short")
     result = {key: value for key, value in result.items() if value is not None}
-    return cap_story_facts(result) if cap else result
+    return cap_story_facts(result, used=used) if cap else result
 
 
 # ---------------------------------------------------------------- formatting
@@ -1740,12 +1746,10 @@ class _Builder:
         self.recent = corpus.sentences(self.day)
 
     def story_facts(self, used, *, cap=True, extra=()):
-        """The facts behind the slots used, plus identity and date, and any extra fact ids."""
-        return story_fact_values(
-            self.facts,
-            {fact_id for name in used for fact_id in self.slots.sources.get(name, ())} | set(extra),
-            cap=cap,
-        )
+        """The facts behind the slots used, plus identity and date, and any extra fact ids; a cap
+        keeps the slots' own facts before the extra ones."""
+        behind = {fact_id for name in used for fact_id in self.slots.sources.get(name, ())}
+        return story_fact_values(self.facts, behind | set(extra), cap=cap, used=behind)
 
     def restates_required(self, text):
         """Whether text repeats a run of the required sentence's own words, its slot values aside."""

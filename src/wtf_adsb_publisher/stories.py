@@ -6,6 +6,7 @@ Aircraft tracks are permitted; receiver coordinates and relative metrics are not
 
 import math
 import re
+import unicodedata
 from copy import deepcopy
 from datetime import date, datetime, timezone
 
@@ -216,9 +217,20 @@ OPERATOR_DESIGNATOR = re.compile(r"[A-Z]{3}")
 FOREIGN_MILITARY_BASES = ("dbFlags", "military_allocation")
 COUNTRY_CODE = re.compile(r"[A-Z]{2}")
 # A State's name as the pinned identity table writes it, accents and typographic
-# apostrophes included ("Côte d’Ivoire"); control characters and markup are refused.
+# apostrophes included ("Côte d’Ivoire"); control and format characters (a bidi override
+# among them), line and paragraph separators, and markup are refused.
 COUNTRY_NAME_LIMIT = 60
 UNSAFE_TEXT = re.compile(r"[\x00-\x1f\x7f<>]")
+UNSAFE_CATEGORIES = frozenset({"Cc", "Cf", "Zl", "Zp"})
+
+
+def unsafe_text(text):
+    """Whether text holds markup or a control, format, line separator, or paragraph separator character."""
+    return bool(UNSAFE_TEXT.search(text)) or any(
+        unicodedata.category(char) in UNSAFE_CATEGORIES for char in text
+    )
+
+
 # A winds-aloft day's per-direction counts and medians, all required, and the hour of
 # its optional modelled 250 hPa wind.
 WINDS_COUNTS = ("east_addresses", "west_addresses")
@@ -678,7 +690,7 @@ def foreign_military(raw):
         not isinstance(country, str)
         or not COUNTRY_CODE.fullmatch(country)
         or not 1 <= len(name) <= COUNTRY_NAME_LIMIT
-        or UNSAFE_TEXT.search(name)
+        or unsafe_text(name)
         or not isinstance(basis, list)
         or not basis
         or len(set(basis)) != len(basis)

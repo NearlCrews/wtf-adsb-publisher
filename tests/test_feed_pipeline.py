@@ -677,6 +677,37 @@ class RareKindMediaTests(unittest.TestCase):
         self.assertEqual(svg.count('fill="none" stroke-linejoin="round"'), 3)
         self.assertEqual(svg.count("Other aircraft"), 1)
 
+    def test_a_feed_record_without_positions_keeps_its_summary_card(self):
+        import story_fixtures as fixtures
+
+        raw = fixtures.kind_event("descending_spiral")
+        for key in ("maneuver_samples", "pattern_samples", "track", "context_samples"):
+            raw["evidence"].pop(key, None)
+        item, _image, figures = self.render(raw, media_parts=[[]])
+        self.assertEqual(item["kind"], "observation-summary")
+        self.assertEqual(figures, [])
+        self.assertIsNone(autopilot.record_points({"automation": {"source": raw, "media_parts": [[]]}}))
+
+    def test_a_tcas_record_on_the_feed_path_is_placed_by_its_context_samples(self):
+        import story_fixtures as fixtures
+
+        raw = fixtures.kind_event("tcas_ra")
+        # The positions around the advisory, apart from its own message samples.
+        context = [{**point, "lat": point["lat"] + 0.05} for point in raw["evidence"]["pattern_samples"]]
+        raw["evidence"]["context_samples"] = context
+        # The feed cuts an advisory's segments from its messages, so none is drawable.
+        for parts in ([], [[]], [[[context[0]["lat"], context[0]["lon"]]]]):
+            with self.subTest(parts=parts):
+                points = autopilot.record_points({"automation": {"source": raw, "media_parts": parts}})
+                self.assertEqual(points[0], {"lat": context[0]["lat"], "lon": context[0]["lon"]})
+                self.assertEqual(len(points), len(context))
+        # Drawable parts still win.
+        drawn = [[[1.0, 2.0], [1.1, 2.1]]]
+        self.assertEqual(
+            autopilot.record_points({"automation": {"source": raw, "media_parts": drawn}}),
+            [{"lat": 1.0, "lon": 2.0}, {"lat": 1.1, "lon": 2.1}],
+        )
+
     def test_participant_tracks_follow_the_participant_list_rules(self):
         import story_fixtures as fixtures
 

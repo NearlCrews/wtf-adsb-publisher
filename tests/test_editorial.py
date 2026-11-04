@@ -1927,5 +1927,24 @@ class WhatTheDataSupport(unittest.TestCase):
         self.assertEqual(editorial.build_slots(kind_facts("tcas_ra"))["sep"], "3.2 NM")
 
 
+class FactCap(unittest.TestCase):
+    def test_the_cap_keeps_the_facts_the_text_used_before_unquoted_type_facts(self):
+        values = {"obs.date": "2026-09-20", "id.registration": "N1"}
+        values |= {f"tp.B738.{index}": f"Type fact {index}." for index in range(1, 9)}
+        values |= {f"p.{index}.registration": f"N{index}00" for index in range(1, 25)}
+        used = {f"p.{index}.registration" for index in range(1, 25)}
+        kept = editorial.cap_story_facts(values, used=used)
+        self.assertEqual(len(kept), editorial.MAX_STORY_FACTS)
+        self.assertLessEqual(used, set(kept))
+        self.assertIn("obs.date", kept)
+        # A quoted type fact counts as used.
+        kept = editorial.cap_story_facts(values, used=used | {"tp.B738.8"})
+        self.assertIn("tp.B738.8", kept)
+        # Without the list, type background still leads the rest.
+        self.assertTrue(
+            all(key in editorial.cap_story_facts(values) for key in values if key.startswith("tp."))
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
