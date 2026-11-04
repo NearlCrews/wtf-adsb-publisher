@@ -1776,7 +1776,8 @@ class NewKindEvidenceTests(unittest.TestCase):
         for name, item in zip(("episode-earlier", "episode-older"), related, strict=True):
             start = item["observed_start"]
             end = start.replace("T10:00", "T10:10")
-            add(self.ledger, key=name, evidence=packet(start, end), metadata=editorial(path=item["path"]))
+            metadata = editorial(path=item["path"], title=item["title"])
+            add(self.ledger, key=name, evidence=packet(start, end), metadata=metadata)
         # A story not yet published is in the ledger but not in the export.
         unreleased = story_path("unreleased")
         add(self.ledger, key="episode-unreleased", metadata=editorial(path=unreleased), approved=False)
@@ -1784,6 +1785,16 @@ class NewKindEvidenceTests(unittest.TestCase):
         good = published(self.ledger)
         event = next(item for item in good["events"] if item["article_path"] == STORY_PATH)
         self.assertEqual(event["related"], related)
+        # A linked story's later headline reaches every page that links to it.
+        earlier = self.ledger["records"][0]
+        renamed = {**earlier["editorial"], "title": "A corrected headline"}
+        public.put_event(self.ledger, "episode-earlier", earlier["evidence"], renamed, at=NOW)
+        public.set_review_state(self.ledger, earlier["id"], "approved", at=NOW)
+        relinked = next(
+            item for item in published(self.ledger)["events"] if item["article_path"] == STORY_PATH
+        )
+        self.assertEqual(relinked["related"][0], {**related[0], "title": "A corrected headline"})
+        self.assertEqual(self.ledger["records"][-1]["editorial"]["related"][1]["title"], "An earlier story")
         # A review export lists every story, so it keeps the unreleased one too.
         review = public.export_snapshot(self.ledger, mode="review", as_of=NOW)["events"]
         self.assertEqual(
@@ -1801,7 +1812,9 @@ class NewKindEvidenceTests(unittest.TestCase):
         self.assertNotIn("related", plain)
         self.assertEqual(event["evidence_version"], plain["evidence_version"])
         self.assertEqual(public.content_version(event), public.content_version(plain))
-        too_many = [{**related[0], "path": story_path(f"story-{index}")} for index in range(6)]
+        too_many = [
+            {**related[0], "path": story_path(f"story-{index}")} for index in range(public.KEPT_RELATED + 1)
+        ]
         refused = (
             [{**related[0], "path": "/about/"}],
             [{**related[0], "path": STORY_PATH}],
@@ -1820,7 +1833,9 @@ class NewKindEvidenceTests(unittest.TestCase):
                 )
         index = good["events"].index(event)
         absent = [{**related[0], "path": story_path("absent")}]
-        for bad in (*refused, [{**related[0], "title": "  Spaced  "}], absent):
+        retitled = [{**related[0], "title": "Not its headline"}, related[1]]
+        moved = [{**related[0], "observed_start": "2026-10-01T09:00:00Z"}, related[1]]
+        for bad in (*refused, [{**related[0], "title": "  Spaced  "}], absent, retitled, moved):
             tampered = deepcopy(good)
             tampered["events"][index]["related"] = bad
             tampered["snapshot_id"] = public._digest(
@@ -1828,6 +1843,35 @@ class NewKindEvidenceTests(unittest.TestCase):
             )
             with self.subTest(snapshot=bad), self.assertRaises(ValueError):
                 public.validate_snapshot(tampered)
+
+    def test_a_page_lists_the_newest_five_published_related_stories(self):
+        stored = []
+        for index in range(8):
+            start = f"2026-09-2{index + 1}T08:00:00Z"
+            path = story_path(f"linked-{index}")
+            # The two newest are not yet published, so the export skips them.
+            metadata = editorial(path=path, title=f"Linked story {index}")
+            add(
+                self.ledger,
+                key=f"linked-{index}",
+                evidence=packet(start, start),
+                metadata=metadata,
+                approved=index < 6,
+            )
+            stored.insert(0, {"path": path, "title": f"Linked story {index}", "observed_start": start})
+        add(
+            self.ledger,
+            evidence=packet("2026-09-29T08:00:00Z", "2026-09-29T08:10:00Z"),
+            metadata=editorial(related=stored),
+        )
+        snapshot = published(self.ledger)
+        event = next(item for item in snapshot["events"] if item["article_path"] == STORY_PATH)
+        self.assertEqual(event["related"], stored[2:7])
+        review = public.export_snapshot(self.ledger, mode="review", as_of=NOW)
+        self.assertEqual(
+            next(item for item in review["events"] if item["article_path"] == STORY_PATH)["related"],
+            stored[:5],
+        )
 
     def test_headline_keys_are_public_measurement_keys(self):
         known = (

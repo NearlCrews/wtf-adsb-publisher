@@ -87,8 +87,10 @@ OPTIONAL_EVIDENCE_FIELDS = ("priority_evidence", "watchlist", "participants")
 KIND_TYPES = kinds.table("section")
 # Stories about a day rather than an aircraft: their events name no aircraft and say so.
 SUBJECTLESS_KINDS = kinds.where(subjectless=True)
-# Other stories of the same registration an event links to (autopilot.related_stories).
+# Other stories of the same registration a page links to (autopilot.related_stories), and how
+# many a record keeps, so an export that drops unpublished ones can still fill the page.
 MAX_RELATED = 5
+KEPT_RELATED = 25
 READINGS = {
     "gs": ("Ground speed", "kn"),
     "tas": ("True airspeed", "kn"),
@@ -648,13 +650,18 @@ def article_slug(path):
     return STORY_PATH.fullmatch(_article_path(path))["slug"]
 
 
-def _related(raw, own_path):
+# Each related link's fields and the listed event's field it copies.
+RELATED_FIELDS = (("path", "article_path"), ("title", "title"), ("observed_start", "observed_start"))
+
+
+def _related(raw, own_path, limit=KEPT_RELATED):
     """Other stories of the same registration, newest first, as the theme lists them.
 
     Each is {"path", "title", "observed_start"}; none is the event's own page. The list
-    sits outside the evidence and content versions, so a change in it is no revision.
+    sits outside the evidence and content versions, so a change in it is no revision. A
+    record keeps up to KEPT_RELATED; an export lists up to MAX_RELATED (export_snapshot).
     """
-    if not isinstance(raw, list) or not 1 <= len(raw) <= MAX_RELATED:
+    if not isinstance(raw, list) or not 1 <= len(raw) <= limit:
         raise ValueError("Invalid related stories")
     result = []
     for item in raw:
@@ -2026,15 +2033,16 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
             }
         )
     # A related story links only to a page this export lists, so no link leads to a story
-    # that is unpublished, withdrawn, or not yet released.
-    listed = {event["article_path"] for event in events}
+    # that is unpublished, withdrawn, or not yet released, and each link carries that
+    # page's current headline and start, not the ones saved when this story was written.
+    listed = {event["article_path"]: event for event in events}
     for event in events:
-        if "related" in event:
-            kept = [item for item in event["related"] if item["path"] in listed]
-            if kept:
-                event["related"] = kept
-            else:
-                event.pop("related")
+        targets = [listed[item["path"]] for item in event.pop("related", ()) if item["path"] in listed]
+        targets.sort(key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["article_path"]))
+        if targets:
+            event["related"] = [
+                {key: target[field] for key, field in RELATED_FIELDS} for target in targets[:MAX_RELATED]
+            ]
     # Stable UUID tie-breaks do not change when prose or publication times change.
     events.sort(key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["id"]))
     days = _daily_counts(events, ledger["available_from"], as_of)
@@ -2695,7 +2703,10 @@ def _snapshot_event(event, mode, status, as_of):
         subjectless and (event["subjectless"] is not True or event["aircraft"])
     ):
         raise ValueError("Only a subjectless kind's event names no aircraft, and it names none")
-    if "related" in event and _related(event["related"], event["article_path"]) != event["related"]:
+    if (
+        "related" in event
+        and _related(event["related"], event["article_path"], MAX_RELATED) != event["related"]
+    ):
         raise ValueError("Related stories must be normalized")
     if not isinstance(event["source"], str) or event["source"] not in POSITION_SOURCES:
         raise ValueError("Unknown received source")
@@ -2803,8 +2814,12 @@ def validate_snapshot(snapshot):
         ids.add(event["id"])
         paths.add(_article_path(event["article_path"]))
         _snapshot_event(event, mode, snapshot["publication_status"], as_of)
-    if any(item["path"] not in paths for event in snapshot["events"] for item in event.get("related", ())):
-        raise ValueError("A related story must be an event in the same snapshot")
+    listed = {event["article_path"]: event for event in snapshot["events"]}
+    for event in snapshot["events"]:
+        for item in event.get("related", ()):
+            target = listed.get(item["path"])
+            if target is None or any(item[key] != target[field] for key, field in RELATED_FIELDS):
+                raise ValueError("A related story must be an event in the same snapshot, as it lists")
     ordered = sorted(
         snapshot["events"], key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["id"])
     )

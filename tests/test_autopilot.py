@@ -1299,7 +1299,7 @@ class StoryPublicationTests(unittest.TestCase):
                 earlier["state"] = "withdrawn"
                 self.assertEqual(autopilot.editorial_inputs(ledger, packet, later["key"])["related"], [])
 
-    def test_related_stories_keep_the_newest_five_and_skip_subjectless_stories(self):
+    def test_related_stories_are_kept_newest_first_and_skip_subjectless_stories(self):
         ledger = public.new_ledger("2026-07-01")
         items = []
         for identifier in range(1, 8):
@@ -1314,8 +1314,15 @@ class StoryPublicationTests(unittest.TestCase):
         starts = [item["observed_start"] for item in inputs["related"]]
         self.assertEqual(len(starts), 7)
         self.assertEqual(starts, sorted(starts, reverse=True))
+        # The record keeps them all, so an export that skips unpublished ones can still list five.
         metadata = autopilot.editorial(packet, later["key"], **inputs)
-        self.assertEqual([item["observed_start"] for item in metadata["related"]], starts[:5])
+        self.assertEqual([item["observed_start"] for item in metadata["related"]], starts)
+        many = [
+            {**inputs["related"][0], "path": f"/stories/linked-{index}-1-oct-2026/"} for index in range(30)
+        ]
+        self.assertEqual(
+            len(autopilot.editorial(packet, later["key"], **{**inputs, "related": many})["related"]), 25
+        )
         # A winds story's example aircraft is not its subject: it neither has nor gives related stories.
         winds = deepcopy(packet)
         winds["kind"] = "winds_aloft_day"

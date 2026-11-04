@@ -537,7 +537,8 @@ def related_stories(ledger, packet, key):
 
     The story's own record (episode `key`) is never among them. A subjectless story's
     aircraft are examples, so it has none and is none. story_facts.build reads the list for
-    repeat.previous; editorial() keeps the newest public.MAX_RELATED for the page.
+    repeat.previous; editorial() keeps the newest public.KEPT_RELATED, and each export
+    lists the newest public.MAX_RELATED of those it publishes.
     """
     registration = (packet.get("aircraft") or {}).get("registration")
     start = _quiet(lambda: public.instant(packet["observation"]["start_utc"]))
@@ -546,13 +547,18 @@ def related_stories(ledger, packet, key):
     found = []
     for record in ledger.get("records", []):
         evidence = record.get("evidence") or {}
+        # The cheap registration test first: a pass calls this once for every record.
+        if (
+            not isinstance(evidence, dict)
+            or (evidence.get("aircraft") or {}).get("registration") != registration
+        ):
+            continue
         editorial_ = record.get("editorial") or {}
         if (
             record.get("episode_key") == key
+            or evidence.get("kind") in public.SUBJECTLESS_KINDS
             or _quiet(_removed, record, default=True)
             or (record.get("automation") or {}).get("suspended")
-            or evidence.get("kind") in public.SUBJECTLESS_KINDS
-            or (evidence.get("aircraft") or {}).get("registration") != registration
         ):
             continue
         began = observation_start(record)
@@ -583,10 +589,10 @@ def related_stories(ledger, packet, key):
 
 
 def _page_related(related):
-    """The newest related stories as the public event lists them, or None for none."""
+    """The newest related stories as a record keeps them, or None for none."""
     listed = [
         {key: item[key] for key in ("path", "title", "observed_start")}
-        for item in (related or ())[: public.MAX_RELATED]
+        for item in (related or ())[: public.KEPT_RELATED]
     ]
     return listed or None
 
