@@ -774,6 +774,15 @@ class NewCooldowns(unittest.TestCase):
             kind="first_operator_here", address="a00003", start=400 * 86400, evidence=first("ABC")
         )
         self.assertEqual(log.repeat(again), "first_repeat")
+        self.assertEqual(
+            curation.REPEAT_REASONS["first_repeat"],
+            "A first sighting of this type, allocation State, or operator already had its story",
+        )
+        # Without a designator the operator first is keyed by its own address.
+        self.assertEqual(
+            curation.facts(_story_event("first_operator_here", "a00001", {"first_sighting": {}}))["subtopic"],
+            "aircraft:a00001",
+        )
 
     def test_a_routine_type_does_not_hold_an_operator_first(self):
         def first(designator):
