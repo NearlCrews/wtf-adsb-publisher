@@ -72,10 +72,10 @@ export const KIND_GUIDE = {
   },
   foreign_military: {
     name: "Foreign military visitor",
-    what: "A military aircraft whose address or database entry ties it to a country other than the United States.",
+    what: "A military aircraft whose address comes from a block assigned to a country other than the United States.",
     why: "Military aircraft from other countries are a small share of the traffic here, and they often fly types and markings seldom seen in these records.",
     falseAlarms:
-      "A military flag in the database can be outdated, and an aircraft that moved to another registry can keep the address from its old one.",
+      "A military flag in the database can be outdated. When the registration's country is unknown, an aircraft that moved to another registry can still carry the address from its old one.",
   },
   first_type_here: {
     name: "First sighting of a type",
@@ -110,7 +110,7 @@ export const KIND_GUIDE = {
     what: "An aircraft listed in Plane Alert DB, a community list of aircraft that spotters follow.",
     why: "The list collects government aircraft, historic airframes, and distinctive liveries, so a match often means something out of the ordinary is overhead.",
     falseAlarms:
-      "The list and the aircraft database can both be out of date. A name on the list is a label, and it is no evidence of who owns the aircraft or who was aboard.",
+      "The list and the aircraft database can both be out of date. A name on the list is a label, and it is not evidence of who owns the aircraft or who was aboard.",
   },
   stratospheric_balloon: {
     name: "High-altitude balloon",
@@ -194,7 +194,7 @@ export const KIND_GUIDE = {
     what: "A turn much tighter than large aircraft usually fly.",
     why: "Airliners and other large aircraft normally turn gently, so a sustained tight turn stands out.",
     falseAlarms:
-      "Position noise can inflate a turn rate worked out from positions, and the rate is no measurement of bank angle. A wrong emitter category can make a small aircraft look large.",
+      "Position noise can inflate a turn rate worked out from positions, and the rate is not a measurement of bank angle. A wrong emitter category can make a small aircraft look large.",
   },
   aerobatic_practice: {
     name: "Aerobatic-style practice",
@@ -250,7 +250,7 @@ export const KIND_GUIDE = {
     what: "An aircraft that went past the altitude set on its autopilot panel before coming back to it.",
     why: "Few sources show the selected altitude, and an overshoot means the aircraft went beyond the level set for it.",
     falseAlarms:
-      "A selected altitude is a panel setting and no clearance. A late change to the selection, or an altitude report that lags, can create a false overshoot.",
+      "A selected altitude is a panel setting, and it is not a clearance. A late change to the selection, or an altitude report that lags, can create a false overshoot.",
   },
   above_rated_altitude: {
     name: "Above the certified ceiling",
@@ -318,7 +318,7 @@ export const KIND_GUIDE = {
   special_squawk_minfuel: {
     name: "Minimum fuel status",
     what: "The minimum fuel status in the emergency field of the aircraft's ADS-B broadcasts.",
-    why: "Minimum fuel tells controllers that the aircraft can accept little delay. It is an advisory and no emergency declaration.",
+    why: "Minimum fuel tells controllers that the aircraft can accept little delay. It is an advisory, and it is not an emergency declaration.",
     falseAlarms:
       "The field can be set by mistake, and the data cannot show how much fuel was aboard.",
   },
@@ -362,7 +362,7 @@ export const KIND_GUIDE = {
     what: "A collision-avoidance instruction, such as climb or descend, issued automatically by the aircraft's TCAS and reported in its own broadcasts.",
     why: "Broadcast data seldom shows what happens on the flight deck, and an advisory is one of the few moments it does.",
     falseAlarms:
-      "Many advisories happen at spacing controllers treat as normal, so one is no evidence of a near miss. The spacing figures come from broadcast positions, which have errors of their own.",
+      "Many advisories happen at spacing controllers treat as normal, so one is not evidence of a near miss. The spacing figures come from broadcast positions, which have errors of their own.",
   },
   outlier_gs: {
     name: "Ground speed spike",
