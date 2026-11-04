@@ -161,6 +161,13 @@ SCOPE_BASIS = {
     "archived-label": "archive-label",
     "discontinuity-pair-not-physical-travel": "derived",
 }
+# Why a reading the listed type cannot produce may come from another aircraft's record.
+MISMATCH_HYPOTHESES = (
+    "a stale registry entry",
+    "a re-registration",
+    "a transponder programmed with another aircraft's address",
+    "a database typo",
+)
 # Possible explanations a story may offer, always hedged in prose. A glitch story offers
 # none: it gives the reading, the listed type and the type's cited limit, never a cause.
 HYPOTHESES = {
@@ -172,6 +179,16 @@ HYPOTHESES = {
     "parallel_passes": ("aerial survey or mapping",),
     "thermal_soaring": ("soaring in rising air",),
     "formation_flight": ("formation flight",),
+    "type_speed_mismatch": MISMATCH_HYPOTHESES,
+    "type_altitude_mismatch": MISMATCH_HYPOTHESES,
+    "winds_aloft_day": ("strong winds aloft, such as a jet stream",),
+    "aerobatic_practice": ("aerobatic practice", "training maneuvers"),
+    "unregistered_address": (
+        "registry lag after a new registration",
+        "a registry the site does not consult",
+        "an address programmed by hand",
+    ),
+    "racetrack_orbit": ("a long racetrack hold", "a refueling-style track", "an orbit over one area"),
 }
 # One general sentence per kind on what such an observation usually is, never what this flight
 # was: the writer may restate it once as context (ctx.kind).
@@ -197,12 +214,12 @@ KIND_CONTEXT = {
     "use one piece of sky for an hour or more.",
     "identity_conflict": "The three identifiers an aircraft carries usually agree; a disagreement is usually a "
     "database or settings artifact.",
-    "type_speed_mismatch": "A reading a type cannot produce usually means the database has the wrong aircraft for "
-    "the address.",
-    "type_altitude_mismatch": "A reading a type cannot produce usually means the database has the wrong aircraft "
-    "for the address.",
-    "seasonal_speed_record": "Ground-speed records in one season mostly track the wind, which is why the margin "
-    "matters.",
+    "type_speed_mismatch": "A reading a type cannot produce usually means the address belongs to a different "
+    "aircraft than the database lists.",
+    "type_altitude_mismatch": "A reading a type cannot produce usually means the address belongs to a different "
+    "aircraft than the database lists.",
+    "seasonal_speed_record": "Ground-speed records mostly follow the wind, which is why the margin over the earlier "
+    "best matters.",
     "thermal_soaring": "Gliders and motor gliders gain height by circling in rising air.",
     "first_type_here": "A first sighting says only that the type had not appeared in these records before.",
     "first_country_here": "An address block names the State that issued the address, which usually matches the "

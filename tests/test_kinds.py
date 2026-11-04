@@ -192,10 +192,10 @@ class WordingTablesCoverTheRegistry(unittest.TestCase):
         self.assertEqual(set(public_prose.FIXED_HEADLINES), fixed)
         self.assertEqual(public_prose.FIXED_HEADLINE_KINDS, fixed)
 
-    def test_required_sentences_are_the_record_and_rated_kinds(self):
+    def test_required_sentences_are_the_record_rated_winds_and_foreign_military_kinds(self):
         self.assertEqual(
             set(public_prose.REQUIRED_SENTENCES),
-            kinds.where(record=True) | set(kinds.table("rated")),
+            kinds.where(record=True) | set(kinds.table("rated")) | {"winds_aloft_day", "foreign_military"},
         )
         self.assertLessEqual(set(public_prose.REQUIRED_SENTENCES), set(editorial.REQUIRED_BUILDERS))
 

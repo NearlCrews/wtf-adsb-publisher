@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import reference_fixture
 import story_fixtures
 
-from wtf_adsb_publisher import editorial, explain, public_prose, stories, story_facts
+from wtf_adsb_publisher import editorial, explain, public_prose, publication, stories, story_facts
 from wtf_adsb_publisher import public_events as public
 from wtf_adsb_publisher.public_prose import MAX_PROSE, packet_facts, prose_issues
 
@@ -1413,6 +1413,258 @@ class CaveatTests(unittest.TestCase):
         with patch.object(public_prose, "_restated", wraps=public_prose._restated) as restated:
             self.assertFalse(public_prose.is_caveat("It flew at 41,000 ft.", [unknown]))
         restated.assert_not_called()
+
+
+def kind_story(kind, **changes):
+    """(facts, story): a kind's template story, with fact values changed by id first."""
+    facts = story_fixtures.facts(story_fixtures.kind_event(kind), place=story_fixtures.PLACES["coleman"])
+    for item in facts["facts"]:
+        if item["id"] in changes:
+            item["value"] = changes[item["id"]]
+    return facts, editorial.render(facts, "episode")
+
+
+def with_sentence(story, sentence):
+    """The story with a sentence added before the last sentence of its last paragraph."""
+    return {**story, "paragraphs": public_prose.insert_before_last(story["paragraphs"], sentence)}
+
+
+def without(story, sentence):
+    return {
+        **story,
+        "paragraphs": [" ".join(text.replace(sentence, "").split()) for text in story["paragraphs"]],
+    }
+
+
+class NewProseRules(unittest.TestCase):
+    """The new kinds' headlines and required sentences, and the story-quality checks."""
+
+    def test_fixed_headlines_for_new_kinds(self):
+        cases = (
+            ("first_operator_here", {"fs.operator": "Qantas"}, "Qantas spotted for the first time"),
+            ("winds_aloft_day", {"wind.day": "2026-11-05"}, "Strong winds aloft on 5 November 2026"),
+            ("unregistered_address", {"id.hex": "a1b2c3"}, "Address A1B2C3 flew with no registry entry"),
+        )
+        for kind, changes, headline in cases:
+            with self.subTest(kind=kind):
+                facts = story_fixtures.facts(story_fixtures.kind_event(kind))
+                for item in facts["facts"]:
+                    if item["id"] in changes:
+                        item["value"] = changes[item["id"]]
+                self.assertEqual(public_prose.fixed_headline(facts)[0], headline)
+
+    def test_new_required_sentences(self):
+        winds = story_fixtures.facts(story_fixtures.kind_event("winds_aloft_day"))
+        self.assertEqual(
+            public_prose.required_sentence(winds),
+            "The wind itself was not measured; the difference in ground speeds is what the data show.",
+        )
+        foreign = story_fixtures.facts(story_fixtures.kind_event("foreign_military"))
+        self.assertEqual(
+            public_prose.required_sentence(foreign),
+            "The listing comes from the aircraft database and the address block, not from anything the flight "
+            "itself transmitted.",
+        )
+        self.assertNotRegex(public_prose.REQUIRED_SENTENCES["foreign_military"], public_prose.MISSION_CLAIM)
+        # A listing whose facts do not say what marked it has no required sentence to carry.
+        foreign["facts"] = [item for item in foreign["facts"] if item["id"] != "fm.basis"]
+        self.assertIsNone(public_prose.required_sentence(foreign))
+        for kind in ("winds_aloft_day", "foreign_military"):
+            with self.subTest(kind=kind):
+                facts, story = kind_story(kind)
+                required = public_prose.required_sentence(facts)
+                self.assertEqual(public_prose.carries(story["paragraphs"], required), 1)
+                self.assertEqual(public_prose.story_issues(story, facts), [])
+                self.assertIn(
+                    "claim:limit_unhedged", public_prose.story_issues(without(story, required), facts)
+                )
+
+    def test_filler_frames_are_refused(self):
+        facts, story = kind_story("watch_type")
+        self.assertEqual(public_prose.story_issues(story, facts), [])
+        for sentence in (
+            "A reported altitude of 33,000 feet gives a sense of the flight.",
+            "The double deck is a useful design detail to remember.",
+            "It is worth noting that the record holds nine positions.",
+            "The track adds some context to the reading.",
+            "Its callsign rounds out the picture.",
+            "The entry does not show who was aboard.",
+        ):
+            with self.subTest(sentence=sentence):
+                issues = public_prose.story_issues(with_sentence(story, sentence), facts)
+                self.assertIn("filler:frame", issues)
+                self.assertNotIn(
+                    "filler:frame",
+                    public_prose.story_issues(with_sentence(story, sentence), facts, new=False),
+                )
+        self.assertIn(
+            "filler:frame", public_prose.story_issues({**story, "dek": "It is worth noting."}, facts)
+        )
+
+    def test_box_facts_cannot_be_reused_in_ai_prose(self):
+        profiles = story_fixtures.profile(
+            "A388",
+            "Airbus built the A380 with two full-length passenger decks.",
+            "The A380 first flew in April 2005 and entered airline service two years later, in 2007.",
+            publisher="Airbus",
+        )
+        facts = story_fixtures.facts(
+            story_fixtures.watch_a380(), place=story_fixtures.PLACES["coleman"], profiles=profiles
+        )
+        story = {"paragraphs": ["It passed at 39,000 ft. The A380 has two decks."]}
+        self.assertEqual(public_prose.box_issues(story, facts), [])
+        # A short fact repeats when a sentence carries all of it; a longer one, ten words in a row.
+        for sentence in (
+            "Airbus built the A380 with two full-length passenger decks, the type box says.",
+            "It first flew in April 2005 and entered airline service two years later.",
+        ):
+            with self.subTest(sentence=sentence):
+                reused = {"paragraphs": [f"It passed at 39,000 ft. {sentence}"]}
+                self.assertEqual(public_prose.box_issues(reused, facts), ["box:reused"])
+        # The story checks leave the box to the AI writer's check: template text quotes it.
+        template = editorial.render(facts, "episode")
+        self.assertNotIn("box:reused", public_prose.story_issues(template, facts))
+
+    def test_the_type_box_lists_the_facts_the_text_does_not_quote(self):
+        first = "Airbus built the A380 with two full-length passenger decks."
+        second = "The A380 first flew in April 2005 and entered airline service in 2007."
+        story = {
+            "headline": "Asiana A380 HL7635 passes near Coleman, Michigan",
+            "dek": "It reported 487 knots.",
+            "paragraphs": [f"HL7635 passed near Coleman. {first}"],
+            "facts": {"tp.A388.1": first, "tp.A388.2": second, "id.registration": "HL7635"},
+        }
+        self.assertEqual(publication.type_box(story), [second])
+        self.assertEqual(publication.type_box({**story, "paragraphs": ["HL7635 passed."]}), [first, second])
+        # A story written when the box listed the facts its text used keeps them all.
+        legacy = {**story, "paragraphs": [f"HL7635 passed near Coleman. {first} {second}"]}
+        self.assertEqual(publication.type_box(legacy), [first, second])
+
+    def test_a_dek_adds_a_fact_the_headline_lacks(self):
+        facts, story = kind_story("watch_type")
+        self.assertEqual(public_prose.story_issues(story, facts), [])
+        registration = story_facts.value(facts, "id.registration")
+        echo = {
+            **story,
+            "headline": f"{registration} passes overhead",
+            "dek": f"{registration} passes overhead.",
+        }
+        self.assertIn("dek:adds_nothing", public_prose.story_issues(echo, facts))
+        self.assertNotIn("dek:adds_nothing", public_prose.story_issues(echo, facts, new=False))
+        self.assertTrue(
+            public_prose.adds_to(f"{registration} passes", f"{registration} reported 487 knots.", facts)
+        )
+        self.assertTrue(
+            public_prose.adds_to(f"{registration} passes", "It flew near Coleman, Michigan.", facts)
+        )
+        self.assertFalse(public_prose.adds_to(f"{registration} passes", "It passed in the evening.", facts))
+
+    def test_every_kind_context_line_passes_quoted_verbatim_in_a_story_of_its_kind(self):
+        for kind, line in story_facts.KIND_CONTEXT.items():
+            with self.subTest(kind=kind):
+                facts, story = kind_story(kind)
+                self.assertEqual(public_prose.context_line(facts), line)
+                self.assertEqual(public_prose.carries(story["paragraphs"], line), 1)
+                self.assertEqual(public_prose.story_issues(story, facts), [])
+                self.assertIn("context:missing", public_prose.story_issues(without(story, line), facts))
+                self.assertNotIn(
+                    "context:missing", public_prose.story_issues(without(story, line), facts, new=False)
+                )
+
+    def test_a_light_rephrase_of_the_context_line_counts_and_keeps_its_figures(self):
+        line = story_facts.KIND_CONTEXT["thermal_soaring"]
+        self.assertTrue(public_prose.restates_context(line, line))
+        self.assertTrue(
+            public_prose.restates_context(
+                "Gliders and motor gliders gain height by circling in air that rises.", line
+            )
+        )
+        # A claim about this flight wrapped around the line is no rephrase.
+        self.assertFalse(
+            public_prose.restates_context(
+                "This glider gained height by circling in rising air near the field, as gliders and motor gliders "
+                "often do on warm afternoons.",
+                line,
+            )
+        )
+        self.assertFalse(
+            public_prose.restates_context(
+                "It climbed 3,000 feet in rising air.", "It climbed 2,000 feet in rising air."
+            )
+        )
+        facts, story = kind_story("thermal_soaring")
+        rephrased = {
+            **story,
+            "paragraphs": [
+                text.replace(line, "Gliders and motor gliders gain height by circling in air that rises.")
+                for text in story["paragraphs"]
+            ],
+        }
+        self.assertNotIn("context:missing", public_prose.story_issues(rephrased, facts))
+
+    def test_house_headline_forms(self):
+        facts, story = kind_story("watchlist_match")
+        registration = story_facts.value(facts, "id.registration")
+        association = story_fixtures.WATCH_ASSOCIATION
+        self.assertRegex(
+            story["headline"],
+            rf"^(?:Cessna )?Citation CJ4 {registration} linked to {association} by Plane Alert DB$",
+        )
+        listed = {
+            **story,
+            "headline": f"Cessna Citation CJ4 {registration}, listed under {association}, spotted",
+        }
+        self.assertNotIn("headline:watchlist_form", public_prose.story_issues(listed, facts))
+        loose = {
+            **story,
+            "headline": f"Cessna Citation CJ4 {registration} flies for {association} near Coleman",
+        }
+        self.assertIn("headline:watchlist_form", public_prose.story_issues(loose, facts))
+        self.assertNotIn("headline:watchlist_form", public_prose.story_issues(loose, facts, new=False))
+        facts, story = kind_story("foreign_military")
+        country = story_facts.value(facts, "fm.country")
+        self.assertRegex(story["headline"], rf", listed as military from {country}, spotted")
+        loose = {
+            **story,
+            "headline": story["headline"].replace(", listed as military from", ", a military aircraft of"),
+        }
+        self.assertIn("headline:foreign_military_form", public_prose.story_issues(loose, facts))
+        self.assertNotIn("headline:foreign_military_form", public_prose.story_issues(loose, facts, new=False))
+
+    def test_house_headlines_share_their_skeleton_without_a_variety_issue(self):
+        for kind in ("watchlist_match", "foreign_military"):
+            with self.subTest(kind=kind):
+                facts, story = kind_story(kind)
+                recent = [story_fixtures.recent_entry(story, facts)]
+                again = editorial.render_with_report(facts, "episode-2", recent=recent)[1]
+                self.assertNotIn("headline_similar", again.issues)
+
+    def test_mismatch_and_new_kind_hypotheses_are_offered_hedged(self):
+        self.assertIn("a stale registry entry", story_facts.HYPOTHESES["type_speed_mismatch"])
+        self.assertEqual(
+            story_facts.HYPOTHESES["type_altitude_mismatch"], story_facts.HYPOTHESES["type_speed_mismatch"]
+        )
+        for kind in ("winds_aloft_day", "aerobatic_practice", "unregistered_address", "racetrack_orbit"):
+            self.assertTrue(story_facts.HYPOTHESES[kind], kind)
+        facts, story = kind_story("type_speed_mismatch")
+        self.assertEqual(public_prose.story_issues(story, facts), [])
+        hedged = with_sentence(story, "One explanation may be a stale registry entry.")
+        self.assertEqual(public_prose.story_issues(hedged, facts), [])
+        bare = with_sentence(story, "The address carries a stale registry entry.")
+        self.assertIn("claim:unhedged_hypothesis", public_prose.story_issues(bare, facts))
+        # The fixed winds headline is the engine's, never an unhedged hypothesis.
+        facts, story = kind_story("winds_aloft_day")
+        self.assertTrue(story["headline"].startswith("Strong winds aloft on "))
+        self.assertEqual(public_prose.story_issues(story, facts), [])
+
+    def test_turn_rate_forms(self):
+        check = public_prose.prose_checker(
+            story_fixtures.facts(story_fixtures.kind_event("aerobatic_practice"))
+        )
+        for unit in ("degrees a second", "degrees each second", "degree a second"):
+            with self.subTest(unit=unit):
+                self.assertEqual(check(f"It turned at 24 {unit}."), [])
+        self.assertTrue(check("It turned at 31 degrees a second."))
 
 
 if __name__ == "__main__":

@@ -18,7 +18,16 @@ import story_fixtures
 from inbox_support import inbox
 from test_curation import finding
 
-from wtf_adsb_publisher import autopilot, curation, entity_context, episode_evidence, publication, selection
+from wtf_adsb_publisher import (
+    autopilot,
+    curation,
+    entity_context,
+    episode_evidence,
+    public_prose,
+    publication,
+    selection,
+    story_facts,
+)
 from wtf_adsb_publisher import public_events as public
 from wtf_adsb_publisher.ghost_client import GhostError
 
@@ -1193,6 +1202,26 @@ class AutopilotTests(unittest.TestCase):
             public.validate_snapshot(review)
 
 
+class PublishedTextTests(unittest.TestCase):
+    def setUp(self):
+        reference_fixture.install()
+
+    def test_a_published_story_without_the_context_line_still_holds(self):
+        # Checks added for new text never replace a story already published.
+        facts = story_fixtures.facts(
+            story_fixtures.kind_event("formation_flight"), place=story_fixtures.PLACES["coleman"]
+        )
+        story = autopilot.engine.render(facts, "episode")
+        line = story_facts.KIND_CONTEXT["formation_flight"]
+        published = {
+            **story,
+            "paragraphs": [" ".join(text.replace(line, "").split()) for text in story["paragraphs"]],
+        }
+        self.assertIn("context:missing", public_prose.story_issues(published, facts))
+        self.assertTrue(autopilot._holds(published, facts))
+        self.assertTrue(autopilot._holds(story, facts))
+
+
 class StoryPublicationTests(unittest.TestCase):
     """Story URLs, Ghost fields and owned prose: the redo's publication hardening."""
 
@@ -1680,16 +1709,17 @@ class StoryPublicationTests(unittest.TestCase):
         self.assertEqual(autopilot.stage(self.ledger, [corrected], at=NOW), {"changed": 1, "rejected": 0})
 
     def test_a_thin_record_publishes_the_engines_plain_record(self):
-        # No reading, track or type history: no angle fills two paragraphs on its own.
+        # No reading, track or type history: no kind angle renders, and the generic record, its two
+        # fact sentences and the kind's context line, is the story.
         item = candidate(8, "watch_type", None)
         item["source"]["evidence"]["aircraft"]["t"] = "DC3"
         packet = autopilot.evidence(item["source"], item["interval"])
         metadata = autopilot.editorial(packet, item["key"])
-        self.assertEqual(metadata["story"]["angle"], "minimal")
+        self.assertEqual(metadata["story"]["angle"], "generic_record")
         self.assertEqual(autopilot.stage(self.ledger, [item], at=NOW), {"changed": 1, "rejected": 0})
         snapshot, result = self.publish()
         self.assertEqual(result["published"], 1)
-        self.assertEqual(snapshot["events"][0]["story"]["angle"], "minimal")
+        self.assertEqual(snapshot["events"][0]["story"]["angle"], "generic_record")
 
     def test_a_record_without_any_valid_story_waits_and_the_pass_goes_on(self):
         engine = sys.modules["wtf_adsb_publisher.editorial"]

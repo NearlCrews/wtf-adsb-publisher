@@ -186,8 +186,9 @@ PROSE_UNITS = [
     (r"years|year|yrs|yr", [("years", 1)]),
     (r"decades|decade", [("years", 10)]),
     (r"centuries|century", [("years", 100)]),
-    # A turn rate, before the bare angle so "degrees per second" reads as one unit.
-    (r"degrees[ -]per[ -]second|degree[ -]per[ -]second|deg/s|\u00b0/s", [("turn_rate", 1)]),
+    # A turn rate, before the bare angle so "degrees per second", "degrees a second", and "degrees
+    # each second" read as one unit.
+    (r"degrees?[ -](?:per|a|each)[ -]second|deg/s|\u00b0/s", [("turn_rate", 1)]),
     (r"degrees|degree|deg|\u00b0", [("angle", 1)]),
     (r"percent|per[ -]cent|%", [("percent", 1)]),
     (r"hectopascals|hectopascal|hpa|millibars|millibar|mbar|mb", [("pressure", 1)]),
@@ -1328,9 +1329,10 @@ READING_NOUNS = re.compile(
 # The words of a cause marker itself, which name no cause: every word its patterns spell out.
 CAUSE_MARKER_WORDS = frozenset(re.findall(r"[a-z]{2,}", CAUSE_LINKS + CAUSE_COPULA))
 # Kinds whose story names no cause at all: an outlying reading, a reading that does not fit the
-# listed type, and a reading past the type's certified limit. Their facts list no hypothesis, so
-# a cause noun anywhere, or a causal verb in a sentence about a reading, is refused, hedged or not.
-# A mismatch story may state a second registry's type as a fact; it is not a hypothesis.
+# listed type, and a reading past the type's certified limit. A cause noun anywhere, or a causal
+# verb in a sentence about a reading, is refused, hedged or not. A mismatch story may state a
+# second registry's type as a fact, and offer one of its listed hypotheses, hedged, none of which
+# names a cause noun.
 CAUSELESS_KINDS = kinds.where(causeless=True)
 CAUSELESS_PREFIXES = ("outlier_",)
 CAUSE_NOUNS = re.compile(
@@ -3892,11 +3894,12 @@ RECORD_HEDGE = re.compile(
 RECORD_KINDS = curation.RECORD_KINDS
 RATED_KINDS = rules.RATED_KINDS
 # The one sentence a story of these kinds carries in a paragraph, as written, in place of the
-# evidence card's longer caveats: the speed record's wind and faulty-reading hedge, and a
-# certified-limit story's doubt about its reading. Both writers insert it verbatim (editorial's
-# builders, public_writer.assemble for AI prose), so the checks find it by equality and read the
-# rest of the story without it. A speed's names how its airspeed was obtained, by its
-# lim.airspeed fact's basis (AIRSPEED_ORIGINS).
+# evidence card's longer caveats: the speed record's wind and faulty-reading hedge, a
+# certified-limit story's doubt about its reading, a winds aloft day's unmeasured wind, and where a
+# foreign military listing comes from. Both writers insert it verbatim (editorial's builders,
+# public_writer.assemble for AI prose), so the checks find it by equality and read the rest of the
+# story without it. A speed's names how its airspeed was obtained, by its lim.airspeed fact's
+# basis (AIRSPEED_ORIGINS); a foreign military listing's names its fm.basis.
 REQUIRED_SENTENCES = {
     "seasonal_speed_record": "Ground speed includes any tailwind, and a faulty reading can't be ruled out.",
     "above_rated_altitude": (
@@ -3904,6 +3907,8 @@ REQUIRED_SENTENCES = {
         "limit."
     ),
     "above_rated_speed": "The airspeed is {airspeed_origin}, so a faulty reading can't be ruled out.",
+    "winds_aloft_day": "The wind itself was not measured; the difference in ground speeds is what the data show.",
+    "foreign_military": "The listing comes from {fm_basis}, not from anything the flight itself transmitted.",
 }
 AIRSPEED_ORIGINS = {
     "derived": "an estimate from ground speed and modelled wind",
@@ -3960,13 +3965,25 @@ FIXED_HEADLINES = {
     "unregistered_address": ("Address {hex_upper} flew with no registry entry",),
 }
 FIXED_HEADLINE_KINDS = frozenset(FIXED_HEADLINES)
-# A watchlist headline leads with the aircraft and the name its entry carries, then "spotted":
-# "{type} {reg}, listed under {name}, spotted near {place}", the entry's category or tags for
-# an entry that names nobody, or "{name}-listed {type} {reg} spotted" (headline:watchlist_form).
+# A watchlist headline leads with the aircraft and the name its entry carries: "{type} {ident}
+# linked to {association} by Plane Alert DB", or for an entry that names nobody, its category or
+# tags: "{type} {reg}, filed under "{category}", spotted". The older forms, "{type} {reg}, listed
+# under {name}, spotted" and "{name}-listed {type} {reg} spotted", stay accepted, since stories
+# already published carry them (headline:watchlist_form).
 WATCHLIST_HEADLINE = re.compile(
-    r"^(?P<aircraft>.+?), (?:(?:listed|filed) under|tagged) (?P<entry>.+?), spotted\b"
+    r"^(?P<linked>.+?) linked to (?P<association>.+?) by Plane Alert DB\b"
+    r"|^(?P<aircraft>.+?), (?:(?:listed|filed) under|tagged) (?P<entry>.+?), spotted\b"
     r"|^(?P<listed>.+?)-listed (?P<subject>.+?) spotted\b"
 )
+# A foreign military headline leads with the aircraft and the State its listing names: "{type}
+# {ident}, listed as military from {country}, spotted" (headline:foreign_military_form).
+FOREIGN_MILITARY_HEADLINE = re.compile(
+    r"^(?P<aircraft>.+?), listed as military from (?P<country>.+?), spotted\b"
+)
+# Kinds whose headline is a shared skeleton with the story's names in it. With the fixed kinds,
+# the variety guard reads their shared form as the house form, never as a repeat.
+SKELETON_HEADLINE_KINDS = frozenset({"watchlist_match", "foreign_military"})
+HOUSE_HEADLINE_KINDS = FIXED_HEADLINE_KINDS | SKELETON_HEADLINE_KINDS
 # A list of three or more written "A, B and C": the items are short and parallel, so a
 # parenthetical ("the jet, listed in the database, flew north and landed") or a clause
 # ("on 8 September, it climbed and left") is left alone. Missing a list beats rejecting prose.
@@ -4029,7 +4046,7 @@ HEADING_SCOPE = re.compile(
 )
 HEDGE = re.compile(
     r"\b(?:(?-i:may)|might|could|likely|possibly|perhaps|" + LIKENESS_HEDGES + r"|looks? like|like an?"
-    r"|one possible|fits?|suggests?|appears? to|[a-z]+-like)\b",
+    r"|one possible|fits?|suggests?|appears? to|[a-z]+-(?:like|style))\b",
     re.I,
 )
 LIMIT_SENTENCE = re.compile(
@@ -4038,6 +4055,21 @@ LIMIT_SENTENCE = re.compile(
     r"|\bnot an? (?:emergency|distress|determination)\b|\bare not in the data\b",
     re.I,
 )
+
+# Stock frames that say nothing about the flight, and the watchlist closer the page's limitations
+# already carry; a story uses none of them (filler:frame).
+FILLER_FRAMES = re.compile(
+    r"\b(?:gives a sense of the flight|a useful design detail to remember|worth noting"
+    r"|adds (?:a|some) (?:context|color)|rounds out the picture|the entry does not show who was aboard)\b",
+    re.I,
+)
+# The page shows the type box (tp. facts) beside the story, so a sentence that shares this many
+# words in a row with one repeats it; a shorter fact repeats when a sentence carries all of its
+# words in order (box:reused, and the box itself in publication).
+BOX_RUN = 10
+# A sentence restates the kind's context line (ctx.kind) when its figures are the line's and at
+# least this share of the line's content words and of its own are shared (context:missing).
+CONTEXT_REPHRASE = 0.8
 
 
 def is_caveat(sentence, profiles=()):
@@ -4138,6 +4170,18 @@ HYPOTHESIS_GENERIC = {
     "database",
     "configuration",
     "aboard",
+    "such",
+    "long",
+    "area",
+    "track",
+    "racetrack",
+    "registry",
+    "registration",
+    "address",
+    "transponder",
+    "another",
+    "entry",
+    "site",
 }
 
 
@@ -4429,13 +4473,34 @@ def _watchlist_headline_issue(headline, facts):
     match = WATCHLIST_HEADLINE.match(headline) if isinstance(headline, str) else None
     if not match:
         return "headline:watchlist_form"
-    aircraft = (match["aircraft"] or match["subject"]).lower()
-    entry = (match["entry"] or match["listed"]).lower()
-    idents = [(values.get(key) or {}).get("value") for key in ("id.registration", "id.callsign", "id.hex")]
-    if not any(isinstance(ident, str) and ident.lower() in aircraft for ident in idents) or not any(
-        name.lower() in entry for name in names
-    ):
+    aircraft = (match["linked"] or match["aircraft"] or match["subject"]).lower()
+    entry = (match["association"] or match["entry"] or match["listed"]).lower()
+    if not _names_ident(aircraft, values) or not any(name.lower() in entry for name in names):
         return "headline:watchlist_form"
+    return None
+
+
+def _names_ident(text, values):
+    """Whether lowercase text names the aircraft by its registration, callsign, or address."""
+    idents = [(values.get(key) or {}).get("value") for key in ("id.registration", "id.callsign", "id.hex")]
+    return any(isinstance(ident, str) and ident.lower() in text for ident in idents)
+
+
+def _foreign_military_headline_issue(headline, facts):
+    """headline:foreign_military_form unless a foreign military headline takes the house form: the
+    aircraft by its registration or identifier, then "listed as military from" the State its
+    listing names, then "spotted". A story whose facts name no State has none to name."""
+    values = _story_values(facts)
+    country = (values.get("fm.country") or {}).get("value")
+    if not isinstance(country, str) or not country.strip():
+        return None
+    match = FOREIGN_MILITARY_HEADLINE.match(headline) if isinstance(headline, str) else None
+    if (
+        not match
+        or not _names_ident(match["aircraft"].lower(), values)
+        or country.lower() not in match["country"].lower()
+    ):
+        return "headline:foreign_military_form"
     return None
 
 
@@ -4628,6 +4693,14 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
         for part in (type_fact.get("value"), type_fact.get("category"), *(type_fact.get("aliases") or ()))
         if part
     ).lower()
+    # A fixed headline is the engine's ("Strong winds aloft on 5 November 2026"), not a hypothesis,
+    # and so is a title tag that shortens it ("Strong winds aloft on 5 November").
+    fixed = fixed_headline(facts)
+    claims = [
+        sentence
+        for name, sentence in labelled
+        if not (fixed and name in ("headline", "seo_title") and fixed[0].startswith(sentence.strip()))
+    ]
     for hypothesis in facts.get("hypotheses", []):
         if not isinstance(hypothesis, str):
             continue
@@ -4639,7 +4712,7 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
         if not terms:
             continue
         pattern = re.compile(r"\b(?:" + "|".join(re.escape(term) for term in terms) + r")\b", re.I)
-        for sentence in sentences:
+        for sentence in claims:
             if pattern.search(sentence) and not HEDGE.search(sentence) and not EPISTEMIC.search(sentence):
                 issues.append("claim:unhedged_hypothesis")
     lowered = [sentence.lower() for sentence in sentences]
@@ -4939,7 +5012,8 @@ def _masked(check, phrases):
 
 def required_sentence(facts):
     """The sentence a story's kind carries in a paragraph as written (REQUIRED_SENTENCES), or None
-    for another kind, or for a speed whose facts do not say how its airspeed was obtained."""
+    for another kind, for a speed whose facts do not say how its airspeed was obtained, or for a
+    foreign military listing whose facts do not say what marked it."""
     if (
         is_story_facts(facts)
         and facts.get("kind") == "identity_conflict"
@@ -4947,10 +5021,17 @@ def required_sentence(facts):
     ):
         return "This observation rests on one archived sample."
     template = REQUIRED_SENTENCES.get(facts.get("kind")) if is_story_facts(facts) else None
-    if template is None or "{airspeed_origin}" not in template:
+    used = re.findall(r"\{(\w+)\}", template or "")
+    if not used:
         return template
-    origin = AIRSPEED_ORIGINS.get(_story_values(facts).get("lim.airspeed", {}).get("basis"))
-    return None if origin is None else template.format(airspeed_origin=origin)
+    values = _story_values(facts)
+    slots = {
+        "airspeed_origin": AIRSPEED_ORIGINS.get((values.get("lim.airspeed") or {}).get("basis")),
+        "fm_basis": (values.get("fm.basis") or {}).get("value"),
+    }
+    if not all(isinstance(slots.get(name), str) and slots[name].strip() for name in used):
+        return None
+    return template.format(**{name: slots[name] for name in used})
 
 
 def _written(sentence):
@@ -4979,8 +5060,130 @@ def _without(story, sentence):
     }
 
 
-def story_issues(story, packet_or_facts):
-    """Every reason a story fails; an empty list means it may be published."""
+def _plain_words(text):
+    """Lowercase words and figures, punctuation stripped: "Full-length decks." is full, length, decks."""
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _filler_issues(story):
+    """filler:frame when the dek or a paragraph uses a refused frame (FILLER_FRAMES)."""
+    paragraphs = story.get("paragraphs") if isinstance(story.get("paragraphs"), list) else []
+    texts = [text for text in (story.get("dek"), *paragraphs) if isinstance(text, str)]
+    return ["filler:frame"] if any(FILLER_FRAMES.search(text) for text in texts) else []
+
+
+def _box_runs(text):
+    """(run length, word runs) of a type box fact: BOX_RUN words, or all of a shorter fact's."""
+    words = _plain_words(text)
+    size = min(BOX_RUN, len(words))
+    return size, {tuple(words[index : index + size]) for index in range(len(words) - size + 1)}
+
+
+def quotes(text, fact):
+    """Whether text repeats a type box fact: a BOX_RUN-word run of it, or all of a shorter one."""
+    size, runs = _box_runs(fact)
+    words = _plain_words(text) if size and isinstance(text, str) else []
+    return any(tuple(words[index : index + size]) in runs for index in range(len(words) - size + 1))
+
+
+def box_issues(story, facts):
+    """box:reused when a paragraph sentence of AI prose repeats a type box fact (tp.); the page
+    shows the box beside the story. Template text quotes its type facts, and the box then lists
+    the ones it leaves out (publication)."""
+    paragraphs = story.get("paragraphs") if isinstance(story, dict) else None
+    sentences = [sentence for _index, sentence in _paragraph_sentences(paragraphs or [])]
+    profiles = profile_texts(facts) if is_story_facts(facts) else []
+    if any(quotes(sentence, fact) for sentence in sentences for fact in profiles):
+        return ["box:reused"]
+    return []
+
+
+# Facts written as sentences, whose capitalized first words are no names.
+SENTENCE_FACTS = ("tp.", "ctx.kind")
+
+
+def _fact_names(facts):
+    """Lowercase name tokens the story facts give: each word of a string fact that is capitalized or
+    carries a digit, from its value, list items, aliases, and short form."""
+    names = set()
+    for item in facts["facts"]:
+        if item["id"].startswith(SENTENCE_FACTS):
+            continue
+        value = item.get("value")
+        texts = [
+            text
+            for text in (
+                *(value if isinstance(value, list) else [value]),
+                *(item.get("aliases") or ()),
+                item.get("short"),
+            )
+            if isinstance(text, str)
+        ]
+        for text in texts:
+            for word in re.findall(r"[A-Za-z0-9]+", text):
+                if (
+                    word[0].isupper() or any(char.isdigit() for char in word)
+                ) and word.lower() not in STOPWORDS:
+                    names.add(word.lower())
+    return names
+
+
+def adds_to(headline, dek, facts):
+    """Whether a dek gives a figure, or a name from the story facts, that the headline lacks."""
+    fresh = set(_plain_words(dek)) - set(_plain_words(headline))
+    names = _fact_names(facts)
+    return any(any(char.isdigit() for char in token) or token in names for token in fresh)
+
+
+def _dek_issues(story, facts):
+    """dek:adds_nothing unless the dek adds a fact to the headline (adds_to)."""
+    dek, headline = story.get("dek"), story.get("headline")
+    if not isinstance(dek, str) or not isinstance(headline, str) or not dek.strip():
+        return []
+    return [] if adds_to(headline, dek, facts) else ["dek:adds_nothing"]
+
+
+def context_line(facts):
+    """The kind's context line (ctx.kind) of story facts, spaces collapsed, or None."""
+    value = (_story_values(facts).get("ctx.kind") or {}).get("value") if is_story_facts(facts) else None
+    return " ".join(value.split()) if isinstance(value, str) and value.strip() else None
+
+
+def _context_words(text):
+    return {
+        _stem(word) for word in re.findall(r"[a-z0-9]+(?:'[a-z]+)?", text.lower()) if word not in STOPWORDS
+    }
+
+
+def _figures(text):
+    return sorted(figure.replace(",", "") for figure in re.findall(r"\d(?:[\d,.]*\d)?", text))
+
+
+def restates_context(sentence, line):
+    """Whether a sentence is the kind's context line as written or lightly rephrased: the same
+    figures, and CONTEXT_REPHRASE or more of the line's content words and of its own shared."""
+    if not isinstance(sentence, str) or not line or _figures(sentence) != _figures(line):
+        return False
+    own, theirs = _context_words(sentence), _context_words(line)
+    shared = len(own & theirs)
+    return bool(own and theirs) and min(shared / len(own), shared / len(theirs)) >= CONTEXT_REPHRASE
+
+
+def _context_sentences(story, line):
+    """The paragraph sentences that restate the context line, as written."""
+    paragraphs = story.get("paragraphs") if isinstance(story.get("paragraphs"), list) else []
+    return [
+        sentence for _index, sentence in _paragraph_sentences(paragraphs) if restates_context(sentence, line)
+    ]
+
+
+def story_issues(story, packet_or_facts, *, new=True):
+    """Every reason a story fails; an empty list means it may be published.
+
+    new: the story is new text. A published story is held to the checks it was written under, so
+    with new=False the house headline forms (headline:watchlist_form, headline:foreign_military_form)
+    and the story-quality checks (filler:frame, dek:adds_nothing, context:missing) do not apply.
+    """
     facts, failure = _facts_for(packet_or_facts)
     listed = _list_phrases(packet_or_facts)
     # The entry's own names keep their capitals in a headline: "The Flying Bulls", "Display Team".
@@ -4997,9 +5200,11 @@ def story_issues(story, packet_or_facts):
         return issues
     if fixed and story.get("headline") != fixed[0]:
         issues.append("headline:not_fixed")
-    if kind == "watchlist_match" and (
-        form := _watchlist_headline_issue(story.get("headline"), packet_or_facts)
-    ):
+    house = {
+        "watchlist_match": _watchlist_headline_issue,
+        "foreign_military": _foreign_military_headline_issue,
+    }
+    if new and kind in house and (form := house[kind](story.get("headline"), packet_or_facts)):
         issues.append(form)
     # The kind's required sentence is found by equality, once, in a paragraph; every other
     # check then reads the story without it.
@@ -5017,6 +5222,19 @@ def story_issues(story, packet_or_facts):
     if (required or kind in REQUIRED_SENTENCES) and carried != 1:
         missing = "claim:record_unhedged" if kind in RECORD_KINDS else "claim:limit_unhedged"
         issues.append("paragraphs:repeated_limitations" if carried else missing)
+    if new:
+        issues.extend(_filler_issues(story))
+    if told:
+        # The kind's context line is a sourced fact: a sentence that restates it is backed by it, so
+        # the checks read the story without it, as they do the required sentence.
+        line = context_line(packet_or_facts)
+        restated = _context_sentences(story, line) if line else []
+        if new and line and not restated:
+            issues.append("context:missing")
+        for sentence in restated:
+            story = _without(story, sentence)
+        if new:
+            issues.extend(_dek_issues(story, packet_or_facts))
     check = _masked(_checker(facts, failure), listed)
     for name, text in _story_fields(story):
         if isinstance(text, str):

@@ -298,17 +298,16 @@ KIND_NOTES = (
     (("outlier_",), GLITCH_NOTE),
     (
         ("watchlist_match",),
-        'Headline: the type and registration, then ", listed under <the name the entry carries>," then '
-        '"spotted" and the place if there is one, as in "Beechcraft King Air 300 N79, listed under Federal '
-        'Aviation Administration, spotted near Center Line, MI"; for an entry that names nobody, ", filed '
-        'under "<category>"," in its place. Put "Plane Alert DB" in the dek or first paragraph, not the '
-        "headline. Say who or what the entry names and why the list carries the aircraft, from its category "
+        'Headline: the type and registration, then "linked to <the name the entry carries> by Plane Alert '
+        'DB", as in "Beechcraft King Air 300 N79 linked to Federal Aviation Administration by Plane Alert '
+        'DB"; for an entry that names nobody, the type and registration, then ", filed under "<category>", '
+        'spotted" and the place if there is one. Name Plane Alert DB in the dek or first paragraph as well. '
+        "Say who or what the entry names and why the list carries the aircraft, from its category "
         "and tags, each attributed to Plane Alert DB or to the entry. When wl.who is given, it is what Wikidata "
         "calls the organization the entry links to. Use it once, in a sentence that names the entry, its "
         'link, or Plane Alert DB, as in "The entry\'s link leads to <wl.who>, according to Wikidata." Restate '
         'it as written; "the" may go before the name, and "a", "an", or "the" before the description. You '
-        "may name Wikidata as well, but never as the only attribution. Say once that the entry does not show "
-        "who was aboard.",
+        "may name Wikidata as well, but never as the only attribution.",
     ),
     (("gnss_integrity_",), "Call the change an integrity drop. Never write jamming or spoofing."),
     (
@@ -597,6 +596,10 @@ def check(story, facts, corpus, *, fresh=None, check_private=None):
     ):
         problems.append("the headline names neither the aircraft nor its type")
     problems.extend(public_prose.story_issues(story, facts))
+    # The page shows the type box beside AI prose, which therefore never repeats it; template text
+    # quotes its type facts, and the box then lists the rest (publication.type_box).
+    if story.get("source") != "template":
+        problems.extend(public_prose.box_issues(story, facts))
     if check_private:
         try:
             check_private(json.dumps(story, ensure_ascii=False).encode())

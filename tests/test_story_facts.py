@@ -697,8 +697,8 @@ class FinalReviewTests(unittest.TestCase):
                 self.assertFalse([key for key in values(built) if key.startswith(("env.", "m.threshold"))])
                 self.assertNotIn("a decoding or data error", built["hypotheses"])
         mismatch = fixtures.facts(fixtures.kind_event("type_speed_mismatch"))
-        # A mismatch story's one line is a statement the engine writes, not a hypothesis.
-        self.assertEqual(mismatch["hypotheses"], [])
+        # A mismatch story may offer one of the listed explanations, never a decoding error.
+        self.assertEqual(mismatch["hypotheses"], list(story_facts.MISMATCH_HYPOTHESES))
         self.assertEqual(fixtures.facts(fixtures.outlier_cessna())["hypotheses"], [])
         self.assertEqual(
             fixtures.facts(fixtures.kind_event("position_jump"))["hypotheses"], ["a decoding or data error"]
@@ -1163,7 +1163,7 @@ class RegistryType(unittest.TestCase):
         self.assertEqual(values["tc.type"]["value"], "Boeing 757-200")
         self.assertEqual(values["tc.type"]["source"], "src.adsbdb")
         self.assertIn("src.adsbdb", {s["id"] for s in facts["sources"]})
-        self.assertEqual(facts["hypotheses"], [])
+        self.assertEqual(facts["hypotheses"], list(story_facts.MISMATCH_HYPOTHESES))
 
     def test_an_agreement_names_the_registry_only_and_an_unknown_code_falls_back_to_its_class(self):
         agreed = story_facts.fact_map(self.mismatch("agrees", code=None))

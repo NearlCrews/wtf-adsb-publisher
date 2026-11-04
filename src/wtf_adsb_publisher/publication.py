@@ -13,7 +13,7 @@ from copy import deepcopy
 from html import escape
 from urllib.parse import quote
 
-from . import site_origin, story_facts
+from . import public_prose, site_origin, story_facts
 from .public_events import (
     PARTICIPANT_ROLES,
     TYPE_LABELS,
@@ -381,17 +381,31 @@ def _linked(paragraphs):
     return output
 
 
+def type_box(story):
+    """The sourced type facts (tp.) a story's type box lists: those its text does not quote
+    (public_prose.quotes), so the box never repeats the story. A story whose text quotes every type
+    fact it lists was written when the box listed the facts the text used, and keeps them all."""
+    facts = [
+        value for key, value in story["facts"].items() if key.startswith("tp.") and isinstance(value, str)
+    ]
+    texts = [
+        text
+        for text in (story.get("headline"), story.get("dek"), *(story.get("paragraphs") or ()))
+        if isinstance(text, str)
+    ]
+    left = [fact for fact in facts if not any(public_prose.quotes(text, fact) for text in texts)]
+    return left or facts
+
+
 def _type_background(event, *, legacy=False):
-    """The sourced type facts the story carries, and the sources behind its text.
+    """The sourced type facts the story's type box lists (type_box), and the sources behind its text.
 
     `legacy` renders the Sources heading as every story had it before October 2026,
     always a third-level one, so an older live block is still recognised as ours.
     """
     story, routing = event["story"], event.get("context") or {}
     aircraft = routing.get("type")
-    facts = [
-        value for key, value in story["facts"].items() if key.startswith("tp.") and isinstance(value, str)
-    ]
+    facts = type_box(story)
     lines = []
     if aircraft and facts:
         name = escape(aircraft["name"])

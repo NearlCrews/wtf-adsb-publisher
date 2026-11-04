@@ -39,8 +39,10 @@ def good_story():
             "HL7635 broadcast callsign AAR224 just after midnight UTC on 27 September 2026. The AAR prefix is "
             "assigned to Asiana Airlines, and the aircraft database lists the registration as an Airbus A380-800.",
             "Nine saved positions near Coleman, Michigan, cover about 18 miles of its path, and the archive recorded "
-            "39,000 ft and a ground speed of 487 knots. The A380 first flew in April 2005 and entered airline "
-            "service in 2007.",
+            "39,000 ft and a ground speed of 487 knots. "
+            + story_facts.KIND_CONTEXT["watch_type"]
+            + " The A380 "
+            "first flew in April 2005 and entered airline service in 2007.",
         ],
     }
 
@@ -624,7 +626,7 @@ class StoryPolicyTests(unittest.TestCase):
                 "26903 flew on 8 September 2026, and the aircraft database lists it as an Embraer C-390 "
                 "Millennium. Its transponder address, 497CDE, sits in the block ICAO allocates to Portugal.",
                 "At 15:10 UTC, it reported a pressure altitude of 23,200 ft and 406 knots over the ground. It is "
-                "the first of its type in these records.",
+                "the first of its type in these records. " + story_facts.KIND_CONTEXT["first_type_here"],
             ],
         }
         self.assertEqual(story_issues(story, facts), [])
@@ -664,7 +666,8 @@ class StoryPolicyTests(unittest.TestCase):
                 f"{registration} reported a ground speed of 509 knots at a geometric altitude of 46,050 ft near "
                 "Coleman, Michigan. The aircraft database lists the registration as a Cessna Citation CJ4.",
                 "Its track holds 30 positions over about 7 minutes. Geometric altitude comes from satellite "
-                "positioning and can differ from the pressure altitude pilots fly by.",
+                "positioning and can differ from the pressure altitude pilots fly by. "
+                + story_facts.KIND_CONTEXT["watchlist_match"],
             ],
         }
         issues = story_issues(plain, facts)
@@ -683,6 +686,11 @@ class StoryPolicyTests(unittest.TestCase):
         # An entry that names someone is headlined by that name, never by its category.
         reasoned["headline"] = f'Cessna Citation CJ4 {registration}, filed under "Distinctive", spotted'
         self.assertEqual(story_issues(reasoned, facts), ["headline:watchlist_form"])
+        reasoned["headline"] = (
+            f"Cessna Citation CJ4 {registration} linked to {fixtures.WATCH_ASSOCIATION} by Plane Alert DB"
+        )
+        self.assertEqual(story_issues(reasoned, facts), [])
+        # The older listed form stays accepted for stories already published.
         reasoned["headline"] = (
             f"Cessna Citation CJ4 {registration}, listed under {fixtures.WATCH_ASSOCIATION}, spotted"
         )
@@ -812,11 +820,7 @@ class HeadlineAndHedgeTests(unittest.TestCase):
         facts = fixtures.facts(fixtures.kind_event("watchlist_match"), place=fixtures.PLACES["camden"])
         story = editorial.render(facts, "episode")
         self.assertEqual(story_issues(story, facts), [])
-        self.assertRegex(
-            story["headline"],
-            r"(?:, (?:listed|filed) under .*, spotted|-listed .* spotted|, tagged .*, spotted)",
-        )
-        self.assertNotIn("Plane Alert DB", story["headline"])
+        self.assertRegex(story["headline"], r" linked to .+ by Plane Alert DB$")
         self.assertIn("Plane Alert DB", " ".join([story["dek"], *story["paragraphs"]]))
         registration = story_facts.value(facts, "id.registration")
         headline = f"Cessna Citation CJ4 {registration}, listed under {fixtures.WATCH_ASSOCIATION}, spotted near Camden"
@@ -825,19 +829,21 @@ class HeadlineAndHedgeTests(unittest.TestCase):
         unnamed = {
             **story,
             "headline": headline,
-            "dek": "It reported 509 knots at a geometric altitude of 46,050 ft. The entry does not show who was aboard.",
+            "dek": "It reported 509 knots at a geometric altitude of 46,050 ft. Its track ran near Camden, Michigan.",
             "paragraphs": [
                 f"The aircraft database lists {registration} as a Cessna Citation CJ4. The entry names "
                 f'{fixtures.WATCH_ASSOCIATION} as its association and files it under "Distinctive", with the '
                 'tags "Business Jet" and "Corporate".',
-                "It reported a ground speed of 509 knots at a geometric altitude of 46,050 ft near Camden, "
-                "Michigan. Its track holds 30 positions over about 7 minutes.",
+                story_facts.KIND_CONTEXT["watchlist_match"] + " It reported a ground speed of 509 knots at a "
+                "geometric altitude of 46,050 ft near Camden, Michigan. Its track holds 30 positions over about 7 "
+                "minutes.",
             ],
         }
+        # The context line names Plane Alert DB in general, never as this entry's source.
         self.assertIn("claim:watchlist_source_missing", story_issues(unnamed, facts))
         named = {
             **unnamed,
-            "dek": 'Plane Alert DB files it under "Distinctive". The entry does not show who was aboard.',
+            "dek": 'Plane Alert DB files it under "Distinctive". It reported 509 knots at 46,050 ft.',
         }
         self.assertEqual(story_issues(named, facts), [])
 
@@ -1048,11 +1054,13 @@ class DesignExampleTests(unittest.TestCase):
             with self.subTest(case=case["name"]):
                 for field in ("headline", "dek", "paragraph"):
                     self.assertEqual(prose_issues(after[field], facts), [], (field, after[field]))
+                # A new story carries its kind's context line, here opening the second paragraph.
+                context = public_prose.context_line(facts)
                 story = {
                     "angle": "explainer",
                     "headline": after["headline"],
                     "dek": after["dek"],
-                    "paragraphs": [after["paragraph"], after["paragraph"]],
+                    "paragraphs": [after["paragraph"], " ".join(filter(None, [context, after["paragraph"]]))],
                 }
                 shape = [issue for issue in story_issues(story, facts) if not issue.startswith("paragraph")]
                 self.assertEqual(shape, [])
@@ -1360,7 +1368,15 @@ class DesignRoleTests(unittest.TestCase):
         self.assertIn("tp.R135.1", {item["id"] for item in facts["facts"]})
         family = "The reconnaissance family developed through modifications to Boeing 135 series airframes."
         self.assertEqual(self.new_issues(facts, family), [])
-        self.assertEqual(self.new_issues(facts, family[:-1] + ", and this is one of them.", "dek"), [])
+        # The dek here tests the names it uses, not whether it adds to the headline.
+        self.assertEqual(
+            [
+                issue
+                for issue in self.new_issues(facts, family[:-1] + ", and this is one of them.", "dek")
+                if issue != "dek:adds_nothing"
+            ],
+            [],
+        )
         # A P-8 named by its role, not its name.
         p8 = fixtures.facts(
             fixtures.event(

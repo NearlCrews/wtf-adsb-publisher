@@ -26,6 +26,7 @@ from wtf_adsb_publisher import (
     explain,
     public_prose,
     publication,
+    story_facts,
     weekly_research,
     weekly_spotlight,
 )
@@ -154,15 +155,21 @@ def answer(*candidates, usage=None):
     }
 
 
+# The kind's context line (ctx.kind) of the vintage records these candidates are written for,
+# which every new story carries; the candidates open their second paragraph with it.
+VINTAGE_CONTEXT = story_facts.KIND_CONTEXT["vintage"]
+
+
 def good(registration, variant=0, *, angle="snapshot", extra=(), used=()):
-    """A passing candidate built from identity and time facts."""
+    """A passing candidate built from identity and time facts and the kind's context line."""
     text = TEXTS[registration][variant]
+    first, second, *rest = text["paragraphs"]
     return {
         "angle": angle,
         "headline": text["headline"],
         "dek": text["dek"],
-        "paragraphs": [*text["paragraphs"], *extra],
-        "facts_used": [*FACTS_USED, *used],
+        "paragraphs": [first, f"{VINTAGE_CONTEXT} {second}", *rest, *extra],
+        "facts_used": [*FACTS_USED, "ctx.kind", *used],
     }
 
 
@@ -729,17 +736,9 @@ class WriterTests(unittest.TestCase):
             fact = next(item for item in data["facts"] if item["id"].startswith("tp."))
             self.assertIn("type_profile", [option["id"] for option in data["angle_options"]])
             first = good(registration, 0)
-            first = {
-                **first,
-                "angle": "type_profile",
-                "paragraphs": [
-                    *first["paragraphs"],
-                    fact["value"]
-                    + " The sources section below links to the page this description comes from.",
-                ],
-                "facts_used": [*first["facts_used"], fact["id"]],
-            }
-            # Only the candidate with the type fact passes, so the choice is fixed.
+            # The type fact is declared, not repeated: the page's type box shows it beside the prose.
+            first = {**first, "angle": "type_profile", "facts_used": [*first["facts_used"], fact["id"]]}
+            # Only the first candidate passes, so the choice is fixed.
             return [first, fabricated(registration)]
 
         requester, calls = self.requester(build)
@@ -765,13 +764,14 @@ class WriterTests(unittest.TestCase):
         watch = writer.kind_note("watchlist_match")
         self.assertTrue(
             watch.startswith(
-                'Headline: the type and registration, then ", listed under <the name the entry carries>," then '
-                '"spotted"'
+                'Headline: the type and registration, then "linked to <the name the entry carries> by Plane '
+                'Alert DB"'
             )
         )
         self.assertIn('filed under "<category>",', watch)
-        self.assertIn('Put "Plane Alert DB" in the dek or first paragraph, not the headline', watch)
-        self.assertTrue(watch.endswith("Say once that the entry does not show who was aboard."))
+        self.assertIn("Name Plane Alert DB in the dek or first paragraph as well", watch)
+        # The limitation block carries what the entry does not show; the note asks for no closer.
+        self.assertNotIn("who was aboard", watch)
         self.assertIn("in a sentence that names the entry, its link, or Plane Alert DB", watch)
         self.assertIn("never as the only attribution", watch)
         for kind in ("first_type_here", "first_country_here"):
@@ -932,7 +932,8 @@ class WriterTests(unittest.TestCase):
             "406 knots on 8 September.",
             "paragraphs": [
                 "No Embraer C-390 Millennium appeared in these records before 8 September 2026, when 26903 flew. "
-                "Its transponder address, 497CDE, sits in the block ICAO allocates to Portugal.",
+                "Its transponder address, 497CDE, sits in the block ICAO allocates to Portugal. "
+                + story_facts.KIND_CONTEXT["first_type_here"],
                 "At 15:10 UTC, it reported a pressure altitude of 23,200 ft and 406 knots over the ground. The "
                 "aircraft database lists the registration as an Embraer C-390 Millennium.",
             ],
@@ -977,7 +978,7 @@ class WriterTests(unittest.TestCase):
                 "HL7635 broadcast callsign AAR224 just after midnight UTC on 27 September 2026. The AAR prefix is "
                 "assigned to Asiana Airlines, and the aircraft database lists the registration as an Airbus A380-800.",
                 "Nine saved positions near Coleman, Michigan, cover about 18 miles of its path. Airbus delivered 251 "
-                "A380s before production ended in 2021.",
+                "of the A380s before the line ended. " + story_facts.KIND_CONTEXT["watch_type"],
             ],
             "facts_used": ["id.registration", "id.type", "op.callsign", "track.place", "track.positions"],
         }
@@ -985,7 +986,7 @@ class WriterTests(unittest.TestCase):
         self.assertEqual(writer.check(story, facts, writer.engine.Corpus([]), fresh=(raw, options)), [])
         self.assertIn("tp.A388.3", story["facts"])
         self.assertIn("https://www.example.com/a380-end", {source["url"] for source in story["sources"]})
-        # The checks' own bindings: the restated profile sentence, not its neighbour.
+        # The checks' own bindings: the profile sentence the prose draws on, not its neighbour.
         self.assertEqual(
             public_prose.bound_facts(facts, raw["paragraphs"]) & {"tp.A388.2", "tp.A388.3"}, {"tp.A388.3"}
         )
@@ -1177,7 +1178,8 @@ class WriterTests(unittest.TestCase):
                 "This archived observation of N10001 begins at 12:00 UTC on 1 October 2026. According to the "
                 "aircraft database, the airframe is a Cessna 172 Skyhawk registered in the United States.",
                 "It comes from the archive, which is why each measurement in the card below keeps the time of its "
-                "own report, so a reader can check every value.",
+                "own report, so a reader can check every value. "
+                + story_facts.KIND_CONTEXT["stratospheric_balloon"],
             ],
         }
         template = autopilot.editorial(packet, item["key"], **inputs)["story"]

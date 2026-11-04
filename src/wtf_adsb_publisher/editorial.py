@@ -788,6 +788,8 @@ def _record_slots(slots, value, kind):
     profiles = [fact_id for fact_id in value.items if fact_id.startswith("tp.")]
     for index, fact_id in enumerate(profiles[:3], start=1):
         slots.put(f"tp{index}", value(fact_id), fact_id)
+    # The kind's context line (ctx.kind), which every story of the kind carries (CONTEXT_BUILDER).
+    slots.put("ctx", value("ctx.kind"), "ctx.kind")
     season = value.item("season.start")
     if season:
         slots.put("season_start", day_month(season["value"]), "season.start")
@@ -1565,8 +1567,9 @@ def _part_issues(part, entry, corpus, day, kind, type_code):
     if part == "headline":
         if entry.headline and entry.headline in corpus.headlines:
             issues.append("duplicate_headline")
-        # A fixed headline ("{type} spotted for the first time") shares its skeleton by design.
-        if kind not in public_prose.FIXED_HEADLINE_KINDS and any(
+        # A house headline ("{type} spotted for the first time", "{type} {ident} linked to {name}
+        # by Plane Alert DB") shares its skeleton by design.
+        if kind not in public_prose.HOUSE_HEADLINE_KINDS and any(
             jaccard(entry.headline_grams, other.headline_grams) >= HEADLINE_JACCARD
             for other in corpus.window(day, WINDOW_ANY_DAYS)
         ):
@@ -1694,8 +1697,10 @@ class _Builder:
     def __init__(self, facts, slots, corpus):
         self.facts, self.slots, self.corpus = facts, slots, corpus
         self.check = public_prose.prose_checker(facts)
-        # The kind's required sentence is the checks' own text, which they read the story without.
+        # The kind's required sentence is the checks' own text, which they read the story without,
+        # and so is its context line, a sourced fact.
         self.required = public_prose.required_sentence(facts)
+        self.context = public_prose.context_line(facts)
         # Sourced type facts as the checks read them: a restated one is never the story's caveat.
         self.profiles = public_prose.profile_texts(facts)
         self.cache = {}
@@ -1717,7 +1722,7 @@ class _Builder:
 
     def clean(self, text):
         if text not in self.cache:
-            self.cache[text] = text == self.required or not self.check(text)
+            self.cache[text] = text in (self.required, self.context) or not self.check(text)
         return self.cache[text]
 
     def _part_entry(self, part, text):
@@ -1752,7 +1757,13 @@ class _Builder:
         options = _rotation(list(templates), seed)
         if demote is not None:
             first = self.pick(
-                templates, seed, limits, part, skip=skip, reject=lambda text: demote(text), hide=hide
+                templates,
+                seed,
+                limits,
+                part,
+                skip=skip,
+                reject=lambda text: demote(text) or bool(reject and reject(text)),
+                hide=hide,
             )
             return first or self.pick(templates, seed, limits, part, skip=skip, reject=reject, hide=hide)
         best = None
@@ -1811,13 +1822,16 @@ MEASURES = {"alt": ("alt", "alt_phrase"), "gs": ("gs", "gs_exact", "mph")}
 LEADING_COUNT = re.compile(r"\d[\d,.]*\s+[a-z]")
 # Sentences a kind's story carries whatever its angle: the speed record's scope and hedge (its
 # title tag says "fastest", which a paragraph scopes to these records), a rated story's
-# certified figure with its sheet and its one hedge, and why Plane Alert DB lists a watchlist
-# entry. Every angle of the kind carries them (a watchlist category angle in its opener); the
-# fallback angles and the plain record add them (_fallback_story).
+# certified figure with its sheet and its one hedge, why Plane Alert DB lists a watchlist entry,
+# and the required sentence of a winds aloft day and a foreign military listing. Every angle of
+# the kind carries them (a watchlist category angle in its opener, a winds or foreign military
+# angle before its limitation); the fallback angles and the plain record add them (_fallback_story).
 REQUIRED_BUILDERS = {
     "seasonal_speed_record": ("season", "record_hedge"),
     "above_rated_altitude": ("rated_source", "rated_hedge_altitude"),
     "above_rated_speed": ("rated_source", "rated_hedge_speed"),
+    "winds_aloft_day": ("winds_hedge",),
+    "foreign_military": ("foreign_hedge",),
     "watchlist_match": ("wl_why",),
 }
 # Fact sentences that should not repeat a recent story word for word when another variant exists.
@@ -1938,8 +1952,16 @@ def _paragraphs(builder, body, opener, seed, opener_used=frozenset()):
             # Type background is optional; a sentence recent stories already carried is left out.
             if name in OPTIONAL_REPEATS and _plain(text) in recent:
                 return True
-            # A limitation is a caveat, not a restatement, so only the one-limitation rule applies.
-            return name != "limit" and repeats(text)
+            # A limitation is a caveat, not a restatement, so only the one-limitation rule applies,
+            # and no sentence restates the required one; the context line is the kind's, which every
+            # story carries.
+            if (
+                builder.required
+                and text not in (builder.required, builder.context)
+                and _restates(text, builder.required)
+            ):
+                return True
+            return name not in ("limit", CONTEXT_BUILDER) and repeats(text)
 
         def stale(text):
             return overlap(text) or (name in FRESH_BUILDERS and _plain(text) in recent)
@@ -1972,8 +1994,9 @@ def _paragraphs(builder, body, opener, seed, opener_used=frozenset()):
 
     def commit(name, found):
         (index, text, slots_used), group = found
-        # The required sentence is the caveat the story was already counted as carrying.
-        limiting = public_prose.is_caveat(text, profiles) and text != builder.required
+        # The required sentence is the caveat the story was already counted as carrying, and the
+        # context line is general background, never this story's caveat.
+        limiting = public_prose.is_caveat(text, profiles) and text not in (builder.required, builder.context)
         if limiting and state["limited"]:
             return
         state["limited"] = state["limited"] or limiting
@@ -2017,14 +2040,22 @@ LEANS_ON_PREVIOUS = re.compile(r"\bthe same type\b", re.I)
 def _caveat_inside(sentences, required=None, profiles=()):
     """sentences with a closing caveat, or the kind's required sentence, moved ahead of the
     sentence before it, so the story never ends on one; a restated type fact (profiles) is no
-    caveat. A sentence that leans on the one before it (LEANS_ON_PREVIOUS) moves with it, unless
+    caveat. Closing caveats in a row (a limitation after a context line that reads as one) move
+    together. A sentence that leans on the one before it (LEANS_ON_PREVIOUS) moves with it, unless
     the one before it is the opener, which stays first in a longer story."""
-    if len(sentences) < 2 or not public_prose.closes_on_caveat(sentences[-1], required, profiles):
+
+    def closes(sentence):
+        return public_prose.closes_on_caveat(sentence, required, profiles)
+
+    if len(sentences) < 2 or not closes(sentences[-1]):
         return sentences
-    at = len(sentences) - 2
+    end = len(sentences) - 1
+    while end > 1 and closes(sentences[end - 1]):
+        end -= 1
+    at = end - 1
     while at > 1 and LEANS_ON_PREVIOUS.search(sentences[at]):
         at -= 1
-    return [*sentences[:at], sentences[-1], *sentences[at:-1]]
+    return [*sentences[:at], *sentences[end:], *sentences[at:end]]
 
 
 CLASS_TOKENS = {"num", "id", "time", "date", "reg", "type", "op", "place", "country", "category"}
@@ -2041,6 +2072,13 @@ def _overlaps(first, second, names=()):
     b = set(normalize(second, names)) - public_prose.STOPWORDS - CLASS_TOKENS
     shared = len(a & b)
     return shared >= 3 and shared / min(len(a), len(b)) >= 0.6
+
+
+def _restates(text, other, run=4):
+    """Whether text repeats a run of words from other: "the wind itself was not measured"."""
+    words, theirs = re.findall(r"[a-z']+", text.lower()), re.findall(r"[a-z']+", other.lower())
+    runs = {tuple(theirs[index : index + run]) for index in range(len(theirs) - run + 1)}
+    return any(tuple(words[index : index + run]) in runs for index in range(len(words) - run + 1))
 
 
 def _echoes(text, other, names=(), share=0.5):
@@ -2192,6 +2230,8 @@ def _parts(builder, angle, seed):
             limits["dek"],
             "dek",
             demote=lambda text, title=headline[1]: _echoes(title, text, builder.names, 0.75),
+            # A dek adds a fact the headline lacks (public_prose dek:adds_nothing).
+            reject=lambda text, title=headline[1]: not public_prose.adds_to(title, text, builder.facts),
         )
         if not dek:
             continue
@@ -2219,7 +2259,8 @@ def _candidate(builder, angle, key, seo):
     if parts is None:
         return None
     headline, dek, opener = parts
-    sentences, body_used, choices, marker = _paragraphs(builder, angle.body, opener[1], seed, opener[2])
+    body = _with_context(builder, angle.body)
+    sentences, body_used, choices, marker = _paragraphs(builder, body, opener[1], seed, opener[2])
     paragraphs = _split(_caveat_inside(sentences, builder.required, builder.profiles), marker)
     if paragraphs is None:
         return None
@@ -2291,6 +2332,8 @@ MINIMAL_BODY = (
 MINIMAL_HEADLINES = (
     "{type} {reg} flies near {place}",
     "[{type} ]{ident} in the air on {day_month}",
+    "{ident_named|cap} in the air on {day_month}",
+    "Aircraft reports from {ident_named} on {day_month}",
     "{ident_named|cap} in the air on {date}",
     "Aircraft reports from {ident_named} on {date}",
 )
@@ -2329,7 +2372,22 @@ def _house_headlines(kind):
     kind's one headline, or a watchlist story's lead with the aircraft and its entry; else None."""
     if kind in public_prose.FIXED_HEADLINE_KINDS:
         return FIXED_FORM
-    return WATCHLIST_HEADLINES if kind == "watchlist_match" else None
+    return {"watchlist_match": WATCHLIST_HEADLINES, "foreign_military": FOREIGN_HEADLINES}.get(kind)
+
+
+# The builder for the kind's context line (ctx.kind), which every story of the kind carries, first in
+# the second paragraph ("/"), or last in a body with no break.
+CONTEXT_BUILDER = "context"
+
+
+def _with_context(builder, body):
+    """body with the context builder placed, when the facts give a context line."""
+    if not builder.slots.get("ctx") or CONTEXT_BUILDER in body:
+        return body
+    if "/" in body:
+        at = body.index("/") + 1
+        return (*body[:at], CONTEXT_BUILDER, *body[at:])
+    return (*body, CONTEXT_BUILDER)
 
 
 def _plain_record(builder, key, seo):
@@ -2340,7 +2398,7 @@ def _plain_record(builder, key, seo):
     if opener:
         sentences, used, _choices, _marker = _paragraphs(
             builder,
-            (*MINIMAL_BODY, *REQUIRED_BUILDERS.get(builder.kind, ())),
+            _with_context(builder, (*MINIMAL_BODY, *REQUIRED_BUILDERS.get(builder.kind, ()))),
             opener[0],
             _hash(key, "minimal", PROSE_POLICY),
             frozenset(opener[1]),
@@ -2353,6 +2411,10 @@ def _plain_record(builder, key, seo):
             sentences.insert(1 if sentences else 0, text)
             used |= slots_used
             break
+    # The context line is background to the record's facts, never padding for a thin record: it
+    # stays only beside two fact sentences or more.
+    if builder.context and sum(1 for text in sentences if text != builder.context) < 2:
+        sentences = [text for text in sentences if text != builder.context]
     # The caveat moves in once every sentence but the padding is placed; padding goes last.
     sentences = _caveat_inside(sentences, builder.required, builder.profiles)
     paragraphs = _split(sentences)
@@ -2501,6 +2563,7 @@ BUILDERS = {
     ),
     "profile": ("{tp1}",),
     "profile2": ("{tp2}",),
+    "context": ("{ctx}",),
     "limit": ("{limit}",),
     "military_flag": (
         "The aircraft database flags it as military.",
@@ -2538,6 +2601,8 @@ BUILDERS = {
     "record_hedge": (public_prose.REQUIRED_SENTENCES["seasonal_speed_record"],),
     "rated_hedge_altitude": (public_prose.REQUIRED_SENTENCES["above_rated_altitude"],),
     "rated_hedge_speed": (public_prose.REQUIRED_SENTENCES["above_rated_speed"],),
+    "winds_hedge": (public_prose.REQUIRED_SENTENCES["winds_aloft_day"],),
+    "foreign_hedge": (public_prose.REQUIRED_SENTENCES["foreign_military"],),
     # A rated story states the certified figure and its sheet once.
     "rated_source": ("The type certificate data sheet lists a {lim_name} of {lim_limit}.",),
     # Reports over the limit are counted, never read as a value held for a span of time.
@@ -2749,9 +2814,8 @@ BUILDERS = {
     ),
     "wind_hyp": (
         "Ground speed includes the wind along the track, so the {asymmetry_adj} gap reflects wind at those "
-        "heights; the wind itself was not measured.",
-        "The {asymmetry_adj} gap between the directions comes from ground speeds, which include the wind; the "
-        "wind itself was not measured.",
+        "heights.",
+        "The {asymmetry_adj} gap between the directions comes from ground speeds, which include the wind.",
     ),
     "fm_basis": (
         "The listing as a military aircraft of {fm_country_the} comes from {fm_basis}.",
@@ -2797,9 +2861,9 @@ BUILDERS = {
         "It broadcast emitter category {unr_category}.",
     ),
     "unr_hyp": (
-        "A missing entry for {hex_upper} can come from registry lag, a registry the site does not consult, or "
+        "A missing entry for {hex_upper} may come from registry lag, a registry the site does not consult, or "
         "an address programmed by hand.",
-        "Registry lag, a registry the site does not consult, or an address set by hand can each leave "
+        "Registry lag, a registry the site does not consult, or an address set by hand may each leave "
         "{hex_upper} unlisted.",
     ),
 }
@@ -2873,6 +2937,8 @@ BUILDER_REQUIRES = {
     "record_hedge": ("speed_record",),
     "rated_hedge_altitude": ("rated_altitude",),
     "rated_hedge_speed": ("airspeed_origin",),
+    "winds_hedge": ("wind_day",),
+    "foreign_hedge": ("fm_basis",),
     "speed_estimate": ("airspeed_estimated",),
     "speed_report": ("airspeed_reported",),
     "formation_hyp": ("sep",),
@@ -3190,17 +3256,18 @@ VINTAGE_ANGLES = (VINTAGE_AGE, TYPE_PROFILE, VINTAGE_YEAR, LOW_AND_SLOW, SNAPSHO
 
 # Watchlist entries: who or what Plane Alert DB associates with the aircraft and why it
 # lists it (its category, group, description and tags). The headline leads with the
-# aircraft, then the name the entry carries, then "spotted"; the dek or a paragraph
-# names Plane Alert DB and attributes each detail to it.
+# aircraft, then "linked to" the name the entry carries "by Plane Alert DB"; an entry that names
+# nobody, its category, then "spotted". The dek or a paragraph names Plane Alert DB too and
+# attributes each detail to it.
+LINKED_HEADLINES = (
+    "{type} {reg} linked to {wl_assoc} by Plane Alert DB",
+    "{type_short} {reg} linked to {wl_assoc} by Plane Alert DB",
+    "[{type} ]{ident} linked to {wl_assoc} by Plane Alert DB",
+)
 LIST_ASSOCIATION = Angle(
     "list_association",
     "Lead with the aircraft and the name its Plane Alert DB entry carries, then why the list carries it.",
-    headlines=(
-        "{type} {reg}, listed under {wl_assoc}, spotted[ near {place}]",
-        "{type_short} {reg}, listed under {wl_assoc}, spotted[ near {place}]",
-        "[{type} ]{ident}, listed under {wl_assoc}, spotted[ near {place}]",
-        "{wl_assoc}-listed {type_short} {ident} spotted[ near {place}]",
-    ),
+    headlines=LINKED_HEADLINES,
     deks=(
         'Plane Alert DB files it under "{wl_list}"[, its category for {wl_note}].',
         'Plane Alert DB tags it {wl_tags} and files it under "{wl_list}".',
@@ -3213,10 +3280,7 @@ LIST_ASSOCIATION = Angle(
 LIST_PROFILE = Angle(
     "category_type_profile",
     "The type's background first, then the attributed Plane Alert DB entry and its reason.",
-    headlines=(
-        "{type} {reg}, listed under {wl_assoc}, spotted[ at {alt}]",
-        "{wl_assoc}-listed {type_short} {reg} spotted[ near {place}]",
-    ),
+    headlines=LINKED_HEADLINES,
     deks=(
         "Plane Alert DB lists {reg} under {wl_assoc}. It reported {alt}[ and {gs}] on {day_month}.",
         "The community list Plane Alert DB names {wl_assoc} for {reg}, which reported {alt} on {day_month}.",
@@ -3503,6 +3567,7 @@ MISMATCH_EXPLAINER = Angle(
     deks=(
         "The aircraft database lists {ident} as {type_a}, which {rated_phrase}, and one report read {value}.",
         "The database lists {ident} as {type_a}, and one report read {value}.",
+        "One report on {day_month} read {value}, and the database lists {ident} as {type_a}.",
     ),
     openers=(
         "One report from {ident} on {date} read {value}.",
@@ -3669,6 +3734,8 @@ STATUS_ANGLES = (
         deks=(
             "Its ADS-B status field read {status}, which stands for {status_meaning}. {status_caveat}",
             "{ident} broadcast the {status_label} status at {ep_clock} on {ep_day_month}. {status_caveat}",
+            "On {day_month}, the status field of {ident} read {status}, which stands for {status_meaning}. "
+            "{status_caveat}",
         ),
         openers=(
             "At {ep_clock} on {ep_date}, {ident_named} set its ADS-B status field to {status}, which stands "
@@ -4558,6 +4625,8 @@ IDENTITY_CONTRAST = Angle(
     ),
     deks=(
         "The registration {reg} and the transponder address {hex} do not match in the identity checks.",
+        "On {day_month}, the identity checks found that the registration {reg} and the transponder address "
+        "{hex} do not match.",
         "A database error, a re-registration, or an avionics setting could explain the mismatch for {reg}.",
     ),
     openers=(
@@ -4748,7 +4817,7 @@ WINDS_GAP = Angle(
         "ones.",
         "The median ground speeds of eastbound and westbound jets differed by {asymmetry} on {date}.",
     ),
-    body=("wind_medians", "wind_counts", "/", "wind_hyp", "wind_example", "limit"),
+    body=("wind_medians", "wind_counts", "/", "wind_hyp", "wind_example", "winds_hedge", "limit"),
     tier=0,
     requires=("fixed_headline", "asymmetry"),
 )
@@ -4766,7 +4835,7 @@ WINDS_MEDIANS = Angle(
         "Jets heading east on {date} had a median ground speed of {east_median}; those heading west had "
         "{west_median}.",
     ),
-    body=("wind_counts", "wind_hyp", "/", "wind_example", "limit"),
+    body=("wind_counts", "wind_hyp", "/", "wind_example", "winds_hedge", "limit"),
     tier=1,
     requires=("fixed_headline", "east_median", "west_median"),
 )
@@ -4784,21 +4853,24 @@ WINDS_EXAMPLE = Angle(
         "The fastest eastbound jet in these records on {date} was {fast_reg}[, {fast_type_a}] by its aircraft "
         "database record.",
     ),
-    body=("wind_medians", "wind_counts", "/", "wind_hyp", "limit"),
+    body=("wind_medians", "wind_counts", "/", "wind_hyp", "winds_hedge", "limit"),
     tier=2,
     requires=("fixed_headline", "fast_reg", "asymmetry"),
 )
 WINDS_ANGLES = (WINDS_GAP, WINDS_MEDIANS, WINDS_EXAMPLE)
 
 # A military aircraft from another State: the State and the source of the listing lead; the
-# record shows the airframe and its track, never a mission.
+# record shows the airframe and its track, never a mission. Every angle's headline takes the house
+# form (public_prose.FOREIGN_MILITARY_HEADLINE).
+FOREIGN_HEADLINES = (
+    "{type} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
+    "{type_short} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
+    "{ident_named|cap}, listed as military from {fm_country}, spotted[ near {place}]",
+)
 FOREIGN_STATE = Angle(
     "state_and_basis",
     "Which State's military the listing names and where the listing comes from.",
-    headlines=(
-        "{type} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
-        "{type} {ident}, a military aircraft of {fm_country_the}, logged[ near {place}]",
-    ),
+    headlines=FOREIGN_HEADLINES,
     deks=(
         "{fm_basis|cap} ties {ident} to the military of {fm_country_the}. It reported {alt}[ and {gs}] on "
         "{day_month}.",
@@ -4809,33 +4881,27 @@ FOREIGN_STATE = Angle(
         "{fm_basis|cap} lists {ident_named} as a military aircraft of {fm_country_the}.",
         "On {date}, {ident_named}, listed as a military aircraft of {fm_country_the}, reported {alt_phrase}.",
     ),
-    body=("fm_basis", "identity", "reading", "/", "track", "profile", "limit"),
+    body=("fm_basis", "identity", "reading", "/", "track", "profile", "foreign_hedge", "limit"),
     tier=0,
     requires=("fm_country", "fm_basis", "ident", "type"),
 )
 FOREIGN_TYPE = Angle(
     "type_profile",
     "A sourced fact about the type, then the listing and the record.",
-    headlines=(
-        "{type} {ident}, a military aircraft of {fm_country_the}, at {alt}",
-        "{type} {ident}, listed as military from {fm_country}, at {alt}",
-    ),
+    headlines=FOREIGN_HEADLINES,
     deks=(
         "The {type_short} reported {alt}[ and {gs}] on {day_month}[ near {place}].",
         "{positions|cap} positions put the {type_short} at {alt} on {day_month}[ near {place}].",
     ),
     openers=("{tp1}", "{tp2}"),
-    body=("fm_basis", "identity", "reading", "/", "track", "profile2", "limit"),
+    body=("fm_basis", "identity", "reading", "/", "track", "profile2", "foreign_hedge", "limit"),
     tier=1,
     requires=("tp1", "fm_country", "type", "ident"),
 )
 FOREIGN_TRACK = Angle(
     "track",
     "Where the track ran, as observed; nothing about a route beyond it.",
-    headlines=(
-        "Military {type} {ident} of {fm_country_the} logged near {place}",
-        "Near {place}, {type} {ident}, listed as military from {fm_country}",
-    ),
+    headlines=FOREIGN_HEADLINES,
     deks=(
         "Its track near {place} on {day_month} covers {miles}[, at {alt}].",
         "{ident} passed near {place} on {day_month}, with {positions} positions over {track_time}.",
@@ -4844,7 +4910,7 @@ FOREIGN_TRACK = Angle(
         "The track of {ident_named} on {date} runs near {place}.",
         "Near {place} on {date}, {ident_named} reported {alt_phrase}.",
     ),
-    body=("fm_basis", "track", "reading", "/", "identity", "limit"),
+    body=("fm_basis", "track", "reading", "/", "identity", "foreign_hedge", "limit"),
     tier=2,
     requires=("place", "fm_country", "type", "ident"),
 )
@@ -5043,6 +5109,8 @@ UNLISTED_WAIT = Angle(
     deks=(
         "A week after {hex_upper} first appeared, the registries the site consults still listed nothing.",
         "The site asked the registries again a week after {hex_upper} first appeared, and none listed it.",
+        "The address {hex_upper} reported {alt} on {day_month}, and a second registry check a week after it "
+        "first appeared found nothing.",
     ),
     openers=(
         "A week after the address {hex_upper} first appeared, the registries the site consults still held no "

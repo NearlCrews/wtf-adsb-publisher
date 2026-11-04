@@ -17,7 +17,8 @@ import story_fixtures as fixtures
 from wtf_adsb_publisher import editorial, public_events, public_prose, story_facts, watchlists
 
 # What a record too thin to fill a paragraph fails: one short sentence, left unpublished.
-THIN_ISSUES = {"paragraph[0]:length", "paragraphs:too_short"}
+# A thin record also leaves out its kind's context line, which is never padding.
+THIN_ISSUES = {"paragraph[0]:length", "paragraphs:too_short", "context:missing"}
 
 
 def setUpModule():
@@ -261,7 +262,13 @@ class RenderTests(unittest.TestCase):
                         for sentence in sentences(paragraph)
                         if public_prose.LIMIT_SENTENCE.search(sentence)
                     ]
-                    self.assertTrue(slots["limit"] in " ".join(story["paragraphs"]) or limited)
+                    # The kind's required sentence, when it has one, stands in for a limitation it restates.
+                    required = public_prose.required_sentence(facts)
+                    self.assertTrue(
+                        slots["limit"] in " ".join(story["paragraphs"])
+                        or limited
+                        or (required and public_prose.carries(story["paragraphs"], required))
+                    )
         variant = fixtures.kind_event("notable_variant")
         variant["evidence"]["aircraft"]["type"] = "adsb_icao"
         for sample in variant["evidence"]["pattern_samples"]:
@@ -293,7 +300,7 @@ class RenderTests(unittest.TestCase):
             def __init__(self, unvaried=()):
                 self.unvaried = set(unvaried)
 
-            def pick(self, templates, seed, limits, part, *, skip=(), demote=None):
+            def pick(self, templates, seed, limits, part, *, skip=(), demote=None, reject=None):
                 options = [text for text in templates if text not in skip]
                 # Like _Builder.pick: demoted variants, then ones with variety issues, come last.
                 options.sort(key=lambda text: (text in self.unvaried, bool(demote and demote(text))))
@@ -389,7 +396,7 @@ class RenderTests(unittest.TestCase):
         bare = story_facts.build(fixtures.packet(thin(fixtures.kind_event("watch_type"))))
         story, report = editorial.render_with_report(bare, "episode")
         self.assertFalse(report.publishable)
-        self.assertEqual(report.issues, ["paragraph[0]:length", "paragraphs:too_short"])
+        self.assertEqual(report.issues, ["paragraph[0]:length", "paragraphs:too_short", "context:missing"])
         self.assertEqual(len(sentences(story["paragraphs"][0])), 1)
         self.assertIn(story_facts.value(bare, "id.hex"), story["headline"])
 
@@ -1259,9 +1266,11 @@ class CaveatOrdering(unittest.TestCase):
     def test_the_plain_record_keeps_its_opener_first_when_it_adds_the_attribution(self):
         # An opener and one caveat, then the attribution a type with no registration needs: the
         # caveat is placed after that insert, so the story opens on the opener and closes on a fact.
+        # The kind's context line, which would otherwise close the story, is left out.
         raw = fixtures.kind_event("rapid_descent")
         raw["evidence"]["aircraft"].pop("r", None)
         facts = fixtures.facts(raw, place=fixtures.PLACES["coleman"])
+        facts["facts"] = [item for item in facts["facts"] if item["id"] != "ctx.kind"]
         self.assertIsNone(story_facts.value(facts, "id.registration"))
         slots = editorial.build_slots(facts)
         builder = editorial._Builder(facts, slots, editorial.Corpus([]))
@@ -1668,10 +1677,8 @@ class FinalReviewTests(unittest.TestCase):
         for index in range(8):
             story = editorial.render(facts, f"episode-{index}")
             with self.subTest(index=index):
-                self.assertRegex(story["headline"], r"spotted")
                 self.assertIn(fixtures.WATCH_ASSOCIATION, story["headline"])
-                self.assertRegex(story["headline"], r", (?:listed|filed) under |-listed |, tagged ")
-                self.assertNotIn("Plane Alert DB", story["headline"])
+                self.assertRegex(story["headline"], r" N51EM linked to .+ by Plane Alert DB$")
                 self.assertIn("Plane Alert DB", " ".join([story["dek"], *story["paragraphs"]]))
                 self.assertNotIn("'s ", story["headline"])
         self.assertEqual(editorial.series(["A", "B", "C"]), "A, B, and C")
@@ -1805,6 +1812,8 @@ class FinalReviewTests(unittest.TestCase):
         named = {name for angles in editorial.KIND_ANGLES.values() for angle in angles for name in angle.body}
         named |= {name for angle in editorial.GENERIC_ANGLES for name in angle.body}
         named |= set(editorial.EXTRA_BUILDERS) | set(editorial.MINIMAL_BODY) | {"mlat", "identity_ref"}
+        # The context line is placed in every body of a kind that has one (_with_context).
+        named.add(editorial.CONTEXT_BUILDER)
         named |= {name for names in editorial.BUILDER_FALLBACKS.values() for name in names}
         self.assertEqual(set(editorial.BUILDERS) - named, set())
 

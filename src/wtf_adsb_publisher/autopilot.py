@@ -612,8 +612,10 @@ def _cites_current(story, facts):
 
 
 def _holds(story, facts):
-    """Whether a saved story still passes the story checks and every fact it lists is unchanged."""
-    return _cites_current(story, facts) and not public_prose.story_issues(story, facts)
+    """Whether a saved story still passes the story checks and every fact it lists is unchanged.
+    It is held to the checks for published text (story_issues with new=False), so a check added
+    for new stories never replaces one already published."""
+    return _cites_current(story, facts) and not public_prose.story_issues(story, facts, new=False)
 
 
 def _carried(previous, fresh, facts):

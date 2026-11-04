@@ -1535,6 +1535,24 @@
     }
    ],
    [
+    "winds_aloft_day",
+    {
+     "type": "tuple",
+     "value": [
+      "winds_hedge"
+     ]
+    }
+   ],
+   [
+    "foreign_military",
+    {
+     "type": "tuple",
+     "value": [
+      "foreign_hedge"
+     ]
+    }
+   ],
+   [
     "watchlist_match",
     {
      "type": "tuple",
@@ -2408,7 +2426,9 @@
   "value": [
    "seasonal_speed_record",
    "above_rated_altitude",
-   "above_rated_speed"
+   "above_rated_speed",
+   "winds_aloft_day",
+   "foreign_military"
   ]
  },
  "public_prose.SPEED_PROSE_KINDS": {
@@ -3335,7 +3355,13 @@
    "survey_grid",
    "parallel_passes",
    "thermal_soaring",
-   "formation_flight"
+   "formation_flight",
+   "type_speed_mismatch",
+   "type_altitude_mismatch",
+   "winds_aloft_day",
+   "aerobatic_practice",
+   "unregistered_address",
+   "racetrack_orbit"
   ]
  },
  "story_facts.RATED_LIMIT_KINDS": {
