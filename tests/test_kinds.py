@@ -187,9 +187,10 @@ class WordingTablesCoverTheRegistry(unittest.TestCase):
             - kinds.where(first_sighting=True),
         )
 
-    def test_fixed_headlines_are_the_first_sightings(self):
-        self.assertEqual(set(public_prose.FIXED_HEADLINES), kinds.where(first_sighting=True))
-        self.assertEqual(public_prose.FIXED_HEADLINE_KINDS, kinds.where(first_sighting=True))
+    def test_fixed_headlines_are_the_first_sightings_the_winds_day_and_the_unlisted_address(self):
+        fixed = kinds.where(first_sighting=True) | {"winds_aloft_day", "unregistered_address"}
+        self.assertEqual(set(public_prose.FIXED_HEADLINES), fixed)
+        self.assertEqual(public_prose.FIXED_HEADLINE_KINDS, fixed)
 
     def test_required_sentences_are_the_record_and_rated_kinds(self):
         self.assertEqual(

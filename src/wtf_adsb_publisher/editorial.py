@@ -425,6 +425,7 @@ def build_slots(facts):
         _norm_slots,
         _shape_slots,
         _comparison_slots,
+        _detector_slots,
     ):
         build(slots, value, kind)
     for tag in value("tags") or []:
@@ -898,6 +899,55 @@ def _shape_slots(slots, value, kind):
             slots.put("change_adj", unit_value(change, "ft", adjective=True), "m.altitude_change_ft")
 
 
+def _count(value):
+    """A whole count of two or more in words up to twenty, else None."""
+    count = number(value)
+    return spelled(int(count)) if count and count >= 2 and float(count).is_integer() else None
+
+
+def _detector_slots(slots, value, kind):
+    """The facts of the winds aloft day, foreign military, first operator, aerobatic practice,
+    unlisted address, and racetrack orbit kinds. Speeds are in knots, heights in feet, distances
+    in NM, and durations in seconds; a fact the build leaves out leaves its slot empty."""
+    if kind == "winds_aloft_day":
+        slots.put("wind_day", day_month(value("wind.day")), "wind.day")
+        for name in ("asymmetry", "east_median", "west_median"):
+            slots.put(name, unit_value(value(f"wind.{name}"), "kn", rounded=True), f"wind.{name}")
+        gap = unit_value(value("wind.asymmetry"), "kn", rounded=True, adjective=True)
+        slots.put("asymmetry_adj", gap, "wind.asymmetry")
+        for name in ("east_count", "west_count"):
+            slots.put(name, _count(value(f"wind.{name}")), f"wind.{name}")
+        example = value.item("p.1.type")
+        if example and not example.get("group"):
+            slots.put("fast_type_a", article(example["value"]), "p.1.type")
+        slots.put("fast_reg", value("p.1.registration"), "p.1.registration")
+    country = value("fm.country")
+    if kind == "foreign_military" and isinstance(country, str):
+        slots.put("fm_country", country, "fm.country")
+        slots.put("fm_country_the", with_the(country), "fm.country")
+        slots.put("fm_basis", value("fm.basis"), "fm.basis")
+    if kind == "first_operator_here":
+        slots.put("fs_operator", value("fs.operator"), "fs.operator")
+        slots.put("fs_designator", value("fs.designator"), "fs.designator")
+        days = number(value("fs.coverage_days"))
+        if days and days >= 2 and float(days).is_integer():
+            slots.put("coverage_days", _thousands(days), "fs.coverage_days")
+    if kind == "aerobatic_practice":
+        slots.put("reversals", _count(value("aer.reversals")), "aer.reversals")
+        slots.put("excursion", unit_value(value("aer.excursion"), "ft", rounded=True), "aer.excursion")
+        slots.put("span", unit_value(value("aer.span"), "NM"), "aer.span")
+    if kind == "unregistered_address":
+        address = value("id.hex")
+        slots.put("hex_upper", address.upper() if isinstance(address, str) else None, "id.hex")
+        slots.put("unr_call", value("unr.callsign"), "unr.callsign")
+        slots.put("unr_category", value("unr.category"), "unr.category")
+    if kind == "racetrack_orbit":
+        slots.put("rt_legs", _count(value("rt.legs")), "rt.legs")
+        slots.put("rt_leg_length", unit_value(value("rt.leg_length"), "NM"), "rt.leg_length")
+        slots.put("rt_spacing", unit_value(value("rt.spacing"), "NM"), "rt.spacing")
+        slots.put("rt_duration", duration(value("rt.duration")), "rt.duration")
+
+
 def _mach_text(value, *, certified=False):
     """Mach 0.82 or Mach 0.925 for a certified figure, which keeps its digits; Mach 1.03 for an
     estimate, which reads to two places."""
@@ -1029,6 +1079,16 @@ SHAPES = {
         "descending, then climbing away",
     ),
     "extreme_turn_rate": ("makes a very tight turn", "made a very tight turn", "making a very tight turn"),
+    "aerobatic_practice": (
+        "makes repeated climbs and dives over one spot",
+        "made repeated climbs and dives over one spot",
+        "making repeated climbs and dives over one spot",
+    ),
+    "racetrack_orbit": (
+        "flies a racetrack of long reciprocal legs",
+        "flew a racetrack of long reciprocal legs",
+        "flying a racetrack of long reciprocal legs",
+    ),
 }
 FIELD_ADJECTIVES = {"ground speed": "ground-speed", "vertical rate": "vertical-rate"}
 # Kinds whose prose names a ground speed (public_prose.SPEED_PROSE_KINDS).
@@ -2672,6 +2732,74 @@ BUILDERS = {
         "It reported a true airspeed of {tas} and a ground speed of {gs}.",
         "Its true airspeed read {tas}, against {gs} over the ground.",
     ),
+    "wind_medians": (
+        "Eastbound jets at cruising height had a median ground speed of {east_median}, against {west_median} "
+        "for westbound ones.",
+        "The median eastbound ground speed was {east_median}, and the westbound median was {west_median}.",
+    ),
+    "wind_counts": (
+        "The comparison rests on {east_count} aircraft eastbound and {west_count} aircraft westbound.",
+        "{east_count|cap} aircraft flew east and {west_count} aircraft flew west in the comparison.",
+    ),
+    "wind_example": (
+        "In these records, the fastest eastbound jet of the day was {fast_reg}[, {fast_type_a}].",
+        "The fastest eastbound jet in these records that day was {fast_reg}[, {fast_type_a}].",
+    ),
+    "wind_hyp": (
+        "Ground speed includes the wind along the track, so the {asymmetry_adj} gap reflects wind at those "
+        "heights; the wind itself was not measured.",
+        "The {asymmetry_adj} gap between the directions comes from ground speeds, which include the wind; the "
+        "wind itself was not measured.",
+    ),
+    "fm_basis": (
+        "The listing as a military aircraft of {fm_country_the} comes from {fm_basis}.",
+        "{fm_basis|cap} ties the aircraft to the military of {fm_country_the}.",
+    ),
+    "fs_label": (
+        "A callsign is a label, so the {fs_designator} prefix does not confirm who operates the aircraft.",
+        "The {fs_designator} prefix is a label in the callsign, and a label alone does not confirm the operator.",
+    ),
+    "aer_detail": (
+        "It made {reversals} reversals between climbing and descending over a height range of {excursion}.",
+        "The track holds {reversals} reversals between climb and descent, spanning {excursion}.",
+    ),
+    "aer_area": (
+        "All of it stayed inside an area {span} across.",
+        "The climbs and dives stayed within {span}.",
+    ),
+    "aer_hyp": (
+        "{reversals|cap} reversals in a small area make an aerobatic-style pattern; the data do not show what "
+        "the pilot was practicing.",
+        "The {reversals} reversals read as aerobatic-style flying, and the record cannot say what the pilot "
+        "intended.",
+    ),
+    "rt_legs": (
+        "It flew {rt_legs} straight legs of at least {rt_leg_length} back and forth over the same pair of lines.",
+        "The racetrack had {rt_legs} legs, each at least {rt_leg_length} long, over a repeated pair of lines.",
+    ),
+    "rt_spacing": (
+        "The outbound and return lines were {rt_spacing} apart.",
+        "About {rt_spacing} separated its outbound and return lines.",
+    ),
+    "rt_duration": (
+        "The pattern lasted {rt_duration}.",
+        "It kept to the racetrack for {rt_duration}.",
+    ),
+    "unr_none": (
+        "No registry the site consults lists the address {hex_upper}.",
+        "The registries the site consults hold no entry for {hex_upper}.",
+    ),
+    "unr_signal": (
+        "It broadcast the callsign {unr_call}[ and emitter category {unr_category}].",
+        "Its broadcasts carried the callsign {unr_call}.",
+        "It broadcast emitter category {unr_category}.",
+    ),
+    "unr_hyp": (
+        "A missing entry for {hex_upper} can come from registry lag, a registry the site does not consult, or "
+        "an address programmed by hand.",
+        "Registry lag, a registry the site does not consult, or an address set by hand can each leave "
+        "{hex_upper} unlisted.",
+    ),
 }
 # A group counts as said once a sentence has used one of these slots.
 SLOT_GROUPS = {
@@ -2773,6 +2901,9 @@ BUILDER_GROUPS = {
     "survey_hyp": "hypothesis",
     "soaring_hyp": "hypothesis",
     "balloon_hyp": "hypothesis",
+    "wind_hyp": "hypothesis",
+    "aer_hyp": "hypothesis",
+    "unr_hyp": "hypothesis",
     "pair": "pair",
     "tcas_threat": "pair",
     "pair_spacing": "spacing",
@@ -4600,6 +4731,343 @@ GENERIC_RECORD = Angle(
 )
 GENERIC_ANGLES = (GENERIC_VALUE, GENERIC_PLACE, GENERIC_RECORD)
 
+# A winds aloft day has no aircraft subject: the comparison of the two directions is the story,
+# and the fastest eastbound jet appears only as an example. The headline is fixed.
+WINDS_GAP = Angle(
+    "asymmetry",
+    "How much faster eastbound jets moved over the ground than westbound ones; the wind was not measured.",
+    headlines=FIXED_FORM,
+    deks=(
+        "Eastbound jets ran {asymmetry} faster over the ground than westbound ones on {wind_day}.",
+        "On {wind_day}, the median eastbound ground speed beat the westbound median by {asymmetry}.",
+    ),
+    openers=(
+        "On {date}, eastbound jets at cruising height moved {asymmetry} faster over the ground than westbound "
+        "ones.",
+        "The median ground speeds of eastbound and westbound jets differed by {asymmetry} on {date}.",
+    ),
+    body=("wind_medians", "wind_counts", "/", "wind_hyp", "wind_example", "limit"),
+    tier=0,
+    requires=("fixed_headline", "asymmetry"),
+)
+WINDS_MEDIANS = Angle(
+    "medians",
+    "The two median ground speeds and how many aircraft each rests on.",
+    headlines=FIXED_FORM,
+    deks=(
+        "The median ground speed was {east_median} eastbound and {west_median} westbound on {wind_day}.",
+        "Jets heading east had a median ground speed of {east_median}, and jets heading west {west_median}.",
+    ),
+    openers=(
+        "On {date}, the median ground speed of eastbound jets at cruising height was {east_median}, against "
+        "{west_median} for westbound ones.",
+        "Jets heading east on {date} had a median ground speed of {east_median}; those heading west had "
+        "{west_median}.",
+    ),
+    body=("wind_counts", "wind_hyp", "/", "wind_example", "limit"),
+    tier=1,
+    requires=("fixed_headline", "east_median", "west_median"),
+)
+WINDS_EXAMPLE = Angle(
+    "example",
+    "The day's fastest eastbound jet as one example of the gap, never as the subject.",
+    headlines=FIXED_FORM,
+    deks=(
+        "{fast_reg} was the fastest eastbound jet on {wind_day}, when the westbound median was {west_median}.",
+        "On {wind_day}, eastbound jets such as {fast_reg} ran {asymmetry} faster than westbound ones.",
+    ),
+    openers=(
+        "On {date}, {fast_reg}[, {fast_type_a},] was the fastest eastbound jet at cruising height in these "
+        "records.",
+        "The fastest eastbound jet in these records on {date} was {fast_reg}[, {fast_type_a}].",
+    ),
+    body=("wind_medians", "wind_counts", "/", "wind_hyp", "limit"),
+    tier=2,
+    requires=("fixed_headline", "fast_reg", "asymmetry"),
+)
+WINDS_ANGLES = (WINDS_GAP, WINDS_MEDIANS, WINDS_EXAMPLE)
+
+# A military aircraft from another State: the State and the source of the listing lead; the
+# record shows the airframe and its track, never a mission.
+FOREIGN_STATE = Angle(
+    "state_and_basis",
+    "Which State's military the listing names and where the listing comes from.",
+    headlines=(
+        "{type} {ident}, listed as {fm_country} military, spotted[ near {place}]",
+        "{type} {ident}, a military aircraft of {fm_country_the}, logged[ near {place}]",
+    ),
+    deks=(
+        "{fm_basis|cap} ties {ident} to the military of {fm_country_the}. It reported {alt}[ and {gs}] on "
+        "{day_month}.",
+        "The listing as a military aircraft of {fm_country_the} comes from {fm_basis}.[ It flew near {place} on "
+        "{day_month}.]",
+    ),
+    openers=(
+        "{fm_basis|cap} lists {ident_named} as a military aircraft of {fm_country_the}.",
+        "On {date}, {ident_named}, listed as a military aircraft of {fm_country_the}, reported {alt_phrase}.",
+    ),
+    body=("fm_basis", "identity", "reading", "/", "track", "profile", "limit"),
+    tier=0,
+    requires=("fm_country", "fm_basis", "ident", "type"),
+)
+FOREIGN_TYPE = Angle(
+    "type_profile",
+    "A sourced fact about the type, then the listing and the record.",
+    headlines=(
+        "{type} {ident}, a military aircraft of {fm_country_the}, at {alt}",
+        "{type} {ident}, listed as {fm_country} military, at {alt}",
+    ),
+    deks=(
+        "The {type_short} reported {alt}[ and {gs}] on {day_month}[ near {place}].",
+        "{positions|cap} positions put the {type_short} at {alt} on {day_month}[ near {place}].",
+    ),
+    openers=("{tp1}", "{tp2}"),
+    body=("fm_basis", "identity", "reading", "/", "track", "profile2", "limit"),
+    tier=1,
+    requires=("tp1", "fm_country", "type", "ident"),
+)
+FOREIGN_TRACK = Angle(
+    "track",
+    "Where the track ran, as observed; nothing about a route beyond it.",
+    headlines=(
+        "Military {type} {ident} of {fm_country_the} logged near {place}",
+        "Near {place}, {type} {ident}, listed as {fm_country} military",
+    ),
+    deks=(
+        "Its track near {place} on {day_month} covers {miles}[, at {alt}].",
+        "{ident} passed near {place} on {day_month}, with {positions} positions over {track_time}.",
+    ),
+    openers=(
+        "The track of {ident_named} on {date} runs near {place}.",
+        "Near {place} on {date}, {ident_named} reported {alt_phrase}.",
+    ),
+    body=("fm_basis", "track", "reading", "/", "identity", "limit"),
+    tier=2,
+    requires=("place", "fm_country", "type", "ident"),
+)
+FOREIGN_ANGLES = (FOREIGN_STATE, FOREIGN_TYPE, FOREIGN_TRACK)
+
+# An operator's first callsign in these records. The headline is fixed; the designator is a label
+# the crew enters, so no angle treats it as proof of the operator.
+OPERATOR_FIRST = Angle(
+    "first_operator",
+    "The first callsign in these records with this operator's designator.",
+    headlines=FIXED_FORM,
+    deks=(
+        "Flying as {call}, {reg} reported {alt}[ and {gs}] on {day_month}.[ The database lists it as {type_a}.]",
+        "The callsign {call} came from {reg}[ near {place}] on {day_month}.",
+    ),
+    openers=(
+        "Until {date}, no callsign in these records carried {fs_designator}, the designator of {fs_operator}.",
+        "No {fs_operator} callsign appeared in these records before {date}, when {call} flew[ near {place}].",
+    ),
+    body=("fs_label", "identity", "reading", "/", "track", "profile", "limit"),
+    tier=0,
+    requires=("fixed_headline", "fs_operator", "fs_designator", "call", "reg"),
+)
+OPERATOR_LABEL = Angle(
+    "designator",
+    "The designator in the callsign, a label the crew enters.",
+    headlines=FIXED_FORM,
+    deks=(
+        "Its callsign, {call}, opens with {fs_designator}, the ICAO designator of {fs_operator}. It flew on "
+        "{day_month}[ near {place}].",
+        "The {fs_designator} prefix in {call} is the ICAO designator of {fs_operator}, and {reg} flew under it on "
+        "{day_month}.",
+    ),
+    openers=(
+        "On {date}, {reg} flew as {call}, the first callsign in these records with the {fs_designator} prefix "
+        "of {fs_operator}.",
+        "No callsign in these records began with {fs_designator}, the designator of {fs_operator}, before {reg} "
+        "flew as {call} on {date}.",
+    ),
+    body=("fs_label", "identity", "reading", "/", "track", "limit"),
+    tier=1,
+    requires=("fixed_headline", "fs_operator", "fs_designator", "call", "reg"),
+)
+OPERATOR_AIRCRAFT = Angle(
+    "aircraft",
+    "The aircraft and callsign behind the first sighting.",
+    headlines=FIXED_FORM,
+    deks=(
+        "{type_a|cap}, {reg}, flew as {call}[ near {place}] on {day_month}.",
+        "The aircraft behind {call} was {reg}, {type_a} by its database record.",
+    ),
+    openers=(
+        "{reg}, {type_a} by its database record, flew as {call} on {date}, the first {fs_operator} callsign "
+        "in these records.",
+        "The first {fs_operator} callsign in these records, {call}, came from {reg} on {date}.",
+    ),
+    body=("fs_label", "reading", "track", "/", "profile", "limit"),
+    tier=2,
+    requires=("fixed_headline", "fs_operator", "call", "reg", "type"),
+)
+OPERATOR_ANGLES = (OPERATOR_FIRST, OPERATOR_LABEL, OPERATOR_AIRCRAFT)
+
+# Repeated climbs and dives in a small area. The pattern is always "aerobatic-style": the data
+# never show that the aircraft flew aerobatics.
+AEROBATIC_REVERSALS = Angle(
+    "reversals",
+    "How many times the track reversed between climb and descent, and over what height range.",
+    headlines=(
+        "[{type} ]{ident} flies aerobatic-style climbs and dives[ near {place}]",
+        "{reversals|cap} reversals between climb and descent by [{type_short} ]{ident}[ near {place}]",
+    ),
+    deks=(
+        "On {day_month}, {ident} made {reversals} reversals between climbing and descending over {excursion}"
+        "[ near {place}].",
+        "The track from {ident} on {day_month} holds {reversals} reversals spanning {excursion}.",
+    ),
+    openers=(
+        "On {date}, {ident_named} made {reversals} reversals between climbing and descending, over a height "
+        "range of {excursion}.",
+        "{ident_named} flew {reversals} reversals between climb and descent on {date}[ near {place}], spanning "
+        "{excursion}.",
+    ),
+    body=("aer_area", "identity", "reading", "/", "aer_hyp", "track", "airport", "limit"),
+    tier=0,
+    requires=("reversals", "excursion", "ident"),
+)
+AEROBATIC_AREA = Angle(
+    "area",
+    "How small the area was that held the climbs and dives.",
+    headlines=(
+        "[{type} ]{ident} climbs and dives within {span}[ near {place}]",
+        "Aerobatic-style flying by [{type_short} ]{ident} within {span}",
+    ),
+    deks=(
+        "{ident} stayed inside an area {span} across while it climbed and dived on {day_month}.",
+        "The climbs and dives by {ident} on {day_month} stayed within {span}[ near {place}].",
+    ),
+    openers=(
+        "On {date}, {ident_named} kept its climbs and dives inside an area {span} across[ near {place}].",
+        "The climbs and dives that {ident_named} flew on {date} stayed within {span}.",
+    ),
+    body=("aer_detail", "identity", "/", "aer_hyp", "track", "airport", "limit"),
+    tier=1,
+    requires=("span", "ident"),
+)
+AEROBATIC_ANGLES = (AEROBATIC_REVERSALS, AEROBATIC_AREA, SHAPE_PROFILE, SHAPE_DURATION, SHAPE_PLACE)
+
+# A long racetrack of reciprocal legs over two repeated lines; geometry says nothing about purpose.
+RACETRACK_LEGS = Angle(
+    "legs",
+    "The legs of the racetrack and the two lines they repeated.",
+    headlines=(
+        "[{type} ]{ident} flies a racetrack of {rt_legs} long legs[ near {place}]",
+        "{rt_legs|cap} long legs of a racetrack by [{type_short} ]{ident}[ on {day_month}]",
+    ),
+    deks=(
+        "On {day_month}, {ident} flew {rt_legs} straight legs of at least {rt_leg_length} over the same pair of "
+        "lines[ near {place}].",
+        "The track from {ident} on {day_month} repeats a pair of lines, with {rt_legs} legs of {rt_leg_length} or "
+        "more.",
+    ),
+    openers=(
+        "On {date}, {ident_named} flew back and forth over the same pair of lines, in {rt_legs} legs of at least "
+        "{rt_leg_length}.",
+        "{ident_named} flew a racetrack of {rt_legs} long legs on {date}[ near {place}].",
+    ),
+    body=("rt_spacing", "rt_duration", "identity", "/", "reading", "track", "airport", "limit"),
+    tier=0,
+    requires=("rt_legs", "rt_leg_length", "ident"),
+)
+RACETRACK_DURATION = Angle(
+    "duration",
+    "How long the aircraft kept to the racetrack.",
+    headlines=(
+        "[{type} ]{ident} flies a racetrack for {rt_duration}[ near {place}]",
+        "For {rt_duration}, [{type_short} ]{ident} flies a long racetrack",
+    ),
+    deks=(
+        "For {rt_duration} on {day_month}, {ident} flew the same pair of lines back and forth[ near {place}].",
+        "{ident} kept to a racetrack of long legs for {rt_duration} on {day_month}.",
+    ),
+    openers=(
+        "For {rt_duration} on {date}, {ident_named} flew a racetrack of long reciprocal legs.",
+        "On {date}, {ident_named} kept to a long racetrack for {rt_duration}[ near {place}].",
+    ),
+    body=("rt_legs", "rt_spacing", "identity", "/", "reading", "track", "airport", "limit"),
+    tier=1,
+    requires=("rt_duration", "ident"),
+)
+RACETRACK_SPACING = Angle(
+    "spacing",
+    "How far apart the two lines of the racetrack lay.",
+    headlines=(
+        "[{type} ]{ident} flies a racetrack {rt_spacing} wide[ near {place}]",
+        "Racetrack lines {rt_spacing} apart from [{type_short} ]{ident}",
+    ),
+    deks=(
+        "The lines {ident} flew on {day_month} were {rt_spacing} apart[ near {place}].",
+        "{ident} flew out and back along lines {rt_spacing} apart on {day_month}, keeping to the same racetrack"
+        "[ near {place}].",
+    ),
+    openers=(
+        "On {date}, {ident_named} flew out and back along lines {rt_spacing} apart.",
+        "The racetrack {ident_named} flew on {date} had its lines {rt_spacing} apart[ near {place}].",
+    ),
+    body=("rt_legs", "rt_duration", "identity", "/", "reading", "track", "airport", "limit"),
+    tier=2,
+    requires=("rt_spacing", "ident"),
+)
+RACETRACK_ANGLES = (RACETRACK_LEGS, RACETRACK_DURATION, RACETRACK_SPACING, SHAPE_DURATION, SHAPE_PLACE)
+
+# An address no consulted registry lists, a week after it first appeared. The headline is fixed;
+# the story claims nothing about the aircraft.
+UNLISTED_NONE = Angle(
+    "no_entry",
+    "The address and the registries that hold no entry for it.",
+    headlines=FIXED_FORM,
+    deks=(
+        "No registry the site consults lists {hex_upper}. It reported {alt}[ and {gs}] on {day_month}.",
+        "The address {hex_upper} reported positions[ near {place}] on {day_month}, and no registry the site "
+        "consults lists it.",
+    ),
+    openers=(
+        "No registry the site consults lists the transponder address {hex_upper}.",
+        "On {date}, the address {hex_upper} broadcast positions[ near {place}] with no registry entry behind "
+        "them.",
+    ),
+    body=("unr_signal", "reading", "track", "/", "unr_hyp", "limit"),
+    tier=0,
+    requires=("fixed_headline", "hex_upper"),
+)
+UNLISTED_WAIT = Angle(
+    "recheck",
+    "The week's wait and the second registry check.",
+    headlines=FIXED_FORM,
+    deks=(
+        "A week after {hex_upper} first appeared, the registries the site consults still listed nothing.",
+        "The site asked the registries again a week after {hex_upper} first appeared, and none listed it.",
+    ),
+    openers=(
+        "A week after the address {hex_upper} first appeared, the registries the site consults still held no "
+        "entry for it.",
+        "Registries can lag, so the site waited a week and asked them again, and none listed {hex_upper}.",
+    ),
+    body=("unr_signal", "reading", "/", "track", "unr_hyp", "limit"),
+    tier=1,
+    requires=("fixed_headline", "hex_upper"),
+)
+UNLISTED_SIGNAL = Angle(
+    "transmitted",
+    "What the transponder sent: the callsign and emitter category.",
+    headlines=FIXED_FORM,
+    deks=(
+        "It broadcast the callsign {unr_call}[ and emitter category {unr_category}] on {day_month}.",
+        "The address {hex_upper} transmitted the callsign {unr_call} on {day_month}[ near {place}].",
+    ),
+    openers=(
+        "On {date}, the address {hex_upper} transmitted the callsign {unr_call}.",
+        "The callsign {unr_call} came from the address {hex_upper} on {date}[ near {place}].",
+    ),
+    body=("unr_none", "reading", "/", "track", "unr_hyp", "limit"),
+    tier=2,
+    requires=("fixed_headline", "hex_upper", "unr_call"),
+)
+UNLISTED_ANGLES = (UNLISTED_NONE, UNLISTED_WAIT, UNLISTED_SIGNAL)
+
 SHAPE_KINDS = tuple(SHAPES)
 SQUAWK_CODES = tuple(sorted(kinds.STATUS_CODES))
 STATUS_KINDS = tuple(sorted(kinds.STATUS_NAMES))
@@ -4663,6 +5131,12 @@ KIND_ANGLES = {
     **dict.fromkeys(STATUS_CODE_KINDS, STATUS_KIND_ANGLES),
     "special_use_code": SPECIAL_CODE_ANGLES,
     "tcas_ra": TCAS_ANGLES,
+    "winds_aloft_day": WINDS_ANGLES,
+    "foreign_military": FOREIGN_ANGLES,
+    "first_operator_here": OPERATOR_ANGLES,
+    "aerobatic_practice": AEROBATIC_ANGLES,
+    "unregistered_address": UNLISTED_ANGLES,
+    "racetrack_orbit": RACETRACK_ANGLES,
 }
 
 
@@ -4702,6 +5176,8 @@ SEO_FACTS = {
     **dict.fromkeys(SQUAWK_CODE_KINDS, "squawk {code}"),
     **dict.fromkeys(STATUS_CODE_KINDS, "{status} status"),
     **dict.fromkeys(SHAPE_KINDS, "{shape}"),
+    "winds_aloft_day": "eastbound jets {asymmetry} faster",
+    "unregistered_address": "no registry entry",
 }
 PAIR_SEO = {
     "tcas_ra": "TCAS {advisory} advisory",
@@ -4719,6 +5195,13 @@ def seo_candidates(kind):
         return ("{type_short} {reg}, listed as built {built}", *IDENTITY_SEO)
     if kind == "first_type_here":
         return ("{type_short} spotted for the first time", *IDENTITY_SEO)
+    if kind == "first_operator_here":
+        return ("{fs_operator} spotted for the first time", *IDENTITY_SEO)
+    if kind == "winds_aloft_day":
+        # No aircraft subject: the title names the day and the gap.
+        return ("Strong winds aloft on {wind_day}", "Winds aloft: " + SEO_FACTS[kind])
+    if kind == "unregistered_address":
+        return ("Address {hex_upper} flew with no registry entry", "{hex_upper}: " + SEO_FACTS[kind])
     if kind == "first_country_here":
         return (
             "First {alloc_country} address spotted: {type_short}",

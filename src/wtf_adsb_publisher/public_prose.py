@@ -3330,6 +3330,12 @@ def _clause_issues(text, scan, hedged, facts, segment, clause, first, led, menti
                 scan, match.group(), position, segment
             ):
                 continue  # "Pilots use 7700 ..." describes practice, not this crew.
+            if (
+                name == "weather"
+                and facts.kind == "winds_aloft_day"
+                and re.match(r"\s+aloft\b", body[match.end() :])
+            ):
+                continue  # "Strong winds aloft" names the kind, which its ground-speed comparison measures.
             if name == "emergency" and NO_STATUS.match(scan, position):
                 continue  # "The emergency status was none" reports an empty field.
             if name == "occupant" and re.match(r"\s*who\b", body, re.I):
@@ -3933,7 +3939,8 @@ WIND_SERVICE = re.compile(r"\bopen[- ]?meteo\b", re.I)
 # (headline:not_fixed), the variety guard reads its shared skeleton as the form, and the AI
 # writer takes it as given. A first sighting names the type in words, or by its class phrase
 # and type code when the database gives no name, or by the code alone when the designator
-# table has no class for it ("<Type> spotted for the first time").
+# table has no class for it ("<Type> spotted for the first time"). An operator's first names the
+# operator, a winds aloft day its date, and an unlisted address the address in capitals.
 FIXED_HEADLINES = {
     "first_type_here": (
         "{type} spotted for the first time",
@@ -3944,6 +3951,9 @@ FIXED_HEADLINES = {
         "First {country} address spotted: {type}",
         "First {country} address spotted: {ident}",
     ),
+    "first_operator_here": ("{operator} spotted for the first time",),
+    "winds_aloft_day": ("Strong winds aloft on {day_long}",),
+    "unregistered_address": ("Address {hex_upper} flew with no registry entry",),
 }
 FIXED_HEADLINE_KINDS = frozenset(FIXED_HEADLINES)
 # A watchlist headline leads with the aircraft and the name its entry carries, then "spotted":
@@ -4317,7 +4327,12 @@ def facts_packet(facts):
     }
     if any(item["id"].startswith("wl.") for item in facts["facts"]):
         packet["watchlist_listed"] = True
-    if any(item["id"] == "db.military" and item.get("value") is True for item in facts["facts"]):
+    # A foreign military listing (fm.country) rests on the database's military flag or a State's
+    # military address block, either of which the story may state as it states the flag.
+    if any(
+        (item["id"] == "db.military" and item.get("value") is True) or item["id"] == "fm.country"
+        for item in facts["facts"]
+    ):
         packet["military_flag"] = True
     return packet
 
@@ -4343,7 +4358,9 @@ def fixed_headline(facts):
 
     The names are the engine's slots (editorial._identity_slots): the type in words unless
     it names a whole group, the class phrase of a type with no name, the type code, the
-    allocation country unless it is home, and the registration, callsign, or address.
+    allocation country unless it is home, and the registration, callsign, or address; then the
+    operator of a first operator sighting, a winds aloft day as "5 November 2026", and the
+    address in capitals.
     """
     forms = FIXED_HEADLINES.get(facts.get("kind")) if is_story_facts(facts) else None
     if not forms:
@@ -4351,6 +4368,8 @@ def fixed_headline(facts):
     values = _story_values(facts)
     kind_type, country = values.get("id.type") or {}, values.get("alloc.country") or {}
     klass = (values.get("id.type_class") or {}).get("value")
+    day = moment((values.get("wind.day") or {}).get("value"))
+    address = (values.get("id.hex") or {}).get("value")
     names = {
         "type": (None if kind_type.get("group") else kind_type.get("value"), "id.type"),
         "type_class_cap": (
@@ -4367,6 +4386,9 @@ def fixed_headline(facts):
             ),
             (None, None),
         ),
+        "operator": ((values.get("fs.operator") or {}).get("value"), "fs.operator"),
+        "day_long": (f"{day.day} {MONTH_NAMES[day.month - 1]} {day.year}" if day else None, "wind.day"),
+        "hex_upper": (address.upper() if isinstance(address, str) else None, "id.hex"),
     }
     for form in forms:
         used = re.findall(r"\{(\w+)\}", form)
@@ -4542,7 +4564,12 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
         issues.append("paragraphs:database_attribution")
     profiles = profile_texts(facts)
     profile_text = " ".join(profiles).lower()
-    scoped = any(identifier.startswith("season.") for identifier in values) or kind.startswith("first_")
+    # A winds aloft day may name its fastest eastbound jet, the top of the comparison its facts hold.
+    scoped = (
+        any(identifier.startswith("season.") for identifier in values)
+        or kind.startswith("first_")
+        or kind == "winds_aloft_day"
+    )
     # "The first A380 here" is a first claim too: the story's own type names count as nouns.
     first_type = (
         re.compile(

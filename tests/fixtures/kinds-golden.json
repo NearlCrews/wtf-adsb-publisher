@@ -1361,6 +1361,8 @@
    "departure_return",
    "possible_go_around",
    "extreme_turn_rate",
+   "aerobatic_practice",
+   "racetrack_orbit",
    "formation_flight",
    "holding_stack",
    "survey_grid",
@@ -1380,7 +1382,11 @@
    "special_squawk_nordo",
    "special_squawk_unlawful",
    "special_use_code",
-   "tcas_ra"
+   "tcas_ra",
+   "winds_aloft_day",
+   "foreign_military",
+   "first_operator_here",
+   "unregistered_address"
   ]
  },
  "editorial.KIND_LIMIT_PREFERENCES": {
@@ -1598,7 +1604,11 @@
    "altitude_oscillation",
    "departure_return",
    "possible_go_around",
-   "extreme_turn_rate"
+   "extreme_turn_rate",
+   "aerobatic_practice",
+   "racetrack_orbit",
+   "winds_aloft_day",
+   "unregistered_address"
   ]
  },
  "editorial.SHAPES keys": {
@@ -1616,7 +1626,9 @@
    "altitude_oscillation",
    "departure_return",
    "possible_go_around",
-   "extreme_turn_rate"
+   "extreme_turn_rate",
+   "aerobatic_practice",
+   "racetrack_orbit"
   ]
  },
  "editorial.SHAPE_KINDS": {
@@ -1634,7 +1646,9 @@
    "altitude_oscillation",
    "departure_return",
    "possible_go_around",
-   "extreme_turn_rate"
+   "extreme_turn_rate",
+   "aerobatic_practice",
+   "racetrack_orbit"
   ]
  },
  "editorial.SPEED_KINDS": {
@@ -2354,14 +2368,20 @@
   "type": "tuple",
   "value": [
    "first_type_here",
-   "first_country_here"
+   "first_country_here",
+   "first_operator_here",
+   "winds_aloft_day",
+   "unregistered_address"
   ]
  },
  "public_prose.FIXED_HEADLINE_KINDS": {
   "type": "frozenset",
   "value": [
    "first_country_here",
-   "first_type_here"
+   "first_operator_here",
+   "first_type_here",
+   "unregistered_address",
+   "winds_aloft_day"
   ]
  },
  "public_prose.RATED_KINDS": {
