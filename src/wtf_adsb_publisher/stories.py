@@ -134,6 +134,20 @@ HEADLINE_PICKS = {
         "duration_seconds",
         "alt_baro",
     ),
+    "aerobatic_practice": (
+        "reversals",
+        "altitude_excursion_ft",
+        "span_nm",
+        "max_turn_rate_dps",
+        "duration_seconds",
+    ),
+    "racetrack_orbit": (
+        "racetrack_legs",
+        "leg_length_nm",
+        "lateral_spacing_nm",
+        "duration_seconds",
+        "alt_baro",
+    ),
     "winds_aloft_day": (
         "asymmetry_kn",
         "east_median_kn",
@@ -142,8 +156,12 @@ HEADLINE_PICKS = {
         "west_addresses",
     ),
 }
+# The most headline measurements a card leads with (publication.key_facts).
+KEY_FACT_LIMIT = 5
 HEADLINE_MEASUREMENTS = {
-    name: HEADLINE_PICKS.get(name) or tuple(KIND_READINGS.get(name, {}))[:5] or ("gs", "alt_baro")
+    name: HEADLINE_PICKS.get(name)
+    or tuple(KIND_READINGS.get(name, {}))[:KEY_FACT_LIMIT]
+    or ("gs", "alt_baro")
     for name in kinds.table("section")
 }
 KINDS = set(kinds.where(origin="story"))

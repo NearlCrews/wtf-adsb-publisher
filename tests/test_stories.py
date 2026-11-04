@@ -212,6 +212,12 @@ class HeadlineMeasurements(unittest.TestCase):
         self.assertEqual(table["gnss_integrity_loss"], ("nic_baro", "sil", "gva", "sda", "version"))
         self.assertEqual(table["selected_altitude_overshoot"], ("nav_altitude_mcp", "nav_qnh"))
         self.assertEqual(table["circling"], ("gs", "alt_baro"))
+        # The shape kinds lead with their shape, not a ground speed and an altitude.
+        self.assertEqual(table["aerobatic_practice"][:3], ("reversals", "altitude_excursion_ft", "span_nm"))
+        self.assertEqual(
+            table["racetrack_orbit"][:3], ("racetrack_legs", "leg_length_nm", "lateral_spacing_nm")
+        )
+        self.assertTrue(all(len(keys) <= stories.KEY_FACT_LIMIT for keys in table.values()))
 
 
 if __name__ == "__main__":

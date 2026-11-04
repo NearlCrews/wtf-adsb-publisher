@@ -559,6 +559,26 @@ class EvidenceBlockTests(unittest.TestCase):
         for meaning in publication.MEASUREMENT_MEANINGS.values():
             self.assertNotRegex(meaning, "[\u2014&]")
 
+    def test_measurement_meanings_add_to_their_labels(self):
+        from wtf_adsb_publisher import public_events as events
+        from wtf_adsb_publisher import stories, story_facts
+
+        meanings = publication.MEASUREMENT_MEANINGS
+        label = events.WINDS_MEASUREMENTS["asymmetry_kn"][0].lower()
+        self.assertNotIn("minus", meanings["asymmetry_kn"])
+        self.assertNotIn(label, meanings["asymmetry_kn"])
+        self.assertIn("diagonal", meanings["span_nm"])
+        # A duration over a detected episode reads apart from one over an analysis window.
+        episode = {"key": "duration_seconds", "label": "Episode duration", "value": 600, "unit": "s"}
+        window = {**episode, "label": "Analysis duration", "scope": "analysis-window"}
+        self.assertIn("episode", publication._key_fact({**episode, "scope": "analysis-window"})[3])
+        self.assertEqual(publication._key_fact(window)[3], publication.WINDOW_DURATION_MEANING)
+        # One feet conversion and one key fact limit.
+        self.assertFalse(hasattr(publication, "FEET_PER_NM"))
+        self.assertEqual(publication.KEY_FACT_LIMIT, stories.KEY_FACT_LIMIT)
+        separation = {"key": "min_separation_nm", "label": "x", "value": 0.4, "unit": "NM"}
+        self.assertEqual(publication._key_fact(separation)[1], f"{story_facts.separation_feet(0.4):,}")
+
     def test_the_card_folds_every_measurement_and_the_evidence_version_away(self):
         snapshot, identifier = fixture()
         event = snapshot["events"][0]
@@ -729,9 +749,11 @@ class PublicOutputCardTests(unittest.TestCase):
         self.assertIn("Lockheed &amp; &quot;Hercules&quot;", html)
         self.assertIn("Closest horizontal separation between the aircraft: 0.3", text)
         self.assertIn("Watchlist association", text)
-        # The association follows the folded measurements and precedes the limitations.
+        # The association follows the evidence version and precedes the limitations. With no
+        # measurements there is nothing to fold, so no empty details element.
         watchlist = html.index("<caption>Watchlist association</caption>")
-        self.assertLess(html.index("</details>"), watchlist)
+        self.assertLess(html.index('class="evidence-hash"'), watchlist)
+        self.assertNotIn("evidence-details", html)
         self.assertLess(watchlist, html.index('<aside class="record-limits"'))
         # The Plane Alert DB entry is named, with its own category, tags, group and link.
         for row in (
@@ -815,6 +837,20 @@ class StoryArticleTests(unittest.TestCase):
         self.assertNotIn(
             "About the", publication.story_html(story_event(facts={"id.registration": "N12345"})[2])
         )
+
+    def test_about_the_type_keeps_its_hub_link_when_the_text_quotes_every_fact(self):
+        fact = "The Bell 407 is a light single-engine utility helicopter with four main rotor blades."
+        _snapshot, _identifier, event = story_event(
+            paragraphs=["First paragraph of the story.", fact + " Second paragraph of the story."],
+            facts={"id.registration": "N12345", "tp.B407.1": fact},
+        )
+        event = deepcopy(event)
+        event["context"]["type"]["profile"] = ["tp.B407.1"]
+        self.assertEqual(publication.type_box(event), [])
+        html = publication.story_html(event)
+        self.assertIn("<h2>About the Bell 407</h2>", html)
+        self.assertIn('href="https://example.com/aircraft/bell-407/">Other Bell 407 stories</a>', html)
+        self.assertNotIn("<ul>", html[html.index("type-background") : html.index("</section>")])
 
     def test_a_source_cited_under_two_fact_ids_is_listed_once(self):
         brochure = {

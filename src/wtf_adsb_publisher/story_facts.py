@@ -1378,14 +1378,18 @@ def _shape(facts, packet, kind):
         _fact(facts, "aer.basis", AEROBATIC_BASIS_WORDS.get(episode.get("basis")), "derived")
 
 
+def separation_feet(nautical_miles, step=10):
+    """A separation in NM as feet, rounded half up to `step` feet (the card's ten, or a kind's own)."""
+    return int(nautical_miles * FEET_PER_NM / step + 0.5) * step
+
+
 def _separation(facts, packet, kind):
     """The closest horizontal separation in feet, to its kind's rounding, beside its NM measurement."""
     if kind not in SEPARATION_KINDS:
         return
     nautical_miles = number(_dict(packet, "maneuver").get("min_separation_nm"))
     if nautical_miles is not None and nautical_miles >= 0:
-        step = SEPARATION_KINDS[kind]
-        feet = round(nautical_miles * FEET_PER_NM / step) * step
+        feet = separation_feet(nautical_miles, SEPARATION_KINDS[kind])
         _fact(facts, "sep.horizontal_ft", feet, "derived", unit="ft", field="min_separation_nm")
 
 

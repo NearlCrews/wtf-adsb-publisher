@@ -234,7 +234,7 @@ def _record_table(caption, rows):
 # stories.HEADLINE_MEASUREMENTS), each with a one-line meaning for a reader new to
 # ADS-B; every measurement, with its scope and time, follows in a collapsed details
 # element with the evidence version.
-KEY_FACT_LIMIT = 5
+KEY_FACT_LIMIT = stories.KEY_FACT_LIMIT
 MEASUREMENT_MEANINGS = {
     "gs": "speed over the ground; wind adds to or subtracts from it",
     "tas": "speed through the air, as the aircraft reported it",
@@ -248,21 +248,27 @@ MEASUREMENT_MEANINGS = {
     "nav_qnh": "the altimeter setting the crew entered",
     "peak_rate_fpm": "the fastest rate in the episode; negative is down",
     "altitude_change_ft": "height lost or gained over the episode",
-    "duration_seconds": "how long the episode lasted",
+    "duration_seconds": "how long the detected episode lasted, which can be shorter than the saved track",
     "sample_count": "how many saved positions the analysis used",
     "closed_loops": "how many times the track closed a full circle",
     "min_separation_nm": "the closest the two aircraft came horizontally",
     "vertical_separation_ft": "the height difference at that moment",
     "participant_count": "how many aircraft flew together",
-    "asymmetry_kn": "eastbound median minus westbound median",
+    "asymmetry_kn": "how much faster the typical eastbound jet moved over the ground",
     "east_median_kn": "the middle ground speed of the eastbound aircraft",
     "west_median_kn": "the middle ground speed of the westbound aircraft",
     "east_addresses": "how many eastbound aircraft were counted",
     "west_addresses": "how many westbound aircraft were counted",
     "reversals": "how many times the climb turned into a descent or back",
-    "span_nm": "the width of the area the pattern fit inside",
+    "altitude_excursion_ft": "the height range between the lowest and highest points",
+    "span_nm": "the diagonal of the area the pattern fit inside",
+    "max_turn_rate_dps": "how quickly the heading changed in the sharpest sustained turn",
+    "racetrack_legs": "how many straight legs the racetrack held",
+    "leg_length_nm": "the average length of one straight leg",
     "lateral_spacing_nm": "the distance between the two parallel lines",
 }
+# A duration over a pattern's analysis window, not over a detected episode.
+WINDOW_DURATION_MEANING = "how long the analyzed stretch of track lasted"
 # A measurement without a line of its own says what kind of figure it is.
 SCOPE_MEANINGS = {
     "saved-report": "one saved report from the aircraft",
@@ -280,7 +286,6 @@ BOILERPLATE_LIMITATIONS = (
     "Individual field ages are unknown",
 )
 FIELD_GUIDE_LINK = "How to read these numbers"
-FEET_PER_NM = 6076.12
 # The kinds the field guide explains, each under the anchor #kind-<kind> (tools/ghost-theme/
 # kind-guide.mjs): every kind a site topic routes that can lead a story. A context kind only adds
 # to another story, except a hold, which becomes a story once it lasts long enough
@@ -320,9 +325,11 @@ def _key_fact(item):
     value, unit = item["value"], item["unit"]
     if item["key"] == "min_separation_nm" and isinstance(value, (int, float)) and value < 1:
         # Under a nautical mile, the separation reads in feet, rounded to ten (half up).
-        feet = _value(int(value * FEET_PER_NM / 10 + 0.5) * 10)
+        feet = _value(story_facts.separation_feet(value))
         return item["label"], feet, "ft", f"about {feet} feet apart"
     meaning = MEASUREMENT_MEANINGS.get(item["key"]) or SCOPE_MEANINGS.get(item["scope"], "a recorded value")
+    if item["key"] == "duration_seconds" and item["label"] == "Analysis duration":
+        meaning = WINDOW_DURATION_MEANING
     if unit == "s" and isinstance(value, (int, float)) and value >= 60:
         # A duration of a minute or more reads in minutes and seconds.
         minutes, seconds = divmod(round(value * 1000), 60000)
@@ -525,16 +532,16 @@ def _type_background(event, *, legacy=False):
     story, routing = event["story"], event.get("context") or {}
     aircraft = routing.get("type")
     facts = type_box(event)
+    # A story whose text quotes every type fact keeps the section and its hub link, without the list.
+    profiled = any(key.startswith("tp.") for key in story["facts"])
     lines = []
-    if aircraft and facts:
+    if aircraft and (facts or profiled):
         name = escape(aircraft["name"])
         lines.extend(
             [
                 '<section class="type-background">',
                 f"<h2>About the {name}</h2>",
-                "<ul>",
-                *(f"<li>{escape(fact)}</li>" for fact in facts),
-                "</ul>",
+                *(["<ul>", *(f"<li>{escape(fact)}</li>" for fact in facts), "</ul>"] if facts else []),
                 f'<p><a href="{site_origin.get()}/aircraft/{aircraft["slug"]}/">Other {name} stories</a></p>',
                 "</section>",
             ]
@@ -940,9 +947,14 @@ def _event_card(event, *, display_review=True):
         facts = key_facts(event)
         if facts:
             output.append(_key_facts_html(facts))
-    output.append(
-        '<details class="evidence-details"><summary>All measurements and the evidence record</summary>'
-    )
+    evidence = '<p class="evidence-hash">Evidence version: ' + _code(event["evidence_version"]) + ".</p>"
+    if not event["measurements"]:
+        # Nothing to fold away: the evidence version stands on its own.
+        output.append(evidence)
+    else:
+        output.append(
+            '<details class="evidence-details"><summary>All measurements and the evidence record</summary>'
+        )
     groups = {}
     for item in event["measurements"]:
         key = tuple(item.get(field) for field in ("scope", "at_utc", "start_utc", "end_utc"))
@@ -957,9 +969,8 @@ def _event_card(event, *, display_review=True):
             + _record_table(measurement_scope(items[0]), rows)
             + "</div>"
         )
-    output.append(
-        '<p class="evidence-hash">Evidence version: ' + _code(event["evidence_version"]) + ".</p></details>"
-    )
+    if event["measurements"]:
+        output.append(evidence + "</details>")
     if "watchlist" in event:
         output.append(_watchlist_table(event["watchlist"]))
     output.append(
