@@ -28,7 +28,11 @@ versions, and evidence contract versions are tracked separately.
   same export so every link carries its target's current headline. A change to
   the list is never a correction.
 - `headline_measurements` on every exported event: the kind's headline
-  measurement keys, for the theme.
+  measurement keys, for the theme. Aerobatic practice and racetrack cards lead
+  with their shape metrics.
+- `registration_photo` on every exported event: whether a page may show the
+  photo found by the listed registration, false for a subjectless story, a
+  disputed identity, or an identity conflict.
 - New story facts: each kind's context line (`KIND_CONTEXT`), the usual descent
   rate for a rapid descent's type class (`TYPICAL_DESCENT_FPM`), a season
   record's margin, the registration's earlier story, and the closest separation
@@ -53,6 +57,9 @@ versions, and evidence contract versions are tracked separately.
   military listing of one State and type, every 14 days; watchlist and unlisted
   address stories every 90 days per airframe; identity conflicts every 21 days
   per series; winds aloft days every 3 days; and go-arounds every 7 days.
+  Operator first sightings are one story per operator designator, so a new
+  operator on a common type is its own story, and a locally routine type never
+  holds one.
 - An unlisted address waits 7 days from its first sighting, then for a settled
   registry answer dated after that week, and a registry that lists the address
   blocks the story. Other pending type checks stop holding a story after 30
@@ -67,7 +74,8 @@ versions, and evidence contract versions are tracked separately.
   more 76, and a glider or lighter-than-air emitter category 75 when the listed
   type agrees. Fixed scores come from the kind registry: identity conflicts 70,
   holding stacks 78, winds aloft days and foreign military listings 80, and
-  unlisted addresses 75.
+  unlisted addresses 75. A racetrack orbit near a mapped runway scores at most
+  50, like a runway circuit.
 - Prose checks for new text: `filler:frame`, `dek:adds_nothing`, and
   `context:missing`, so every story quotes its kind's context line; a restated
   line still answers to the occupant, purpose, and hypothesis checks. AI prose
@@ -75,18 +83,19 @@ versions, and evidence contract versions are tracked separately.
   profile facts the text does not quote. Watchlist headlines read "linked to
   <name> by Plane Alert DB" and foreign military headlines "listed as military
   from <State>, spotted". Winds aloft days and foreign military listings carry
-  required sentences, and a "-style" or "-like" compound hedges only the term
-  it carries. Published stories keep the checks they were written under.
+  required sentences, and a "-style" or "-like" compound hedges only its own
+  phrase. Published stories keep the checks they were written under.
 - Writer rules: stories run 90 to 200 words (`MIN_STORY_WORDS` is 90 for AI and
   template stories), quote the context line word for word, use the required
   sentence and the fixed or house headline exactly, and carry a dek with a fact
   value the headline lacks. New stories no longer end with "The entry does not
   show who was aboard."
-- Weekly picks rank by the kind's rarity over 90 days, then interest,
+- Weekly picks rank by the kind's rarity among live stories over 90 days, then interest,
   exceptional standing, and recency, and a kind picked in the last four weeks
   ranks after every other candidate. Research explains the event first and
   gives the type at most one sentence. Event sections and the explainer pass
-  deterministic prose checks before they are saved.
+  deterministic prose checks before they are saved. An explainer refused three
+  times waits 30 days before its next attempt.
 - Theme 0.7.0: story pages explain the evidence in plain language and show one
   photo per story. They link related stories and background explainers, lay
   out subjectless pages, and draw altitude profile figures. The field guide
