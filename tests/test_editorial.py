@@ -370,12 +370,19 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn("tags", listed)
         self.assertIn("id.registration", listed)
 
+    def test_a_winds_day_may_name_strong_winds_aloft_and_no_other_weather(self):
+        check = public_prose.prose_checker(kind_facts("winds_aloft_day"))
+        self.assertEqual(check("Strong winds aloft marked the day."), [])
+        for phrase in ("Turbulence", "Icing", "Storms", "High winds", "Gusty winds"):
+            with self.subTest(phrase=phrase):
+                self.assertTrue(check(f"{phrase} aloft marked the day."))
+
     def test_field_limits(self):
         for kind, (story, _facts, _report) in self.rendered.items():
             with self.subTest(kind=kind):
-                # A fixed headline is not free text: no length window applies to it.
-                if kind not in public_prose.FIXED_HEADLINE_KINDS:
-                    self.assertTrue(40 <= len(story["headline"]) <= 90, story["headline"])
+                # A fixed headline is not free text: it may run shorter than the floor.
+                floor = 0 if kind in public_prose.FIXED_HEADLINE_KINDS else 40
+                self.assertTrue(floor <= len(story["headline"]) <= 90, story["headline"])
                 self.assertTrue(70 <= len(story["dek"]) <= 155, story["dek"])
                 self.assertLessEqual(len(story["seo_title"]), 60)
                 low, high = public_prose.PARAGRAPHS

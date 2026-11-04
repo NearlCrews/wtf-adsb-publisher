@@ -900,7 +900,7 @@ def _shape_slots(slots, value, kind):
 
 
 def _count(value):
-    """A whole count of two or more in words up to twenty, else None."""
+    """A whole count of two or more: in words up to twenty, in digits above; else None."""
     count = number(value)
     return spelled(int(count)) if count and count >= 2 and float(count).is_integer() else None
 
@@ -2768,8 +2768,8 @@ BUILDERS = {
         "The climbs and dives stayed within {span}.",
     ),
     "aer_hyp": (
-        "{reversals|cap} reversals in a small area make an aerobatic-style pattern; the data do not show what "
-        "the pilot was practicing.",
+        "{reversals|cap} reversals in a small area make an aerobatic-style pattern; the data do not show why the "
+        "aircraft flew it.",
         "The {reversals} reversals read as aerobatic-style flying, and the record cannot say what the pilot "
         "intended.",
     ),
@@ -4773,8 +4773,8 @@ WINDS_EXAMPLE = Angle(
     "The day's fastest eastbound jet as one example of the gap, never as the subject.",
     headlines=FIXED_FORM,
     deks=(
-        "{fast_reg} was the fastest eastbound jet on {wind_day}, when the westbound median was {west_median}.",
-        "On {wind_day}, eastbound jets such as {fast_reg} ran {asymmetry} faster than westbound ones.",
+        "Jets flying east on {wind_day} outpaced those flying west by {asymmetry} in median ground speed.",
+        "On {wind_day}, the eastbound median ground speed ran {asymmetry} above the westbound one.",
     ),
     openers=(
         "On {date}, {fast_reg}[, {fast_type_a},] was the fastest eastbound jet at cruising height in these "
@@ -4793,7 +4793,7 @@ FOREIGN_STATE = Angle(
     "state_and_basis",
     "Which State's military the listing names and where the listing comes from.",
     headlines=(
-        "{type} {ident}, listed as {fm_country} military, spotted[ near {place}]",
+        "{type} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
         "{type} {ident}, a military aircraft of {fm_country_the}, logged[ near {place}]",
     ),
     deks=(
@@ -4815,7 +4815,7 @@ FOREIGN_TYPE = Angle(
     "A sourced fact about the type, then the listing and the record.",
     headlines=(
         "{type} {ident}, a military aircraft of {fm_country_the}, at {alt}",
-        "{type} {ident}, listed as {fm_country} military, at {alt}",
+        "{type} {ident}, listed as military from {fm_country}, at {alt}",
     ),
     deks=(
         "The {type_short} reported {alt}[ and {gs}] on {day_month}[ near {place}].",
@@ -4831,7 +4831,7 @@ FOREIGN_TRACK = Angle(
     "Where the track ran, as observed; nothing about a route beyond it.",
     headlines=(
         "Military {type} {ident} of {fm_country_the} logged near {place}",
-        "Near {place}, {type} {ident}, listed as {fm_country} military",
+        "Near {place}, {type} {ident}, listed as military from {fm_country}",
     ),
     deks=(
         "Its track near {place} on {day_month} covers {miles}[, at {alt}].",

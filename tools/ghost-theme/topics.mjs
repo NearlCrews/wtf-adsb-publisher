@@ -163,13 +163,13 @@ export const topicCopy = {
     related: ["first-sightings", "vintage-aircraft", "watchlisted-aircraft"],
   },
   "first-sightings": {
-    title: "First sightings of aircraft types and countries",
+    title: "First sightings of aircraft types, countries, and operators",
     heading:
-      "First sightings: aircraft types and countries new to these records",
+      "First sightings: aircraft types, countries, and operators new to these records",
     description:
-      "The first time an aircraft type, or an address block assigned to a country, appears in these records, with the dates behind the claim.",
+      "The first time an aircraft type, an address block assigned to a country, or an operator's callsign designator appears in these records, with the dates behind the claim.",
     intro: [
-      "A first sighting is the first time something appears in this site's own records: an aircraft type designator never seen before, or an aircraft whose ICAO address comes from a block assigned to a country that has not shown up here. The claim is local and dated. It says the records had not contained the type or the country before that day, and how often the type flies elsewhere is a question these records cannot answer.",
+      "A first sighting is the first time something appears in this site's own records: an aircraft type designator never seen before, an aircraft whose ICAO address comes from a block assigned to a country that has not shown up here, or a callsign carrying an operator's designator for the first time. The claim is local and dated. It says the records had not contained the type, the country, or the operator before that day, and how often the type flies elsewhere is a question these records cannot answer.",
       "The check waits for at least 90 days with an hour or more of recorded traffic before it trusts a first. Group designators such as ZZZZ, used when a type has no code of its own, never count, and neither do addresses that begin with a tilde, which mark tracks without a real ICAO address. An address that appeared under a different type on more than two earlier days points to a database change, so it does not count as a new type. Country firsts start only after a 30-day warm-up. Operator firsts wait 30 days as well: the first airline-style callsign with a known three-letter designator, such as DLH for Lufthansa, marks that operator's first sighting, though the crew enters the callsign and it does not confirm who operates the aircraft.",
       "A type can pass overhead during a gap in coverage and leave no record, so a first sighting dates the first record, which may come after the first visit. The country comes from the ICAO address allocation table. It tells you which state assigned the address and nothing about who operates the aircraft today or where it is based.",
     ],
@@ -251,11 +251,11 @@ export const topicCopy = {
     title: "Holding stacks: aircraft holding together",
     heading: "Holding patterns: aircraft stacked in racetrack holds",
     description:
-      "Three or more aircraft holding at the same time, stacked at different altitudes while they wait for a clearance.",
+      "Groups of aircraft holding at the same time at different altitudes, and single aircraft flying long racetracks over the same two lines.",
     intro: [
       "When an airport or route is busy, or weather closes a runway, air traffic control can tell aircraft to hold: to fly a racetrack pattern over a fixed point until they are cleared onward. A standard hold uses right turns, and its inbound leg takes about a minute at or below 14,000 ft and a minute and a half above that.",
       "The site finds a hold when a track circles for at least ten minutes and closes three or more loops. A single aircraft's hold only adds context to another story about it. A much longer racetrack is the exception: one aircraft flying at least four straight legs of 10 nautical miles or more, back and forth over the same two lines for 40 minutes or longer, gets a story of its own as a racetrack orbit. When three or more aircraft circle at the same time within 10 nautical miles of one another, at least 500 ft apart vertically, and at 5,000 ft or higher, the site treats them as a stack and tells one story about the group, listing the other aircraft and their altitudes.",
-      "A racetrack shape does not show why an aircraft held. The reason can be traffic, weather, a closed runway, or a training exercise, and controllers' instructions are not part of this data. Loops close to an airport can also be practice circuits, which the site labels separately so they do not crowd out the rarer holds. Gaps in reception can hide part of a hold, so the number of loops describes the saved positions.",
+      "A racetrack shape does not show why an aircraft held. The reason can be traffic, weather, a closed runway, or a long hold flown for other reasons the data do not show, and controllers' instructions are not part of this data. Loops close to an airport can also be practice circuits, which the site labels separately so they do not crowd out the rarer holds. Gaps in reception can hide part of a hold, so the number of loops describes the saved positions.",
     ],
     sources: [SOURCES.aimHolding],
     guide: ["ads-b"],
@@ -330,7 +330,12 @@ export const topicCopy = {
     ],
     sources: [SOURCES.phak, SOURCES.adsb, SOURCES.tcds, SOURCES.openMeteo],
     guide: ["ground-speed", "geometric-altitude"],
-    related: ["rapid-descents", "high-altitude-balloons", "ads-b-glitches"],
+    related: [
+      "rapid-descents",
+      "high-altitude-balloons",
+      "ads-b-glitches",
+      "winds-aloft",
+    ],
   },
   "winds-aloft": {
     title: "Winds aloft: eastbound and westbound jet speeds",
@@ -386,7 +391,7 @@ export const topicCopy = {
     ],
     sources: [SOURCES.errors, SOURCES.readsb],
     guide: ["ads-b", "ground-speed", "mlat"],
-    related: ["gps-integrity", "speed-and-altitude"],
+    related: ["gps-integrity", "speed-and-altitude", "unlisted-addresses"],
   },
   "gps-integrity": {
     title: "GPS integrity drops in aircraft ADS-B data",

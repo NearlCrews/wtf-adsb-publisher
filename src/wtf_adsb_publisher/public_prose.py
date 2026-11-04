@@ -3333,6 +3333,7 @@ def _clause_issues(text, scan, hedged, facts, segment, clause, first, led, menti
             if (
                 name == "weather"
                 and facts.kind == "winds_aloft_day"
+                and match.group().lower() in {"strong wind", "strong winds"}
                 and re.match(r"\s+aloft\b", body[match.end() :])
             ):
                 continue  # "Strong winds aloft" names the kind, which its ground-speed comparison measures.
@@ -4330,7 +4331,8 @@ def facts_packet(facts):
     # A foreign military listing (fm.country) rests on the database's military flag or a State's
     # military address block, either of which the story may state as it states the flag.
     if any(
-        (item["id"] == "db.military" and item.get("value") is True) or item["id"] == "fm.country"
+        (item["id"] == "db.military" and item.get("value") is True)
+        or (item["id"] == "fm.country" and item.get("value"))
         for item in facts["facts"]
     ):
         packet["military_flag"] = True
