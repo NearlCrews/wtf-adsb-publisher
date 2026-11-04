@@ -150,7 +150,7 @@ export const KIND_GUIDE = {
   racetrack_orbit: {
     name: "Racetrack orbit",
     what: "A long oval flown over and over by one aircraft, with straight legs many miles long.",
-    why: "Tankers, airborne radar aircraft, and aircraft in extended holds fly long racetracks, and the shape stands out against traffic going from one place to another.",
+    why: "A racetrack repeats the same pair of long lines many times, a shape that stands out against traffic going from one place to another.",
     falseAlarms:
       "A survey flight or a long hold can trace a similar shape. Reception gaps can cut a leg short or join two legs together.",
   },

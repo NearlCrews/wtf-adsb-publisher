@@ -758,6 +758,10 @@ def _metric_slots(slots, value, kind):
             slots.put(name, unit_value(metric, unit), f"m.{key}")
         elif metric >= 2 and float(metric).is_integer():
             slots.put(name, spelled(int(metric)), f"m.{key}")
+    feet = number(value("sep.horizontal_ft"))
+    if feet and (number(value("m.min_separation_nm")) or 0) < 1:
+        # Under a nautical mile the spacing reads in feet, as the card gives it.
+        slots.put("sep", unit_value(feet, "ft"), "sep.horizontal_ft")
     if slots.get("duration") and (value("m.duration_seconds") or 0) >= 5400:
         slots.put("hours", duration(value("m.duration_seconds")), "m.duration_seconds")
     others = [fact_id for fact_id in value.items if re.fullmatch(r"p\.\d+\.role", fact_id)]
@@ -1148,6 +1152,7 @@ KIND_LIMIT_PREFERENCES = {
     "tcas_ra": ("collision-avoidance",),
     "first_type_here": ("first for these records",),
     "first_country_here": ("first for these records",),
+    "first_operator_here": ("first for these records",),
     "rare_here": ("rarely include",),
     "military": ("database labels",),
     "database_watch": ("database labels",),
@@ -1162,6 +1167,11 @@ LIMIT_REWRITES = {
     public_events.RARE_HERE: "These records rarely include this type, which says nothing about how common it is "
     "elsewhere.",
     public_events.DATABASE_YEAR: "The build year comes from the aircraft database alone.",
+    # The callsign caveat is the operator story's own sentence (fs_label), so the limit keeps the scope.
+    public_events.KIND_LIMITATIONS["first_operator_here"][
+        0
+    ]: "This is a first for these records only; it says "
+    "nothing about how often the operator flies elsewhere.",
 }
 
 
@@ -1815,6 +1825,8 @@ class _Builder:
 # prose that belongs to this page alone. Design 1.2 asks for 60 such words; the margin
 # covers values that another page may share.
 EXTRA_BUILDERS = ("operator", "country", "military_flag", "age")
+# Kinds whose required sentence names the military listing's basis (fm.basis).
+BASIS_KINDS = frozenset({"foreign_military"})
 SPECIFIC_WORDS = 80
 SPECIFIC_TOKENS = frozenset({"reg", "id", "time"})
 # A story states these once: later sentences drop an optional mention and skip variants that
@@ -2034,7 +2046,10 @@ def _paragraphs(builder, body, opener, seed, opener_used=frozenset()):
         found = candidate(name)
         if found:
             commit(name, found)
-    remaining = list(EXTRA_BUILDERS)
+    # A foreign military story names its listing's basis in its required sentence already.
+    remaining = [
+        name for name in EXTRA_BUILDERS if not (name == "military_flag" and builder.kind in BASIS_KINDS)
+    ]
     while remaining and specific_words(sentences, names, recent) < SPECIFIC_WORDS:
         options = []
         for order, name in enumerate(remaining):
@@ -2832,19 +2847,20 @@ BUILDERS = {
         "{east_count|cap} aircraft flew east and {west_count} aircraft flew west in the comparison.",
     ),
     "wind_example": (
-        "In these records, the fastest eastbound jet of the day was the one the aircraft database lists as "
-        "{fast_reg}[, {fast_type_a}].",
-        "The fastest eastbound jet in these records that day was {fast_reg}[, {fast_type_a}] by its aircraft "
-        "database record.",
+        "One eastbound jet in the comparison was the one the database lists as {fast_reg}[, {fast_type_a}].",
+        "One eastbound jet in the comparison that day was {fast_reg}[, {fast_type_a}] by its database record.",
     ),
     "wind_hyp": (
-        "Ground speed includes the wind along the track, so the {asymmetry_adj} gap reflects wind at those "
-        "heights.",
-        "The {asymmetry_adj} gap between the directions comes from ground speeds, which include the wind.",
+        # A hedged cause, as in the limitation; the hypothesis check refuses any other wind wording.
+        "Ground speed includes the wind along the track, so the {asymmetry_adj} gap is consistent with strong "
+        "winds aloft.",
+        "The {asymmetry_adj} gap between the directions comes from ground speeds, which include the wind, and "
+        "is consistent with strong winds aloft.",
     ),
-    "fm_basis": (
+    "fm_state": (
         # Where the listing comes from is the required sentence's (public_prose.REQUIRED_SENTENCES).
-        "The aircraft is tied to the military of {fm_country_the} by {fm_basis}.",
+        "Its address comes from the block allocated to {fm_country_the}.",
+        "The address block it broadcasts is allocated to {fm_country_the}.",
     ),
     "fs_label": (
         "A callsign is a label, so the {fs_designator} prefix does not confirm who operates the aircraft.",
@@ -2865,8 +2881,8 @@ BUILDERS = {
         "intended.",
     ),
     "rt_legs": (
-        "It flew {rt_legs} straight legs of at least {rt_leg_length} back and forth over the same pair of lines.",
-        "The racetrack had {rt_legs} legs, each at least {rt_leg_length} long, over a repeated pair of lines.",
+        "It flew {rt_legs} straight legs averaging {rt_leg_length} back and forth over the same pair of lines.",
+        "The racetrack had {rt_legs} legs averaging {rt_leg_length}, over a repeated pair of lines.",
     ),
     "rt_spacing": (
         "The outbound and return lines were {rt_spacing} apart.",
@@ -4828,7 +4844,8 @@ GENERIC_RECORD = Angle(
 GENERIC_ANGLES = (GENERIC_VALUE, GENERIC_PLACE, GENERIC_RECORD)
 
 # A winds aloft day has no aircraft subject: the comparison of the two directions is the story,
-# and the fastest eastbound jet appears only as an example. The headline is fixed.
+# and one eastbound jet in the comparison appears only as an example (the engine's primary is the
+# day's carrier, not its fastest jet). The headline is fixed.
 WINDS_GAP = Angle(
     "asymmetry",
     "How much faster eastbound jets moved over the ground than westbound ones; the wind was not measured.",
@@ -4866,17 +4883,17 @@ WINDS_MEDIANS = Angle(
 )
 WINDS_EXAMPLE = Angle(
     "example",
-    "The day's fastest eastbound jet as one example of the gap, never as the subject.",
+    "One eastbound jet in the comparison as an example of the gap, never as the subject.",
     headlines=FIXED_FORM,
     deks=(
         "Jets flying east on {wind_day} outpaced those flying west by {asymmetry} in median ground speed.",
         "On {wind_day}, the eastbound median ground speed ran {asymmetry} above the westbound one.",
     ),
     openers=(
-        "On {date}, the aircraft the database lists as {fast_reg}[, {fast_type_a},] was the fastest eastbound "
-        "jet at cruising height in these records.",
-        "The fastest eastbound jet in these records on {date} was {fast_reg}[, {fast_type_a}] by its aircraft "
-        "database record.",
+        "On {date}, one eastbound jet at cruising height in the comparison was {fast_reg}[, {fast_type_a}] by "
+        "its database record.",
+        "One eastbound jet in the comparison on {date} was the one the database lists as {fast_reg}"
+        "[, {fast_type_a}].",
     ),
     body=("wind_medians", "wind_counts", "/", "wind_hyp", "winds_hedge", "limit"),
     tier=2,
@@ -4897,16 +4914,17 @@ FOREIGN_STATE = Angle(
     "Which State's military the listing names and where the listing comes from.",
     headlines=FOREIGN_HEADLINES,
     deks=(
-        "{ident} is tied to the military of {fm_country_the} by {fm_basis}. It reported {alt}[ and {gs}] on "
-        "{day_month}.",
-        "The listing as a military aircraft of {fm_country_the} comes from {fm_basis}.[ It flew near {place} on "
-        "{day_month}.]",
+        "{ident} is listed as military by {fm_basis}; the address block is allocated to {fm_country_the}. It "
+        "reported {alt}[ and {gs}] on {day_month}.",
+        "The military listing comes from {fm_basis}, and the address block is allocated to {fm_country_the}.[ It "
+        "flew near {place} on {day_month}.]",
     ),
     openers=(
-        "{ident_named|cap} is listed as a military aircraft of {fm_country_the} by {fm_basis}.",
-        "On {date}, {ident_named}, listed as a military aircraft of {fm_country_the}, reported {alt_phrase}.",
+        "On {date}, {ident_named}, whose address block is allocated to {fm_country_the}, reported {alt_phrase}.",
+        "{ident_named|cap} broadcast an address from the block of {fm_country_the} and reported {alt_phrase} on "
+        "{date}.",
     ),
-    body=("fm_basis", "identity", "reading", "/", "track", "profile", "foreign_hedge", "limit"),
+    body=("identity", "reading", "/", "track", "profile", "foreign_hedge", "limit"),
     tier=0,
     requires=("fm_country", "fm_basis", "ident", "type"),
 )
@@ -4919,7 +4937,7 @@ FOREIGN_TYPE = Angle(
         "{positions|cap} positions put the {type_short} at {alt} on {day_month}[ near {place}].",
     ),
     openers=("{tp1}", "{tp2}"),
-    body=("fm_basis", "identity", "reading", "/", "track", "profile2", "foreign_hedge", "limit"),
+    body=("fm_state", "identity", "reading", "/", "track", "profile2", "foreign_hedge", "limit"),
     tier=1,
     requires=("tp1", "fm_country", "type", "ident"),
 )
@@ -4935,7 +4953,7 @@ FOREIGN_TRACK = Angle(
         "The track of {ident_named} on {date} runs near {place}.",
         "Near {place} on {date}, {ident_named} reported {alt_phrase}.",
     ),
-    body=("fm_basis", "track", "reading", "/", "identity", "foreign_hedge", "limit"),
+    body=("fm_state", "track", "reading", "/", "identity", "foreign_hedge", "limit"),
     tier=2,
     requires=("place", "fm_country", "type", "ident"),
 )
@@ -5052,13 +5070,13 @@ RACETRACK_LEGS = Angle(
         "{rt_legs|cap} long legs of a racetrack by [{type_short} ]{ident}[ on {day_month}]",
     ),
     deks=(
-        "On {day_month}, {ident} flew {rt_legs} straight legs of at least {rt_leg_length} over the same pair of "
+        "On {day_month}, {ident} flew {rt_legs} straight legs averaging {rt_leg_length} over the same pair of "
         "lines[ near {place}].",
-        "The track from {ident} on {day_month} repeats a pair of lines, with {rt_legs} legs of {rt_leg_length} or "
-        "more.",
+        "The track from {ident} on {day_month} repeats a pair of lines, with {rt_legs} legs averaging "
+        "{rt_leg_length}.",
     ),
     openers=(
-        "On {date}, {ident_named} flew back and forth over the same pair of lines, in {rt_legs} legs of at least "
+        "On {date}, {ident_named} flew back and forth over the same pair of lines, in {rt_legs} legs averaging "
         "{rt_leg_length}.",
         "{ident_named} flew a racetrack of {rt_legs} long legs on {date}[ near {place}].",
     ),

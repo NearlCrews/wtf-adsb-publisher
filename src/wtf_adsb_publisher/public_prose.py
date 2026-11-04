@@ -4710,12 +4710,9 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
         issues.append("paragraphs:database_attribution")
     profiles = profile_texts(facts)
     profile_text = " ".join(profiles).lower()
-    # A winds aloft day may name its fastest eastbound jet, the top of the comparison its facts hold.
-    scoped = (
-        any(identifier.startswith("season.") for identifier in values)
-        or kind.startswith("first_")
-        or kind == "winds_aloft_day"
-    )
+    # A winds aloft day is not scoped: its facts hold no fastest jet (the example is the engine's
+    # day carrier), so a superlative there is unsupported, however it is scoped.
+    scoped = any(identifier.startswith("season.") for identifier in values) or kind.startswith("first_")
     # "The first A380 here" is a first claim too: the story's own type names count as nouns.
     first_type = (
         re.compile(

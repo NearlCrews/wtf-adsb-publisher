@@ -353,8 +353,8 @@ KIND_NOTES = (
     (
         ("winds_aloft_day",),
         "The subject is the day, not an aircraft. Give both medians and both counts once (wind.east_median, "
-        "wind.west_median, wind.east_count, wind.west_count). Name the fastest eastbound aircraft (p.1) once as "
-        "an example, scoped to these records. Say the difference is consistent with strong winds aloft or with a "
+        "wind.west_median, wind.east_count, wind.west_count). Name p.1 once as "
+        "one eastbound jet in the comparison, an example and never the fastest one. Say the difference is consistent with strong winds aloft or with a "
         "jet stream, a kind of wind, and never name a specific weather system or storm. Include this sentence "
         "once, word for word, where it fits, not as the story's last sentence; it is the story's one caveat, so "
         f'write no other wind or data caveat: "{public_prose.REQUIRED_SENTENCES["winds_aloft_day"]}"',

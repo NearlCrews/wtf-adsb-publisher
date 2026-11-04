@@ -1825,5 +1825,107 @@ class FinalReviewTests(unittest.TestCase):
                 self.assertNotIn("last report", story["dek"])
 
 
+class WhatTheDataSupport(unittest.TestCase):
+    """Story text that claims no more than the saved measurements show."""
+
+    def stories(self, kind, count=8):
+        facts = kind_facts(kind)
+        return facts, [editorial.render(facts, f"episode-{index}") for index in range(count)]
+
+    def texts(self, story):
+        return " ".join([story["headline"], story["dek"], *story["paragraphs"]])
+
+    def test_a_winds_day_never_calls_its_example_the_fastest(self):
+        facts, rendered = self.stories("winds_aloft_day")
+        for story in rendered:
+            with self.subTest(angle=story["angle"]):
+                self.assertNotRegex(self.texts(story), r"(?i)fastest|reflects wind")
+        self.assertTrue(any("one eastbound jet in the comparison" in self.texts(s).lower() for s in rendered))
+        for text in editorial.BUILDERS["wind_hyp"]:
+            self.assertIn("is consistent with strong winds aloft", text)
+            self.assertNotIn("reflects", text)
+        # A superlative in a winds story is refused, however it is scoped.
+        story = dict(rendered[0])
+        story["paragraphs"] = [
+            *story["paragraphs"][:-1],
+            story["paragraphs"][-1] + " N791TX was the fastest eastbound jet in these records that day.",
+        ]
+        self.assertIn("claim:unscoped_superlative:fastest", public_prose.story_issues(story, facts))
+
+    def test_a_racetrack_gives_its_mean_leg_length_as_an_average(self):
+        _facts, rendered = self.stories("racetrack_orbit")
+        quoted = False
+        for story in rendered:
+            text = self.texts(story)
+            with self.subTest(angle=story["angle"]):
+                self.assertNotRegex(text, r"(?i)legs of at least|each at least|NM or more|12\.5 NM or")
+            quoted = quoted or "averaging 12.5 NM" in text
+        self.assertTrue(quoted)
+
+    def test_context_lines_claim_only_what_the_data_show(self):
+        lines = story_facts.KIND_CONTEXT
+        self.assertNotRegex(lines["foreign_military"], r"(?i)allied|regularly")
+        self.assertIn("not why the flight came through", lines["foreign_military"])
+        self.assertNotRegex(lines["vintage"], r"(?i)shows|strips|usually")
+        self.assertNotRegex(lines["racetrack_orbit"], r"(?i)radar|tanker|hold")
+        # One sentence, one home.
+        self.assertIs(lines["type_speed_mismatch"], lines["type_altitude_mismatch"])
+
+    def test_a_foreign_military_story_names_its_basis_at_most_twice(self):
+        facts, rendered = self.stories("foreign_military")
+        basis = story_facts.value(facts, "fm.basis")
+        caveat = public_events.KIND_LIMITATIONS["foreign_military"][1]
+        self.assertNotIn("fm_basis", editorial.BUILDERS)
+        for story in rendered:
+            text = self.texts(story)
+            prose = " ".join([story["dek"], *story["paragraphs"]])
+            with self.subTest(angle=story["angle"]):
+                self.assertLessEqual(prose.count(basis), 2)
+                self.assertNotIn("tied to the military", text)
+                self.assertLessEqual(" ".join(story["paragraphs"]).count(caveat), 1)
+                self.assertNotIn("flags it as military", prose)
+                self.assertNotIn("carries the military flag", prose)
+        state = editorial.FOREIGN_STATE
+        for dek in state.deks:
+            self.assertRegex(dek, r"(?:listed as military by|military listing comes from) \{fm_basis\}")
+            self.assertIn("is allocated to {fm_country_the}", dek)
+        for opener in state.openers:
+            self.assertNotIn("{fm_basis}", opener)
+
+    def test_an_operator_first_states_the_callsign_caveat_once(self):
+        _facts, rendered = self.stories("first_operator_here")
+        for story in rendered:
+            prose = " ".join(story["paragraphs"])
+            with self.subTest(angle=story["angle"]):
+                labels = [sentence for sentence in re.split(r"(?<=\.) ", prose) if "label" in sentence]
+                self.assertEqual(len(labels), 1, prose)
+                self.assertNotIn("First in this collection's retained records;", prose)
+        # The limitation, when a story restates it, is a full sentence that leaves the caveat out.
+        limit = public_events.KIND_LIMITATIONS["first_operator_here"][0]
+        rewritten = editorial.LIMIT_REWRITES[limit]
+        self.assertTrue(rewritten.startswith("This is a first") and rewritten.endswith("."))
+        self.assertNotIn("label", rewritten)
+
+    def test_a_winds_day_lists_no_saved_readings_of_its_example(self):
+        def scopes(kind):
+            event = fixtures.projection(fixtures.packet(fixtures.kind_event(kind)))
+            return {item["scope"] for item in event["measurements"]}
+
+        self.assertNotIn("saved-report", scopes("winds_aloft_day"))
+        self.assertNotIn("archived-label", scopes("winds_aloft_day"))
+        self.assertIn("saved-report", scopes("formation_flight"))
+
+    def test_a_close_separation_reads_in_feet(self):
+        facts = kind_facts("formation_flight")
+        self.assertLess(story_facts.value(facts, "m.min_separation_nm"), 1)
+        self.assertEqual(editorial.build_slots(facts)["sep"], "2,430 ft")
+        for index in range(6):
+            story = editorial.render(facts, f"episode-{index}")
+            with self.subTest(index=index):
+                self.assertNotIn("0.4 NM", self.texts(story))
+        # A separation of a nautical mile or more keeps NM.
+        self.assertEqual(editorial.build_slots(kind_facts("tcas_ra"))["sep"], "3.2 NM")
+
+
 if __name__ == "__main__":
     unittest.main()

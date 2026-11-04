@@ -909,8 +909,8 @@ class WriterTests(unittest.TestCase):
                 "Eastbound aircraft had a median ground speed of 560 knots against 380 knots westbound.",
                 "On 20 September 2026, the median eastbound ground speed was 560 knots, and the westbound "
                 "median was 380 knots. The comparison rests on 35 aircraft eastbound and 33 aircraft westbound.",
-                "The fastest eastbound jet in these records that day was N791TX, an Airbus A321neo by its "
-                "aircraft database record.",
+                "One eastbound jet in the comparison that day was N791TX, an Airbus A321neo by its database "
+                "record.",
                 [
                     "The gap is consistent with strong winds aloft.",
                     "The gap is consistent with a jet stream.",

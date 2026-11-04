@@ -190,6 +190,11 @@ HYPOTHESES = {
     ),
     "racetrack_orbit": ("a long racetrack hold", "a refueling-style track", "an orbit over one area"),
 }
+# The mismatch kinds share one context line.
+MISMATCH_CONTEXT = (
+    "A reading a type cannot produce usually means the address belongs to a different aircraft than the "
+    "database lists."
+)
 # One general sentence per kind on what such an observation usually is, never what this flight
 # was: the writer may restate it once as context (ctx.kind).
 KIND_CONTEXT = {
@@ -203,29 +208,27 @@ KIND_CONTEXT = {
     "formation flight, which is routine for military trainers and some civil groups.",
     "winds_aloft_day": "Ground speed is airspeed plus wind, so a jet stream may show up as eastbound aircraft "
     "running far faster over the ground than westbound ones.",
-    "foreign_military": "Military aircraft from allied States regularly cross this region; the data show the "
-    "airframe, not the reason for the flight.",
+    "foreign_military": "A foreign military listing names the country whose forces registered the address, and "
+    "not why the flight came through.",
     "first_operator_here": "An operator designator is the three-letter code that starts an airline-style callsign.",
     "aerobatic_practice": "Repeated climbs and dives inside a small area are what aerobatic practice looks like on "
     "a track map.",
     "unregistered_address": "Registries lag new registrations by days or weeks, and some States publish no public "
     "registry at all.",
-    "racetrack_orbit": "A racetrack of long reciprocal legs is how tankers, airborne radar aircraft, and long holds "
-    "use one piece of sky for an hour or more.",
+    "racetrack_orbit": "A racetrack is a pair of long reciprocal legs joined by turns and flown repeatedly over "
+    "the same piece of sky.",
     "identity_conflict": "The three identifiers an aircraft carries usually agree; a disagreement is usually a "
     "database or settings artifact.",
-    "type_speed_mismatch": "A reading a type cannot produce usually means the address belongs to a different "
-    "aircraft than the database lists.",
-    "type_altitude_mismatch": "A reading a type cannot produce usually means the address belongs to a different "
-    "aircraft than the database lists.",
+    "type_speed_mismatch": MISMATCH_CONTEXT,
+    "type_altitude_mismatch": MISMATCH_CONTEXT,
     "seasonal_speed_record": "Ground-speed records mostly follow the wind, which is why the margin over the earlier "
     "best matters.",
     "thermal_soaring": "Gliders and motor gliders gain height by circling in rising air.",
     "first_type_here": "A first sighting says only that the type had not appeared in these records before.",
     "first_country_here": "An address block names the State that issued the address, which usually matches the "
     "registry.",
-    "vintage": "Airframes past their eightieth year are rare in the air and usually fly to shows or from private "
-    "strips.",
+    "vintage": "Airframes past their eightieth year are rare in the air; few aircraft of that age are still "
+    "flying.",
     "watch_type": "A watch type is one the site follows because it is large, rare, or historic.",
     "watchlist_match": "Plane Alert DB is a community list of aircraft spotters find interesting; a listing says "
     "why spotters follow an aircraft and nothing about who is aboard.",
@@ -1301,7 +1304,7 @@ def _norm(facts, packet, kind):
 
 def _winds(facts, sources, packet, identity):
     """A winds-aloft day: its date, both medians and counts, their difference, the modelled wind
-    when the engine attached one, and the finding's own aircraft, the fastest eastbound, as p.1."""
+    when the engine attached one, and the finding's own aircraft, one eastbound jet in the comparison, as p.1."""
     block = _dict(packet, "winds_aloft")
     if not block:
         return

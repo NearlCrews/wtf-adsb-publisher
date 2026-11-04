@@ -1037,7 +1037,9 @@ def _measurements(packet, *, strict=True):
     if not isinstance(readings, list) or len(readings) > 100:
         raise ValueError("Invalid received readings")
     at = received.get("saved_readings_at_utc")
-    for reading in readings:
+    # A subjectless story's aircraft is an example, so its saved readings name no subject.
+    subjectless = packet.get("kind") in SUBJECTLESS_KINDS
+    for reading in () if subjectless else readings:
         if not isinstance(reading, dict):
             raise ValueError("Invalid reading")
         field = reading.get("field")
@@ -1059,8 +1061,8 @@ def _measurements(packet, *, strict=True):
         if at is not None:
             item["at_utc"] = utc(at)
         measurements.append(item)
-    archived = _archived_labels(packet)
-    for field, label in TEXT_REPORTS.items():
+    archived = not subjectless and _archived_labels(packet)
+    for field, label in () if subjectless else TEXT_REPORTS.items():
         value = received.get(field)
         # 0000 is an absent-code placeholder and "none" is no status; neither is a report.
         if value is None or (field, value) in (("squawk", "0000"), ("emergency_status", "none")):
