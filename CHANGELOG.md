@@ -5,6 +5,89 @@ versions, and evidence contract versions are tracked separately.
 
 ## Unreleased
 
+### Added
+
+- Stories for six engine kinds: winds aloft days, foreign military listings,
+  operator first sightings, aerobatic practice, unlisted addresses, and
+  racetrack orbits. Each has its wording, facts, limitation lines, and writer
+  note. Operator first sightings, winds aloft days, and unlisted addresses take
+  fixed headlines. Winds aloft days, aerobatic practice, unlisted addresses,
+  racetrack orbits, and both type mismatch kinds list their hypotheses.
+- Two topics: Winds aloft under Performance and Unlisted addresses under Data
+  quality. The Notable aircraft, First sightings, Flight shapes, and Holding
+  patterns intros describe the kinds they gained.
+- Validators for the new evidence: the winds aloft, foreign military, and
+  unlisted address blocks, the operator first sighting, and the aerobatic and
+  racetrack metrics.
+- Subjectless stories. A winds aloft day names no aircraft as its subject: its
+  event has an empty aircraft block and `subjectless: true`, its path is
+  `winds-aloft-<d>-<mon>-<yyyy>`, and its page has a day summary card with no
+  photo, type box, or map.
+- Related stories. Each event lists the stories of its registration from the 60
+  days before it, newest first and at most five, rebuilt from the events in the
+  same export so every link carries its target's current headline. A change to
+  the list is never a correction.
+- `headline_measurements` on every exported event: the kind's headline
+  measurement keys, for the theme.
+- New story facts: each kind's context line (`KIND_CONTEXT`), the usual descent
+  rate for a rapid descent's type class (`TYPICAL_DESCENT_FPM`), a season
+  record's margin, the registration's earlier story, and the closest separation
+  in feet for formation and TCAS stories. The facts version is 4.
+- A pinned display name table (`data/display_names.json`) that corrects
+  database spellings in type names, watchlist associations, and operator names.
+- Media for the rare kinds: formation and TCAS maps draw the other aircraft's
+  track when the engine supplies one, and TCAS advisories, stratospheric
+  balloons, thermal soaring, and aerobatic practice add an altitude profile
+  figure (role `profile`). TCAS media fall back to the evidence's own positions
+  when the engine's media parts are empty.
+- A one-off explainer on Canadian addresses (`explainer:canadian-addresses`),
+  written by the weekly run once three published mismatch stories with Canadian
+  addresses exist. It is published at `/explainers/canadian-addresses/`, linked
+  from those stories through `related`, and carried in the snapshot's
+  `explainers` key.
+
+### Changed
+
+- Repeat cooldowns: one story of a kind and one identity story per airframe
+  every 60 days; a watch type every 30 days; a notable variant, or a foreign
+  military listing of one State and type, every 14 days; watchlist and unlisted
+  address stories every 90 days per airframe; identity conflicts every 21 days
+  per series; winds aloft days every 3 days; and go-arounds every 7 days.
+- An unlisted address waits 7 days from its first sighting, then for a settled
+  registry answer dated after that week, and a registry that lists the address
+  blocks the story. Other pending type checks stop holding a story after 30
+  days.
+- Identity stories about a listed type refuse a direct ADS-B ground speed or a
+  pressure altitude the type cannot produce. Tagged aerobatic practice near an
+  airport or on a runway circuit, and holding under 20 minutes, are context
+  only. Subjectless stories are exempt from address repeat rules. The curation
+  version is 12.
+- Scores: aerobatic practice and racetrack orbits 80, a rare type seen on at
+  most one earlier day 75, a go-around 75, a holding pattern of 20 minutes or
+  more 76, and a glider or lighter-than-air emitter category 75 when the listed
+  type agrees. Fixed scores come from the kind registry: identity conflicts 70,
+  holding stacks 78, winds aloft days and foreign military listings 80, and
+  unlisted addresses 75.
+- Prose checks for new text: `filler:frame`, `dek:adds_nothing`, and
+  `context:missing`, so every story quotes its kind's context line; a restated
+  line still answers to the occupant, purpose, and hypothesis checks. AI prose
+  may not repeat a type box fact (`box:reused`), and the type box lists the
+  profile facts the text does not quote. Watchlist headlines read "linked to
+  <name> by Plane Alert DB" and foreign military headlines "listed as military
+  from <State>, spotted". Winds aloft days and foreign military listings carry
+  required sentences, and a "-style" or "-like" compound hedges only the term
+  it carries. Published stories keep the checks they were written under.
+- Writer rules: stories run 90 to 200 words (`MIN_STORY_WORDS` is 90 for AI and
+  template stories), quote the context line word for word, use the required
+  sentence and the fixed or house headline exactly, and carry a dek with a fact
+  value the headline lacks. New stories no longer end with "The entry does not
+  show who was aboard."
+- Weekly picks rank by the kind's rarity over 90 days, then interest,
+  exceptional standing, and recency, and a kind picked in the last four weeks
+  ranks after every other candidate. Research explains the event first and
+  gives the type at most one sentence. Event sections and the explainer pass
+  deterministic prose checks before they are saved.
+
 ## 0.1.0 (2026-11-01)
 
 The first public release. The package identifies itself as 0.1.0, plugins

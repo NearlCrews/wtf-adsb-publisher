@@ -428,6 +428,23 @@ build. Topic routing reads the story engine's `src/wtf_adsb_publisher/data/topic
 `paths.mjs`. A kind the table does not list falls back to the first topic of
 its section, as `story_facts.topic_for` does.
 
+Every event also carries `headline_measurements`, the measurement keys the
+page leads with, in order; the validator accepts only the kind's own list.
+`related` holds up to five links (`path`, `title`, `observed_start`), newest
+first: the stories of the same registration from the 60 days before the event.
+The exporter rebuilds each link from the event it names in the same export, so
+a link always resolves to a page the release builds and carries that page's
+current headline. An explainer link has `observed_start: null` and follows the
+story links. `subjectless: true` marks a story about a day, today only
+`winds_aloft_day`: its `aircraft` block is empty, its routing names no type,
+registration, or operator, and its lead is a day summary card with no photo,
+type box, or map. A snapshot with an explainer page lists it under the
+top-level `explainers` key, in path order, with its key, path, title, summary,
+sections, sources, limitations, facts, and write time; the validator requires
+every explainer link to match a page there by path and title. The Canadian
+address explainer is `explainer:canadian-addresses` at
+`/explainers/canadian-addresses/`.
+
 Each build writes `routes.json`, one sorted JSON list of every generated route:
 each HTML page, each file (`/robots.txt`, `/rss/`, `/search-index/`, the
 sitemaps) and, by prefix, each directory of content-addressed or journal files

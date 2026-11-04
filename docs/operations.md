@@ -196,6 +196,64 @@ those tables or decisions is intended.
 schema; any disagreement exits with status 1. It is offline and reads the example
 batch, or the batches of a feed directory given with `--feed`.
 
+## Story kinds, holds, and explainers
+
+Six kinds from the engine have stories: `winds_aloft_day`, `foreign_military`,
+`first_operator_here`, `aerobatic_practice`, `unregistered_address`, and
+`racetrack_orbit`. Two topics are new: Winds aloft (`/topics/winds-aloft/`,
+under Performance) and Unlisted addresses (`/topics/unlisted-addresses/`, under
+Data quality). Foreign military listings join Notable aircraft, operator first
+sightings join First sightings, aerobatic practice joins Flight shapes, and
+racetrack orbits join Holding patterns.
+
+A winds aloft day is a subjectless story. It is about the day, and the aircraft
+it names are examples. Its public event has an empty `aircraft` block and
+`subjectless: true`, and its article path is
+`/stories/winds-aloft-<d>-<mon>-<yyyy>/`, with `winds-aloft-2-<d>-<mon>-<yyyy>`
+for a second story of that date. The page gets a day summary card in place of a
+track map and has no photo, type box, or type research. No address-keyed repeat
+rule holds a winds day, and a winds day holds no other story by address; only
+its three-day series rule applies.
+
+An unlisted address waits before it can publish. For seven days after its first
+sighting the selection report gives `registry_lag`. After that it gives
+`type_check_stale` until a registry answer dated at least seven days after the
+first sighting arrives. A registry that lists the address blocks the story
+(`registry_lists_address`), and this kind's check never goes stale. For every
+other kind, a pending type check stops holding a story 30 days after the first
+sighting and then counts as unavailable. Identity stories about a listed type
+refuse a direct ADS-B ground speed the type cannot reach, or a pressure altitude
+more than 2,000 ft above its ceiling (`reading_implausible`); a published story
+that fails this gate is suspended at the next pass. Aerobatic practice tagged
+near an airport or on a runway circuit, and holding shorter than 20 minutes, are
+context only.
+
+The weekly run writes the Canadian address explainer once, when three published
+type mismatch stories about addresses in Canada's allocation exist. It saves
+the receipt as `weekly/explainer-canadian-addresses.json` under `state_dir`,
+records the page in the ledger under `explainers`, and reports its state under
+`explainers` in the run status and in `--plan`. A failed attempt waits a day.
+Each export links the covered stories to `/explainers/canadian-addresses/`
+through `related` and carries the page in the snapshot's `explainers` key.
+Without `reference_dir`, no address resolves to an allocation, so no explainer
+is written.
+
+### Upgrading to these kinds
+
+- Copy the new `deploy/ghost-preview/receive-autopilot.py` to the static release
+  host before the first release. It never counts a change to an event's
+  `related` list as a correction, and it accepts `headline_measurements` on an
+  event that lacked it, so the first release keeps the earlier generations.
+- The first refresh after the deploy revises stories whose facts changed: every
+  kind gained a context line, and a story with an earlier story of its
+  registration within 60 days gained a repeat fact and related links.
+- Stories published earlier keep their older frames. The new prose checks
+  apply to new text only.
+- Records rendered by this release carry `type.profile` in their routing, which
+  earlier releases refuse. A rollback needs a routing migration that removes it.
+- `curation.VERSION` is 12. Stored decisions keep their exceptional standing, so
+  the change does not re-evaluate published stories.
+
 ## Readership statistics
 
 The public proxy writes a JSON access log of the public host only
