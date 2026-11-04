@@ -1430,6 +1430,8 @@ print(json.dumps({'review':json.dumps(review),'published':json.dumps(export(ledg
       path.join(pagesMedia, "manifest.json"),
     ),
   );
+  // The same privacy scan as the main build.
+  await scan(pagesDirectory);
   const [explainer] = JSON.parse(pagesJson).explainers;
   const pagesFile = (route) =>
     fs.readFile(

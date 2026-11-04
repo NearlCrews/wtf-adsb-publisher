@@ -62,6 +62,7 @@
           title,
           topic,
           url,
+          page: entry.page === true,
           text: `${title} ${decodeURIComponent(entry.excerpt)} ${topic}`.toLocaleLowerCase(),
         };
       });
@@ -84,8 +85,12 @@
           return item;
         }),
       );
+      // A page such as an explainer is a result, not a story.
+      const [one, many] = matches.some((story) => story.page)
+        ? ["result", "results"]
+        : ["story", "stories"];
       count.textContent = matches.length
-        ? `${matches.length} matching ${matches.length === 1 ? "story" : "stories"}`
+        ? `${matches.length} matching ${matches.length === 1 ? one : many}`
         : "No stories match. Try a different word.";
     }
     button.addEventListener("click", async () => {

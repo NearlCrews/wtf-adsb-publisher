@@ -6,7 +6,6 @@ import {
   BRAND,
   PER_PAGE,
   RELATED_AIRFRAME_STORIES,
-  PROFILE_ALT,
   cardVisual,
   explainerPages,
   pageDigest,
@@ -1072,15 +1071,18 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
   assert.equal(cardVisual(map, type), map);
 }
 // "More about this aircraft" lists the publisher's related links (event
-// `related`): its stories with their dates, then the explainer pages, each
-// labeled "Background". A story with that list leaves the airframe group out
-// of "Related stories", and the stories it lists appear in no other group. A
-// subjectless story lists none.
+// `related`): its stories with their dates, then the airframe's other
+// stories, newest first, up to RELATED_AIRFRAME_STORIES in all, then the
+// explainer pages, each labeled "Background". A story with that list leaves
+// the airframe group out of "Related stories", and the stories it lists
+// appear in no other group. A subjectless story lists none.
 {
   const a380 = { code: "A388", name: "Airbus A380-800", slug: "airbus-a380" };
   const older = event({ registration: "N77", type: a380, day: "2026-09-10" });
   const middle = event({ registration: "N77", type: a380, day: "2026-09-14" });
   const latest = event({ registration: "N77", type: a380, day: "2026-09-18" });
+  // Newer than the story, so outside the publisher's list of earlier stories.
+  const newer = event({ registration: "N77", type: a380, day: "2026-09-20" });
   const page = {
     path: "/explainers/canadian-addresses/",
     title: "When a Canadian address and its listed type disagree",
@@ -1106,7 +1108,7 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
       },
     ],
   };
-  const model = siteModel([older, middle, latest, winds], { topics });
+  const model = siteModel([older, middle, latest, newer, winds], { topics });
   const byId = new Map(model.stories.map((story) => [story.id, story]));
   const story = byId.get(latest.id);
   assert.deepEqual(story.aircraftRelated, [
@@ -1115,6 +1117,20 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
       title: middle.title,
       observedStart: middle.observed_start,
       dateLabel: "14 Sep 2026",
+      background: false,
+    },
+    {
+      url: newer.article_path,
+      title: newer.title,
+      observedStart: newer.observed_start,
+      dateLabel: "20 Sep 2026",
+      background: false,
+    },
+    {
+      url: older.article_path,
+      title: older.title,
+      observedStart: older.observed_start,
+      dateLabel: "10 Sep 2026",
       background: false,
     },
     {
@@ -1131,7 +1147,31 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
   assert.ok(
     !story.related.groups
       .flatMap((group) => group.stories)
-      .some((other) => other.id === middle.id),
+      .some((other) => [middle.id, newer.id, older.id].includes(other.id)),
+  );
+  // The publisher's stories and the airframe's others stop at
+  // RELATED_AIRFRAME_STORIES in all.
+  const days = Array.from({ length: 7 }, (_, index) =>
+    event({
+      registration: "N88",
+      type: a380,
+      day: `2026-09-0${index + 1}`,
+    }),
+  );
+  days[6].related = [
+    {
+      path: days[2].article_path,
+      title: days[2].title,
+      observed_start: days[2].observed_start,
+    },
+  ];
+  const capped = siteModel(days, { topics }).stories.find(
+    (item) => item.id === days[6].id,
+  );
+  assert.equal(RELATED_AIRFRAME_STORIES, 5);
+  assert.deepEqual(
+    capped.aircraftRelated.map((item) => item.url),
+    [2, 5, 4, 3, 1].map((index) => days[index].article_path),
   );
   // Without the list, the airframe group stays.
   assert.equal(byId.get(middle.id).aircraftRelated.length, 0);
@@ -1190,8 +1230,7 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     1,
   );
 
-  // The altitude profile: fixed alt text, and a caption that names both
-  // aircraft only for an advisory whose profile draws the other one.
+  // The altitude profile keeps the publisher's alt text and caption.
   const figure = {
     role: "profile",
     src: "/event-media/p.svg",
@@ -1200,30 +1239,15 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     alt: "Chart of N1's pressure altitude over 4 minutes, from 3,000 to 3,400 ft.",
     caption: "Pressure altitude reported by N1.",
   };
-  assert.equal(PROFILE_ALT, "Altitude over time for this episode");
-  assert.deepEqual(profileFigure(figure, "stratospheric_balloon"), {
+  assert.deepEqual(profileFigure(figure), {
     kind: "altitude-profile",
     src: figure.src,
     width: 1200,
     height: 400,
-    alt: PROFILE_ALT,
-    caption: "Pressure altitude against time.",
+    alt: figure.alt,
+    caption: figure.caption,
   });
-  assert.equal(
-    profileFigure(figure, "tcas_ra").caption,
-    "Pressure altitude against time.",
-  );
-  assert.equal(
-    profileFigure(
-      {
-        ...figure,
-        alt: "Chart of N1's pressure altitude over 4 minutes, from 3,000 to 3,400 ft, beside the other aircraft in the advisory.",
-      },
-      "tcas_ra",
-    ).caption,
-    "Pressure altitude against time for both aircraft in the advisory.",
-  );
-  assert.equal(profileFigure(null, "tcas_ra"), null);
+  assert.equal(profileFigure(null), null);
 }
 console.log(
   "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, story photo rules, list page links, aircraft related lists, explainer pages, and altitude profiles.",

@@ -934,13 +934,13 @@ for (const story of model.stories) {
   // The altitude profile sits below the map, or takes its place when there
   // is none. A subjectless page shows no map: its lead is the day summary.
   const airframe = airframePhotos.get(story.id);
-  const lead =
+  const pageLead =
     story.subjectless && story.leadMedia?.kind === "track"
       ? null
       : story.leadMedia;
-  const profile = profileFigure(story.profileImage, story.kind);
-  const map = charted(lead) ? lead : null;
-  const visual = map || profile || (airframe ? null : lead);
+  const profile = profileFigure(story.profileImage);
+  const map = charted(pageLead) ? pageLead : null;
+  const visual = map || profile || (airframe ? null : pageLead);
   const caption = visual?.caption
     ? escape(visual.caption) +
       (visual.creditPath
@@ -1634,11 +1634,13 @@ const searchIndex = JSON.stringify([
     topic: encodeURIComponent(story.topicHub.title),
     url: story.url,
   })),
+  // An explainer is a page, not a story; the search counts it as a result.
   ...model.explainers.map((page) => ({
     title: encodeURIComponent(page.title),
     excerpt: encodeURIComponent(page.summary),
     topic: encodeURIComponent("Explainer"),
     url: page.url,
+    page: true,
   })),
 ]);
 JSON.parse(searchIndex);

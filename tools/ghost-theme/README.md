@@ -295,9 +295,9 @@ first report, split where the map's track splits, with the other aircraft for an
 advisory. The media manifest lists it under the event's `figures` with the role
 `profile`, and the site model passes it to the page as `profileImage`. The
 page shows it directly below the track map, or in the map's place when there is
-none, with the alt text "Altitude over time for this episode" and the caption
-"Pressure altitude against time.", which adds "for both aircraft in the
-advisory" when an advisory's profile draws the other aircraft.
+none, with the publisher's own alt text and caption, which name the other
+aircraft of an advisory and say the altitudes are uncorrected pressure
+altitudes.
 
 ```sh
 .venv/bin/python tools/run_autopilot.py --dry-run \
@@ -366,10 +366,13 @@ long label as the title; cards and tiles carry the same badge beside their
 date), the observed and published dates, the lead visual, the story prose, "About the {type}" with sourced profile facts,
 the evidence card, "More about this aircraft", and related stories.
 "More about this aircraft" lists the event's `related` links: its earlier
-stories with their dates, then the explainer pages, each labeled "Background".
-A story with that list leaves the airframe group out of "Related stories", and
-the stories it lists appear in no other group there; a story without it keeps
-the airframe group (at most five more about the airframe).
+stories with their dates, then the airframe's other stories not already
+listed, newest first, up to five stories in all, then the explainer pages, each
+labeled "Background". A story with publisher story links leaves the airframe
+group out of "Related stories", and the stories its list shows appear in no
+other group there; a story without them keeps the airframe group (at most five
+more about the airframe). The theme's search counts an explainer hit as a
+result rather than a story.
 A track map or chart leads, else the Planespotters photo of the airframe, else
 the representative type photo. A story page shows one photo of its aircraft:
 the type photo appears only when the story has no airframe photo. Cards never

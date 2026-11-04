@@ -139,9 +139,13 @@ const olderSite = await startPreview({
 // The story page fixture: a subjectless winds day, a mismatch story that
 // links to its explainer page, a related link from the later HL7635 story to
 // the earlier one, and the balloon's altitude profile under its map.
-const pagesFolder = buildFixture(
-  await fixtureSnapshot("pages", "--no-extra", "--story-pages"),
+const pagesFixture = await fixtureSnapshot(
+  "pages",
+  "--no-extra",
+  "--story-pages",
 );
+const pagesEvents = pagesFixture.events;
+const pagesFolder = buildFixture(pagesFixture);
 const pagesSite = await startPreview({ directory: pagesFolder });
 const windsStory = "/stories/strong-winds-aloft-1-oct-2026/";
 const mismatchStory = "/stories/type-speed-mismatch-c01234-18-sep-2026/";
@@ -417,9 +421,16 @@ async function auditRoutes(page, context, origin, list, width, label) {
 }
 
 // A story reads along one axis: its heading, deck, byline, lead figure,
-// airframe photo, prose, related stories, and closing link share the left edge
+// airframe photo, prose, related lists, and closing link share the left edge
 // of the reading column, and the wide data breakout centers on that column.
-async function checkReadingAxis(page, origin, route, width) {
+// A page with no breakout, such as an explainer, says so with `wide: false`.
+async function checkReadingAxis(
+  page,
+  origin,
+  route,
+  width,
+  { wide = true } = {},
+) {
   await page.goto(origin + route);
   await page.evaluate(() => document.fonts.ready);
   const axis = await page.evaluate(() => {
@@ -441,6 +452,8 @@ async function checkReadingAxis(page, origin, route, width) {
         "figure.article-cover",
         "figure.airframe-photo",
         ".gh-content > p, .gh-content > .story-prose > p",
+        ".gh-content > h2",
+        ".aircraft-related",
         ".related-stories",
         ".article-end",
       ].map((selector) => [selector, left(selector)]),
@@ -448,11 +461,20 @@ async function checkReadingAxis(page, origin, route, width) {
       wide: center(".gh-content > .kg-width-wide"),
     };
   });
-  assert.ok(axis.h1 !== null && axis.wide !== null, route);
+  assert.ok(axis.h1 !== null && (axis.wide !== null) === wide, route);
   for (const [selector, left] of axis.parts)
     if (left !== null)
-      assert.equal(left, axis.h1, `${selector} off the axis at ${width}`);
-  assert.equal(axis.wide, axis.column, `Wide breakout off center at ${width}`);
+      assert.equal(
+        left,
+        axis.h1,
+        `${selector} off the axis at ${width}: ${route}`,
+      );
+  if (wide)
+    assert.equal(
+      axis.wide,
+      axis.column,
+      `Wide breakout off center at ${width}: ${route}`,
+    );
 }
 
 async function checkWidth(width) {
@@ -482,6 +504,10 @@ async function checkWidth(width) {
       "pages",
     );
     await checkReadingAxis(page, pagesSite.base, mappedStory, width);
+    await checkReadingAxis(page, pagesSite.base, windsStory, width);
+    await checkReadingAxis(page, pagesSite.base, explainerPage, width, {
+      wide: false,
+    });
   }
 
   await page.goto(base);
@@ -1083,14 +1109,23 @@ try {
     'figure[data-media-kind="altitude-profile"]',
   );
   assert.equal(await profile.count(), 1);
+  // It keeps the publisher's alt text and caption, caveats included.
+  const balloonFigure = JSON.parse(
+    await fs.readFile(
+      path.join(fixtureDirectory, "pages-media/manifest.json"),
+      "utf8",
+    ),
+  ).events[pagesEvents.find((event) => event.article_path === balloonStory).id]
+    .figures[0];
   assert.equal(
     await profile.locator("img").getAttribute("alt"),
-    "Altitude over time for this episode",
+    balloonFigure.alt,
   );
   assert.equal(
     await profile.locator("figcaption").innerText(),
-    "Pressure altitude against time.",
+    balloonFigure.caption,
   );
+  assert.match(balloonFigure.caption, /not corrected for local air pressure/);
   assert.ok(
     await parts.page.evaluate(() =>
       document
@@ -1134,11 +1169,25 @@ try {
     "Home",
     "When a Canadian address and its listed type disagree",
   ]);
-  // The theme's search finds it.
+  // The theme's search finds it, and counts it as a result, not a story.
   const searchEntries = JSON.parse(
     await fs.readFile(path.join(pagesFolder, "search-index/index.txt"), "utf8"),
   );
   assert.ok(searchEntries.some((item) => item.url === explainerPage));
+  await parts.page.getByRole("button", { name: "Search stories" }).click();
+  await parts.page.locator("#story-search").fill("canadian address");
+  await parts.page.locator(".search-results a").first().waitFor();
+  assert.equal(
+    await parts.page.locator(".search-count").innerText(),
+    "2 matching results",
+  );
+  await parts.page.locator("#story-search").fill("asiana");
+  await parts.page.locator(".search-results a").first().waitFor();
+  assert.match(
+    await parts.page.locator(".search-count").innerText(),
+    /^\d+ matching stories$/,
+  );
+  await parts.page.keyboard.press("Escape");
   report.interactions.push({
     relatedLists: true,
     subjectlessPage: true,

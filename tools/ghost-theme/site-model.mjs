@@ -291,22 +291,18 @@ const relatedLink = (item) => ({
 });
 
 // The altitude profile figure (media role "profile") as the page shows it,
-// below the track map or in its place. Its caption names both aircraft only
-// for an advisory whose profile draws the other one, as its own alt text says.
-export const PROFILE_ALT = "Altitude over time for this episode";
-const OTHER_AIRCRAFT = /beside the other aircraft in the advisory/;
-export function profileFigure(profile, kind) {
+// below the track map or in its place, with the publisher's own alt text and
+// caption: the caption names the other aircraft of an advisory and carries
+// the pressure-altitude and timestamp caveats.
+export function profileFigure(profile) {
   if (!profile) return null;
-  const both = kind === "tcas_ra" && OTHER_AIRCRAFT.test(profile.alt || "");
   return {
     kind: "altitude-profile",
     src: profile.src,
     width: profile.width,
     height: profile.height,
-    alt: PROFILE_ALT,
-    caption: both
-      ? "Pressure altitude against time for both aircraft in the advisory."
-      : "Pressure altitude against time.",
+    alt: profile.alt,
+    caption: profile.caption,
   };
 }
 
@@ -408,7 +404,8 @@ export function storyModel(
     // box, map, or related list.
     subjectless: event.subjectless === true,
     // "More about this aircraft": the publisher's related links, the stories
-    // first, then the explainer pages.
+    // first, then the explainer pages; siteModel adds the airframe's other
+    // stories after the publisher's.
     aircraftRelated: event.subjectless
       ? []
       : (event.related || []).map(relatedLink),
@@ -779,8 +776,9 @@ export function siteModel(
   // The airframe hub lists every story, so a story page links the five newest.
   // Each list is read only until it yields enough unused stories.
   // A story with the publisher's related list ("More about this aircraft")
-  // shows it in place of the airframe group, and its stories join no other
-  // group; the airframe hub's link still lists every story.
+  // shows it in place of the airframe group: the publisher's stories, then the
+  // airframe's other stories, newest first, up to RELATED_AIRFRAME_STORIES in
+  // all, then the explainer pages. Its stories join no other group.
   const byAirframe = groupBy(stories, (story) => story.airframeKey);
   const byType = groupBy(stories, (story) => story.typeKey);
   const byUrl = new Map(stories.map((story) => [story.url, story]));
@@ -799,9 +797,24 @@ export function siteModel(
       }
       return picked;
     };
-    const airframe = listed.length
-      ? []
-      : take(byAirframe.get(story.airframeKey), RELATED_AIRFRAME_STORIES);
+    const airframe = take(
+      byAirframe.get(story.airframeKey),
+      Math.max(0, RELATED_AIRFRAME_STORIES - listed.length),
+    );
+    if (listed.length) {
+      const pages = story.aircraftRelated.filter((item) => item.background);
+      story.aircraftRelated = [
+        ...listed,
+        ...airframe.map((other) =>
+          relatedLink({
+            path: other.url,
+            title: other.headline,
+            observed_start: other.observedStart,
+          }),
+        ),
+        ...pages,
+      ];
+    }
     const sameType = take(byType.get(story.typeKey), 3);
     const sameTopic = take(byTopic.get(story.topic), 2);
     const topic = topicsBySlug.get(story.topic);
@@ -816,10 +829,11 @@ export function siteModel(
     story.operatorHub = operatorHub || null;
     story.related = {
       groups: [
-        airframe.length && {
-          title: `More about ${story.registration}`,
-          stories: airframe,
-        },
+        !listed.length &&
+          airframe.length && {
+            title: `More about ${story.registration}`,
+            stories: airframe,
+          },
         sameType.length && {
           title: `Other ${story.typeLabel} stories`,
           stories: sameType,
