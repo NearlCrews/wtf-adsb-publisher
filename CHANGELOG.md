@@ -5,10 +5,8 @@ versions, and evidence contract versions are tracked separately.
 
 ## Unreleased
 
-- `identity_conflict` scores 75, the story bar, so it fills a slot only when
-  nothing else does; the earlier 70 could never publish.
-- A finding that was never type-checked keeps its selection hold; only a
-  failed or outdated check goes stale 30 days after the first sighting.
+### Added
+
 - Stories for six engine kinds: winds aloft days, foreign military listings,
   operator first sightings, aerobatic practice, unlisted addresses, and
   racetrack orbits. Each has its wording, facts, limitation lines, and writer
@@ -54,6 +52,8 @@ versions, and evidence contract versions are tracked separately.
 
 ### Changed
 
+- A finding that was never type-checked keeps its selection hold; only a
+  failed or outdated check goes stale 30 days after the first sighting.
 - Repeat cooldowns: one story of a kind and one identity story per airframe
   every 60 days; a watch type every 30 days; a notable variant, or a foreign
   military listing of one State and type, every 14 days; watchlist and unlisted
@@ -64,8 +64,8 @@ versions, and evidence contract versions are tracked separately.
   holds one.
 - An unlisted address waits 7 days from its first sighting, then for a settled
   registry answer dated after that week, and a registry that lists the address
-  blocks the story. Other pending type checks stop holding a story after 30
-  days.
+  blocks the story. Other type checks that failed, or were made before the
+  listing changed, stop holding a story 30 days after the first sighting.
 - Identity stories about a listed type refuse a direct ADS-B ground speed or a
   pressure altitude the type cannot produce. Tagged aerobatic practice near an
   airport or on a runway circuit, and holding under 20 minutes, are context
@@ -74,7 +74,7 @@ versions, and evidence contract versions are tracked separately.
 - Scores: aerobatic practice and racetrack orbits 80, a rare type seen on at
   most one earlier day 75, a go-around 75, a holding pattern of 20 minutes or
   more 76, and a glider or lighter-than-air emitter category 75 when the listed
-  type agrees. Fixed scores come from the kind registry: identity conflicts 70,
+  type agrees. Fixed scores come from the kind registry: identity conflicts 75 (the story bar; 70 would never have published),
   holding stacks 78, winds aloft days and foreign military listings 80, and
   unlisted addresses 75. A racetrack orbit near a mapped runway scores at most
   50, like a runway circuit.
