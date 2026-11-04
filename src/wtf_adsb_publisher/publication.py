@@ -13,7 +13,7 @@ from copy import deepcopy
 from html import escape
 from urllib.parse import quote
 
-from . import public_prose, site_origin, story_facts
+from . import public_prose, site_origin, stories, story_facts
 from .public_events import (
     PARTICIPANT_ROLES,
     TYPE_LABELS,
@@ -228,6 +228,107 @@ def _record_table(caption, rows):
         + "".join(f'<tr><th scope="row">{escape(label)}</th><td>{value}</td></tr>' for label, value in rows)
         + "</tbody></table>"
     )
+
+
+# The card leads with at most five headline measurements (the kind's
+# stories.HEADLINE_MEASUREMENTS), each with a one-line meaning for a reader new to
+# ADS-B; every measurement, with its scope and time, follows in a collapsed details
+# element with the evidence version.
+KEY_FACT_LIMIT = 5
+MEASUREMENT_MEANINGS = {
+    "gs": "speed over the ground; wind adds to or subtracts from it",
+    "tas": "speed through the air, as the aircraft reported it",
+    "mach": "speed as a fraction of the speed of sound",
+    "alt_baro": "pressure altitude, the figure pilots and controllers use",
+    "alt_geom": "GPS altitude, usually within a few hundred feet of pressure altitude",
+    "archive_alt": "an archived altitude whose reference, pressure or GPS, was not kept",
+    "baro_rate": "climb or descent rate from pressure altitude; negative is down",
+    "geom_rate": "climb or descent rate from GPS altitude; negative is down",
+    "nav_altitude_mcp": "the altitude set on the autopilot, not the altitude flown",
+    "nav_qnh": "the altimeter setting the crew entered",
+    "peak_rate_fpm": "the fastest rate in the episode; negative is down",
+    "altitude_change_ft": "height lost or gained over the episode",
+    "duration_seconds": "how long the episode lasted",
+    "sample_count": "how many saved positions the analysis used",
+    "closed_loops": "how many times the track closed a full circle",
+    "min_separation_nm": "the closest the two aircraft came horizontally",
+    "vertical_separation_ft": "the height difference at that moment",
+    "participant_count": "how many aircraft flew together",
+    "asymmetry_kn": "eastbound median minus westbound median",
+    "east_median_kn": "the middle ground speed of the eastbound aircraft",
+    "west_median_kn": "the middle ground speed of the westbound aircraft",
+    "east_addresses": "how many eastbound aircraft were counted",
+    "west_addresses": "how many westbound aircraft were counted",
+    "reversals": "how many times the climb turned into a descent or back",
+    "span_nm": "the width of the area the pattern fit inside",
+    "lateral_spacing_nm": "the distance between the two parallel lines",
+}
+# A measurement without a line of its own says what kind of figure it is.
+SCOPE_MEANINGS = {
+    "saved-report": "one saved report from the aircraft",
+    "peak-report": "the peak report in the episode",
+    "analysis-window": "measured over the analyzed interval",
+    "archived-label": "the last archived label, carried between saved positions",
+    "reference-data": "a reference figure, not a reading from the aircraft",
+    "discontinuity-pair-not-physical-travel": "calculated between inconsistent positions; not physical travel",
+    "surrounding-reports": "from the saved reports around the outlying value",
+}
+# General caveats every record repeats; the field guide explains them once.
+BOILERPLATE_LIMITATIONS = (
+    "Aircraft metadata is a current database match",
+    "Archive timestamps do not establish",
+    "Individual field ages are unknown",
+)
+FIELD_GUIDE_LINK = "How to read these numbers"
+FEET_PER_NM = 6076.12
+
+
+def key_facts(event):
+    """The headline measurements as (label, value HTML, unit, meaning), at most five.
+
+    The list is the kind's stories.HEADLINE_MEASUREMENTS, which a snapshot event's
+    headline_measurements must equal; a ledger projection, which the card checks
+    render too, does not carry that field. With none of its keys recorded, the first
+    five measurements lead; a detection-rule figure is a site setting and never does.
+    """
+    first = {}
+    for item in event["measurements"]:
+        first.setdefault(item["key"], item)
+    headline = stories.HEADLINE_MEASUREMENTS.get(event["kind"], ())
+    chosen = [first[key] for key in headline if key in first]
+    if not chosen:
+        chosen = [item for item in event["measurements"] if item["scope"] != "detection-rule"]
+    return [_key_fact(item) for item in chosen[:KEY_FACT_LIMIT]]
+
+
+def _key_fact(item):
+    value, unit = item["value"], item["unit"]
+    if item["key"] == "min_separation_nm" and isinstance(value, (int, float)) and value < 1:
+        # Under a nautical mile, the separation reads in feet, rounded to ten (half up).
+        feet = _value(int(value * FEET_PER_NM / 10 + 0.5) * 10)
+        return item["label"], feet, "ft", f"about {feet} feet apart"
+    meaning = MEASUREMENT_MEANINGS.get(item["key"]) or SCOPE_MEANINGS.get(item["scope"], "a recorded value")
+    if unit == "s" and isinstance(value, (int, float)) and value >= 60:
+        # A duration of a minute or more reads in minutes and seconds.
+        minutes, seconds = divmod(round(value * 1000), 60000)
+        text = f"{minutes:,} min" + (f" {_value(seconds / 1000)} sec" if seconds else "")
+        return item["label"], text, "", meaning
+    return item["label"], _value(value), unit, meaning
+
+
+def card_limitations(event):
+    """The kind's own limitations; the field guide covers the general caveats."""
+    return [text for text in event["limitations"] if not text.startswith(BOILERPLATE_LIMITATIONS)]
+
+
+def _key_facts_html(facts):
+    rows = "".join(
+        f"<div><dt>{escape(label)}</dt><dd>{value}"
+        + (f" <small>{escape(unit)}</small>" if unit else "")
+        + f'</dd><dd class="event-key-meaning">{escape(meaning)}</dd></div>'
+        for label, value, unit, meaning in facts
+    )
+    return f'<dl class="event-key-facts">{rows}</dl>'
 
 
 def event_card(snapshot, event_id):
@@ -821,29 +922,37 @@ def _event_card(event, *, display_review=True):
         output.append(
             '<h3>Measurements</h3><p class="measurement-note">Displayed measurements may be rounded.</p>'
         )
-        groups = {}
-        for item in event["measurements"]:
-            key = tuple(item.get(field) for field in ("scope", "at_utc", "start_utc", "end_utc"))
-            groups.setdefault(key, []).append(item)
-        for items in groups.values():
-            rows = []
-            for item in items:
-                unit = f" <small>{escape(item['unit'])}</small>" if item["unit"] else ""
-                rows.append((item["label"], _value(item["value"]) + unit))
-            output.append(
-                '<div class="record-measurements-group">'
-                + _record_table(measurement_scope(items[0]), rows)
-                + "</div>"
-            )
+        facts = key_facts(event)
+        if facts:
+            output.append(_key_facts_html(facts))
+    output.append(
+        '<details class="evidence-details"><summary>All measurements and the evidence record</summary>'
+    )
+    groups = {}
+    for item in event["measurements"]:
+        key = tuple(item.get(field) for field in ("scope", "at_utc", "start_utc", "end_utc"))
+        groups.setdefault(key, []).append(item)
+    for items in groups.values():
+        rows = []
+        for item in items:
+            unit = f" <small>{escape(item['unit'])}</small>" if item["unit"] else ""
+            rows.append((item["label"], _value(item["value"]) + unit))
+        output.append(
+            '<div class="record-measurements-group">'
+            + _record_table(measurement_scope(items[0]), rows)
+            + "</div>"
+        )
+    output.append(
+        '<p class="evidence-hash">Evidence version: ' + _code(event["evidence_version"]) + ".</p></details>"
+    )
     if "watchlist" in event:
         output.append(_watchlist_table(event["watchlist"]))
-    if event["limitations"]:
-        output.append(
-            '<aside class="record-limits" aria-label="What this record cannot show">'
-            "<h3>What this record cannot show</h3><ul>"
-        )
-        output.extend("<li>" + escape(limit) + "</li>" for limit in event["limitations"])
-        output.append("</ul></aside>")
+    output.append(
+        '<aside class="record-limits" aria-label="What this record cannot show">'
+        "<h3>What this record cannot show</h3><ul>"
+    )
+    output.extend("<li>" + escape(limit) + "</li>" for limit in card_limitations(event))
+    output.append(f'<li><a href="{site_origin.get()}/field-guide/">{FIELD_GUIDE_LINK}</a></li></ul></aside>')
     references = aircraft_references(event)
     if references:
         lookup = escape("Look up " + (name or "this aircraft"))
@@ -862,7 +971,6 @@ def _event_card(event, *, display_review=True):
             '<details class="record-details"><summary>Record details</summary>',
             "<p>Public event ID: " + _code(event["id"]) + ".</p>",
             f"<p>Record revision: {event['revision']}.</p>",
-            "<p>Evidence version: " + _code(event["evidence_version"]) + ".</p>",
             "</details></section>",
         ]
     )

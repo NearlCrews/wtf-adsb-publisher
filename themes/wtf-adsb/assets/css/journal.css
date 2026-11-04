@@ -1390,7 +1390,7 @@ html:has(.event-filter-dialog[open]) {
   font-weight: 600;
 }
 
-.observation-record :is(.record-table, .event-measurement-table) {
+.observation-record .record-table {
   display: table;
   width: 100%;
   table-layout: fixed;
@@ -1402,7 +1402,7 @@ html:has(.event-filter-dialog[open]) {
   font-variant-numeric: tabular-nums;
 }
 
-.observation-record :is(.record-table, .event-measurement-table) caption {
+.observation-record .record-table caption {
   padding-bottom: 10px;
   color: var(--ink);
   font-size: 14px;
@@ -1410,8 +1410,8 @@ html:has(.event-filter-dialog[open]) {
   text-align: left;
 }
 
-.observation-record :is(.record-table, .event-measurement-table) th,
-.observation-record :is(.record-table, .event-measurement-table) td {
+.observation-record .record-table th,
+.observation-record .record-table td {
   border-bottom: 1px solid var(--line);
   padding: 10px 12px;
   text-align: left;
@@ -1419,7 +1419,7 @@ html:has(.event-filter-dialog[open]) {
   overflow-wrap: anywhere;
 }
 
-.observation-record :is(.record-table, .event-measurement-table) th {
+.observation-record .record-table th {
   width: 38%;
   color: var(--muted);
   font-weight: 400;
@@ -1453,10 +1453,6 @@ html:has(.event-filter-dialog[open]) {
 
 .observation-record :is(.record-details, .evidence-details) p {
   font-size: 14px;
-}
-
-.observation-record .evidence-hash {
-  overflow-wrap: anywhere;
 }
 
 @media (min-width: 768px) {
@@ -1503,8 +1499,8 @@ html:has(.event-filter-dialog[open]) {
     margin-bottom: 0;
   }
 
-  .observation-record :is(.record-table, .event-measurement-table) th,
-  .observation-record :is(.record-table, .event-measurement-table) td {
+  .observation-record .record-table th,
+  .observation-record .record-table td {
     padding: 10px 8px;
     font-size: 13px;
   }

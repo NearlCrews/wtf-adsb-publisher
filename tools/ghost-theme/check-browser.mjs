@@ -772,8 +772,8 @@ try {
   await parts.page.goto(fixtureSite.base + weeklyStory);
   assert.equal(await parts.page.locator(".weekly-research").count(), 1);
   // A story's evidence block: the headline measurements with their meanings,
-  // the rest of the record and the evidence version folded away, and only
-  // the kind's own limitations, ending with the field guide link.
+  // every measurement and the evidence version folded away, and only the
+  // kind's own limitations, ending with the field guide link.
   await parts.page.goto(
     fixtureSite.base +
       "/stories/embraer-e195-e2-n295rl-above-certified-ceiling-24-sep-2026/",
@@ -790,7 +790,6 @@ try {
       "pressure altitude, the figure pilots and controllers use",
     ],
   );
-  assert.equal(await record.locator(".record-measurements-group").count(), 0);
   assert.equal(
     await record.locator("h3", { hasText: "Measurements" }).count(),
     1,
@@ -802,7 +801,19 @@ try {
     (await folded.locator("summary").innerText()).trim(),
     "All measurements and the evidence record",
   );
-  assert.ok((await folded.locator("tbody tr").count()) > 0);
+  // Every measurement table sits in the details, key facts included.
+  const groups = await record.locator(".record-measurements-group").count();
+  assert.ok(groups > 0);
+  assert.equal(
+    await folded.locator(".record-measurements-group").count(),
+    groups,
+  );
+  const folds = await folded
+    .locator("tbody th")
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()));
+  assert.ok(
+    folds.includes("Ground speed") && folds.includes("Pressure altitude"),
+  );
   assert.equal(
     await folded.locator(".evidence-hash code").textContent(),
     await record.getAttribute("data-evidence-version"),

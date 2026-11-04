@@ -194,7 +194,7 @@ class PublicationCardTests(unittest.TestCase):
         self.assertIn("Tail number (registration)", text)
         self.assertIn("N12345", text)
         self.assertIn("Wikipedia: aircraft type search", text)
-        link = next(attrs for tag, attrs in parsed.tags if tag == "a")
+        link = next(attrs for tag, attrs in parsed.tags if tag == "a" and attrs.get("rel"))
         self.assertEqual(link["href"], snapshot["events"][0]["references"][0]["url"])
         self.assertIn("&amp;view=photos", html)
         self.assertFalse(any(tag in {"script", "iframe"} for tag, _attrs in parsed.tags))
@@ -431,6 +431,168 @@ def public_snapshot(evidence, path="/stories/episode-observation-3-oct-2026/"):
     return public_events.export_snapshot(ledger, mode="review", as_of=NOW), event_id
 
 
+def formation_event(**changes):
+    """A bare public event with the measurements the evidence block reads."""
+
+    def reading(key, label, value, unit, scope="saved-report"):
+        timing = {"at_utc": READING} if scope == "saved-report" else {"start_utc": START, "end_utc": END}
+        return {"key": key, "label": label, "value": value, "unit": unit, "scope": scope, **timing}
+
+    event = {
+        "kind": "formation_flight",
+        "measurements": [
+            reading("gs", "Ground speed", 212, "kn"),
+            reading("alt_baro", "Pressure altitude", 4500, "ft"),
+            reading("nic", "Navigation integrity category", 8, "category"),
+            reading("min_separation_nm", "Closest horizontal separation", 0.25, "NM"),
+            reading("vertical_separation_ft", "Vertical separation", 100, "ft"),
+            reading("participant_count", "Aircraft in formation", 3, "aircraft"),
+            reading("duration_seconds", "Episode duration", 270, "s", "analysis-window"),
+        ],
+        "limitations": [
+            "Aircraft metadata is a current database match; historical assignment is not independently verified.",
+            "Archive timestamps do not establish individual message freshness.",
+            "Individual field ages are unknown; correlated measurements are not independent verification.",
+            "Close formation is inferred from position reports; it does not establish intent.",
+        ],
+    }
+    event.update(changes)
+    return event
+
+
+class EvidenceBlockTests(unittest.TestCase):
+    def test_key_facts_follow_the_headline_list_with_a_meaning_each(self):
+        from wtf_adsb_publisher import stories
+
+        self.assertEqual(
+            stories.HEADLINE_MEASUREMENTS["formation_flight"],
+            (
+                "min_separation_nm",
+                "vertical_separation_ft",
+                "participant_count",
+                "duration_seconds",
+                "alt_baro",
+            ),
+        )
+        facts = publication.key_facts(formation_event())
+        self.assertLessEqual(len(facts), publication.KEY_FACT_LIMIT)
+        self.assertEqual(publication.KEY_FACT_LIMIT, 5)
+        self.assertEqual(
+            [label for label, *_ in facts],
+            [
+                "Closest horizontal separation",
+                "Vertical separation",
+                "Aircraft in formation",
+                "Episode duration",
+                "Pressure altitude",
+            ],
+        )
+        self.assertTrue(all(meaning.strip() for *_, meaning in facts))
+        # Under a nautical mile the separation reads in feet, rounded to ten.
+        self.assertEqual(facts[0][1:], ("1,520", "ft", "about 1,520 feet apart"))
+        self.assertEqual(facts[1][3], "the height difference at that moment")
+        self.assertEqual(facts[2][3], "how many aircraft flew together")
+        self.assertEqual(facts[3][1:3], ("4 min 30 sec", ""))
+        wide = publication.key_facts(
+            formation_event(
+                measurements=[
+                    {
+                        "key": "min_separation_nm",
+                        "label": "Closest horizontal separation",
+                        "value": 1.2,
+                        "unit": "NM",
+                        "scope": "saved-report",
+                    }
+                ]
+            )
+        )
+        self.assertEqual(wide[0][1:], ("1.2", "NM", "the closest the two aircraft came horizontally"))
+
+    def test_without_recorded_headline_keys_the_first_five_measurements_lead(self):
+        rule = {
+            "key": "threshold_kn",
+            "label": "Threshold",
+            "value": 600,
+            "unit": "kn",
+            "scope": "detection-rule",
+        }
+        base = formation_event()
+        # An integrity kind leads with categories this record lacks; an unknown kind has no list.
+        for kind in ("gnss_integrity_loss", "unlisted_kind"):
+            with self.subTest(kind=kind):
+                facts = publication.key_facts(
+                    formation_event(kind=kind, measurements=[rule, *base["measurements"]])
+                )
+                self.assertEqual(
+                    [label for label, *_ in facts],
+                    [
+                        "Ground speed",
+                        "Pressure altitude",
+                        "Navigation integrity category",
+                        "Closest horizontal separation",
+                        "Vertical separation",
+                    ],
+                )
+                # A key without a line of its own says what kind of figure it is.
+                self.assertEqual(facts[2][3], "one saved report from the aircraft")
+
+    def test_the_card_keeps_only_the_kinds_own_limitations(self):
+        event = formation_event()
+        self.assertEqual(
+            publication.card_limitations(event),
+            ["Close formation is inferred from position reports; it does not establish intent."],
+        )
+        for opening in (
+            "Aircraft metadata is a current database match",
+            "Archive timestamps do not establish",
+            "Individual field ages are unknown",
+        ):
+            self.assertIn(opening, publication.BOILERPLATE_LIMITATIONS)
+        self.assertEqual(publication.card_limitations({**event, "limitations": event["limitations"][:3]}), [])
+
+    def test_every_headline_key_with_an_obvious_meaning_has_one(self):
+        from wtf_adsb_publisher import stories
+
+        headline = {key for keys in stories.HEADLINE_MEASUREMENTS.values() for key in keys}
+        categories = {"nic_baro", "sil", "gva", "sda", "version"}
+        self.assertEqual(headline - set(publication.MEASUREMENT_MEANINGS), categories)
+        for meaning in publication.MEASUREMENT_MEANINGS.values():
+            self.assertNotRegex(meaning, "[\u2014&]")
+
+    def test_the_card_folds_every_measurement_and_the_evidence_version_away(self):
+        snapshot, identifier = fixture()
+        event = snapshot["events"][0]
+        card = publication.event_card(snapshot, identifier)
+        measurements = card.index("<h3>Measurements</h3>")
+        facts = card.index('<dl class="event-key-facts">')
+        details = card.index(
+            '<details class="evidence-details"><summary>All measurements and the evidence record</summary>'
+        )
+        folded = card[details : card.index("</details>", details)]
+        self.assertLess(measurements, facts)
+        self.assertLess(facts, details)
+        self.assertIn(
+            '<dd class="event-key-meaning">speed over the ground; wind adds to or subtracts from it</dd>',
+            card,
+        )
+        # Every measurement, key facts included, keeps its scope and time in the details.
+        self.assertEqual(folded.count("<tr>"), len(event["measurements"]))
+        self.assertIn(f'datetime="{READING}"', folded)
+        self.assertIn('class="evidence-hash"', folded)
+        self.assertIn(event["evidence_version"][:16], folded)
+        record = card[card.index(publication.RECORD_DETAILS) :]
+        self.assertNotIn("Evidence version", record)
+        limits = card[
+            card.index('<aside class="record-limits"') : card.index("</aside>", card.index("record-limits"))
+        ]
+        self.assertNotIn("Aircraft metadata is a current database match", limits)
+        self.assertTrue(
+            limits.endswith(
+                '<li><a href="https://example.com/field-guide/">How to read these numbers</a></li></ul>'
+            )
+        )
+
+
 class PublicOutputCardTests(unittest.TestCase):
     def test_episode_card_separates_peak_time_rule_and_window_with_distinct_labels(self):
         evidence = {
@@ -491,7 +653,10 @@ class PublicOutputCardTests(unittest.TestCase):
         html = publication.event_card(snapshot, identifier)
         self.assertIn("Last archived label; its own time was not retained.", html)
         self.assertEqual(html.count('datetime="' + READING + '"'), 1)
-        self.assertIn("Archive timestamps do not establish individual message freshness.", html)
+        # The general caveat stays in the record and is left to the field guide on the card.
+        caveat = "Archive timestamps do not establish individual message freshness."
+        self.assertIn(caveat, snapshot["events"][0]["limitations"])
+        self.assertNotIn(caveat, html)
         evidence["received"]["label_at_utc"] = WINDOW_START
         evidence["received"]["label_provenance"] = "archived_label"
         snapshot, identifier = public_snapshot(evidence)
@@ -547,6 +712,10 @@ class PublicOutputCardTests(unittest.TestCase):
         self.assertIn("Lockheed &amp; &quot;Hercules&quot;", html)
         self.assertIn("Closest horizontal separation between the aircraft: 0.3", text)
         self.assertIn("Watchlist association", text)
+        # The association follows the folded measurements and precedes the limitations.
+        watchlist = html.index("<caption>Watchlist association</caption>")
+        self.assertLess(html.index("</details>"), watchlist)
+        self.assertLess(watchlist, html.index('<aside class="record-limits"'))
         # The Plane Alert DB entry is named, with its own category, tags, group and link.
         for row in (
             'Example & "Wing" Aviation',

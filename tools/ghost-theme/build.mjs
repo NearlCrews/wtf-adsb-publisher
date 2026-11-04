@@ -25,7 +25,6 @@ import {
   loadTypeTable,
 } from "./aircraft-photos.mjs";
 import { airframeFigure, loadAirframePhotos } from "./airframe-photos.mjs";
-import { evidenceView, withEvidenceBlock } from "./evidence.mjs";
 import { loadEventMedia } from "./media.mjs";
 import { preview, root, output, theme, tools, topicsFile } from "./paths.mjs";
 import {
@@ -911,17 +910,6 @@ const withTypePhoto = (html, photo) =>
     (_, inner, end) => `${inner}${typePhotoHtml(photo)}\n${end}`,
   );
 
-// The observation card's measurements and limitations give way to the
-// theme's evidence block: five plain-language key facts, the rest of the
-// record folded away with the evidence version, and the kind's own limits.
-const evidenceTemplate = partialTemplate("evidence-block");
-const withEvidence = (story) =>
-  withEvidenceBlock(
-    story.html,
-    story.event,
-    evidenceTemplate(evidenceView(story.event), { data }),
-  );
-
 // Stories.
 const storyTitle = storyTitles(model.stories);
 const storyDescription = storyDescriptions(model.stories);
@@ -977,8 +965,8 @@ for (const story of model.stories) {
     url: story.url,
     html:
       story.typeInBody && typePhoto
-        ? withTypePhoto(withEvidence(story), typePhoto)
-        : withEvidence(story),
+        ? withTypePhoto(story.html, typePhoto)
+        : story.html,
     authors: [author],
     published_at: story.event.published_at,
     unpublished: story.event.publication_status === "unpublished",

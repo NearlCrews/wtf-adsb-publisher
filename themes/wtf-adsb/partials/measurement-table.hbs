@@ -1,5 +1,4 @@
-<details class="evidence-details">
-  <summary>All measurements and the evidence record</summary>
-  {{#foreach detailGroups}}{{> "measurement-group"}}{{/foreach}}
-  <p class="evidence-hash">Evidence version: <code>{{evidenceHash}}</code></p>
-</details>
+<table class="event-fact-table event-measurement-table">
+  <caption>{{scope}}{{#if interval}}<span class="event-measurement-interval">{{interval}}</span>{{/if}}</caption>
+  <tbody>{{#foreach rows}}<tr><th scope="row">{{label}}</th><td>{{value}}{{#if unit}} <small>{{unit}}</small>{{/if}}</td></tr>{{/foreach}}</tbody>
+</table>

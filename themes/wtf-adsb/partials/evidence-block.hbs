@@ -1,5 +1,0 @@
-<h3>Measurements</h3>
-<p class="measurement-note">Displayed measurements may be rounded.</p>
-{{#if keyFacts}}{{> "event-key-facts" rows=keyFacts}}{{/if}}
-{{> "measurement-table"}}
-<aside class="record-limits" aria-label="What this record cannot show"><h3>What this record cannot show</h3><ul>{{#foreach limitations}}<li>{{#if href}}<a href="{{href}}">{{text}}</a>{{else}}{{text}}{{/if}}</li>{{/foreach}}</ul></aside>
