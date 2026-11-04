@@ -137,6 +137,8 @@ def _holding_score(evidence):
     return 76 if duration >= HOLDING_STORY_SECONDS else 40
 
 
+# An episode kind saved without its episode block, below every story and promotion score.
+UNCONFIRMED_EPISODE_SCORE = 40
 # Episode kinds scored by their own rule from the saved evidence. Every other confirmed
 # episode scores 80 (95 for a live status code); a review still caps either at 60.
 EPISODE_SCORES = {
@@ -317,6 +319,10 @@ def assess(event, profiles=None, *, independent=False, now=None):
             reasons.extend(episode.get("quality_flags", []))
             if episode.get("confirmed") is not True:
                 reasons.append("Episode has not met its confirmation window")
+    elif kind in EPISODE_SCORES:
+        # An episode kind's score rests on its confirmed episode; without the block it has none.
+        score = UNCONFIRMED_EPISODE_SCORE
+        reasons.append("The saved finding holds no episode to confirm")
     if kind.startswith(ARCHIVE_SQUAWK_PREFIX):
         score, review, private = min(score, 60), True, True
     tags = curation.context_tags(evidence)

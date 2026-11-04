@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from wtf_adsb_publisher import curation, editorial, public_writer, rules, story_facts
+from wtf_adsb_publisher import curation, editorial, public_writer, rules, selection, story_facts
 
 THEME = ROOT / "tools" / "ghost-theme"
 # Rules the engine applies that the publisher keeps no constant for; the copy quotes them.
@@ -21,7 +21,7 @@ ENGINE_DESCENT_BANDS = (
     (10000, 6000, 60, 6),
     (0, 4500, 30, 4),
 )
-WORDS = {2: "two", 3: "three", 4: "four", 6: "six", 7: "seven"}
+WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 6: "six", 7: "seven"}
 
 
 def days(seconds):
@@ -152,6 +152,25 @@ class ThemeCopy(unittest.TestCase):
         self.assertIn(
             f"at least {WORDS[rules.SEASON_MIN_SAMPLES]} reports", self.triggers["seasonal_speed_record"]
         )
+
+    def test_the_rare_type_rule(self):
+        trigger = self.triggers["rare_here"]
+        self.assertIn(
+            f"{WORDS[rules.RARE_TYPE_ADDRESSES].capitalize()} or fewer aircraft carried the type in the last "
+            f"{rules.RARE_TYPE_WINDOW_DAYS} days of records, no more than {rules.RARE_TYPE_SHARE:.0%} of the "
+            "aircraft seen",
+            trigger,
+        )
+        self.assertIn(f"at most {WORDS[selection.RARE_STORY_DAYS]} earlier day", trigger)
+        self.assertIn(f"own last {rules.RARE_TYPE_WINDOW_DAYS} days", self.guide["rare_here"]["what"])
+
+    def test_the_ground_speed_ceiling(self):
+        ceiling = f"never above {rules.MAX_PLAUSIBLE_GS_KT} knots"
+        self.assertIn(ceiling, self.intro("speed-and-altitude"))
+        self.assertIn(
+            f"never counts above {rules.MAX_PLAUSIBLE_GS_KT} knots", self.triggers["seasonal_speed_record"]
+        )
+        self.assertIn(f"above {rules.MAX_PLAUSIBLE_GS_KT} knots", self.triggers["outlier_gs"])
 
     def test_the_holding_story_length(self):
         minutes = curation.HOLDING_STORY_SECONDS // 60

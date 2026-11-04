@@ -175,7 +175,14 @@ class EpisodeScores(unittest.TestCase):
                 self.assertEqual(assess(event(kind, maneuver=episode()))["score"], 80)
 
     def test_an_episode_kind_without_its_episode_is_not_a_story(self):
-        self.assertFalse(assess(event("possible_go_around"))["story_eligible"])
+        self.assertLess(selection.UNCONFIRMED_EPISODE_SCORE, curation.MIN_SCORE)
+        for kind in selection.EPISODE_SCORES:
+            with self.subTest(kind=kind):
+                result = assess(event(kind))
+                self.assertEqual(result["score"], selection.UNCONFIRMED_EPISODE_SCORE)
+                self.assertFalse(result["story_eligible"])
+        # The holding stack's fixed score needs its episode too.
+        self.assertEqual(assess(event("holding_stack"))["score"], 40)
 
 
 class EmitterAndFixedScores(unittest.TestCase):

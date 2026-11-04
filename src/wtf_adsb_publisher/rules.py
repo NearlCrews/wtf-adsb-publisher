@@ -88,8 +88,11 @@ EMITTERS = {
     "B4": "Ultralight / hang glider",
     "B6": "Unmanned aircraft",
 }
-# A type with more addresses than this in the 30-day baseline is never locally rare.
+# A type is locally rare with at most this many addresses in the rarity baseline, the last
+# RARE_TYPE_WINDOW_DAYS of records, and at most RARE_TYPE_SHARE of the aircraft seen there.
 RARE_TYPE_ADDRESSES = 3
+RARE_TYPE_WINDOW_DAYS = 30
+RARE_TYPE_SHARE = 0.01
 # Ground-speed stories that give the type's usual speed in these records (selection.type_norm,
 # story_facts._norm). Here rather than in story_facts, which curation cannot import.
 NORM_KINDS = kinds.where(norm=True)
@@ -680,7 +683,7 @@ def candidates(a, now, rarity=None, profiles=None, *, identity=None, band=None):
         aircraft_days = rarity.get("aircraft_days", {}).get(a["hex"], 0)
         if (
             0 < count <= RARE_TYPE_ADDRESSES
-            and count / max(1, rarity.get("known_total", total)) <= 0.01
+            and count / max(1, rarity.get("known_total", total)) <= RARE_TYPE_SHARE
             and type_days <= 3
             and aircraft_days <= 2
         ):
@@ -689,11 +692,11 @@ def candidates(a, now, rarity=None, profiles=None, *, identity=None, band=None):
                 "airframes",
                 f"A rare visitor here: {typecode}",
                 count,
-                "IDs / 30 days",
-                f"Only {count} of {total:,} aircraft IDs in this station's last 30 days have type {typecode}.",
+                f"IDs / {RARE_TYPE_WINDOW_DAYS} days",
+                f"Only {count} of {total:,} aircraft IDs in this station's last {RARE_TYPE_WINDOW_DAYS} days have type {typecode}.",
                 "Local rarity depends on this receiver's coverage and traffic. It says nothing about how many of this type exist worldwide.",
                 70,
-                "Local 30-day history",
+                f"Local {RARE_TYPE_WINDOW_DAYS}-day history",
                 {"rarity": {"type_days": type_days, "aircraft_days": aircraft_days, "type_addresses": count}},
             )
     squawk = str(a.get("squawk", "")).zfill(4)
