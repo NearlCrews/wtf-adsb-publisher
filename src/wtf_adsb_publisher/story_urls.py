@@ -142,6 +142,11 @@ PHENOMENA = kinds.table(
         "above_rated_altitude",
         "above_rated_speed",
         "selected_altitude_overshoot",
+        "winds_aloft_day",
+        "first_operator_here",
+        "aerobatic_practice",
+        "unregistered_address",
+        "racetrack_orbit",
     ),
 )
 INVISIBLE = re.compile(

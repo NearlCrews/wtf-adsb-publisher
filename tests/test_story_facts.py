@@ -1258,7 +1258,7 @@ class RoutingTests(unittest.TestCase):
                 topic, routed = story_facts.topic_for(kind)
                 self.assertEqual(routed, section)
                 self.assertEqual(topic, seen[kind])
-        self.assertEqual(len(topics["topics"]), 17)
+        self.assertEqual(len(topics["topics"]), 19)
         self.assertEqual(story_facts.topic_for("special_squawk_future")[1], "transponder-reports")
 
     def test_context_shape(self):

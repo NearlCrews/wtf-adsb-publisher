@@ -154,7 +154,7 @@ export const topicCopy = {
     description:
       "Large freighters, military transports, and other aircraft types that seldom appear in these records, with the data behind each match.",
     intro: [
-      "Most aircraft in these records are airliners, business jets, and small private planes. This topic collects the others: large airliners and freighters such as the Airbus A380 and the Boeing 747 Dreamlifter, military transports and tankers, government jets, and types the records rarely contain.",
+      "Most aircraft in these records are airliners, business jets, and small private planes. This topic collects the others: large airliners and freighters such as the Airbus A380 and the Boeing 747 Dreamlifter, military transports and tankers, government jets, and types the records rarely contain. Military aircraft from other States belong here too, when the aircraft database marks the airframe as military or its address falls in a block another State sets aside for military use.",
       "Every ADS-B transmitter broadcasts a 24-bit ICAO address. The site looks that address up in an aircraft database to find the registration, the ICAO type designator, and a description, then checks the type against a curated list of notable types and variants. A notable type gets a story at most once every 14 days, whichever airframe flies it. A type recorded on 24 or more of the last 60 days of coverage counts as routine and gets at most one identity story every 30 days, which leaves room for rarer visitors.",
       "A database match describes the aircraft that holds the address now. It cannot prove that the same airframe flew on the day of the story, and it says nothing about who was aboard, where the flight was going, or why. Military aircraft are usually listed by serial number instead of a civil registration, so some of these stories identify the aircraft that way. The field guide explains how a type match works and which parts of a story come from the database.",
     ],
@@ -170,7 +170,7 @@ export const topicCopy = {
       "The first time an aircraft type, or an address block assigned to a country, appears in these records, with the dates behind the claim.",
     intro: [
       "A first sighting is the first time something appears in this site's own records: an aircraft type designator never seen before, or an aircraft whose ICAO address comes from a block assigned to a country that has not shown up here. The claim is local and dated. It says the records had not contained the type or the country before that day, and how often the type flies elsewhere is a question these records cannot answer.",
-      "The check waits for at least 90 days with an hour or more of recorded traffic before it trusts a first. Group designators such as ZZZZ, used when a type has no code of its own, never count, and neither do addresses that begin with a tilde, which mark tracks without a real ICAO address. An address that appeared under a different type on more than two earlier days points to a database change, so it does not count as a new type. Country firsts start only after a 30-day warm-up.",
+      "The check waits for at least 90 days with an hour or more of recorded traffic before it trusts a first. Group designators such as ZZZZ, used when a type has no code of its own, never count, and neither do addresses that begin with a tilde, which mark tracks without a real ICAO address. An address that appeared under a different type on more than two earlier days points to a database change, so it does not count as a new type. Country firsts start only after a 30-day warm-up. Operator firsts wait 30 days as well: the first airline-style callsign with a known three-letter designator, such as DLH for Lufthansa, marks that operator's first sighting, though the crew enters the callsign and it does not confirm who operates the aircraft.",
       "A type can pass overhead during a gap in coverage and leave no record, so a first sighting dates the first record, which may come after the first visit. The country comes from the ICAO address allocation table. It tells you which state assigned the address and nothing about who operates the aircraft today or where it is based.",
     ],
     sources: [SOURCES.tar1090, SOURCES.doc8643],
@@ -254,7 +254,7 @@ export const topicCopy = {
       "Three or more aircraft holding at the same time, stacked at different altitudes while they wait for a clearance.",
     intro: [
       "When an airport or route is busy, or weather closes a runway, air traffic control can tell aircraft to hold: to fly a racetrack pattern over a fixed point until they are cleared onward. A standard hold uses right turns, and its inbound leg takes about a minute at or below 14,000 ft and a minute and a half above that.",
-      "The site finds a hold when a track circles for at least ten minutes and closes three or more loops. A single aircraft's hold only adds context to another story about it. When three or more aircraft circle at the same time within 10 nautical miles of one another, at least 500 ft apart vertically, and at 5,000 ft or higher, the site treats them as a stack and tells one story about the group, listing the other aircraft and their altitudes.",
+      "The site finds a hold when a track circles for at least ten minutes and closes three or more loops. A single aircraft's hold only adds context to another story about it. A much longer racetrack is the exception: one aircraft flying at least four straight legs of 10 nautical miles or more, back and forth over the same two lines for 40 minutes or longer, gets a story of its own as a racetrack orbit. When three or more aircraft circle at the same time within 10 nautical miles of one another, at least 500 ft apart vertically, and at 5,000 ft or higher, the site treats them as a stack and tells one story about the group, listing the other aircraft and their altitudes.",
       "A racetrack shape does not show why an aircraft held. The reason can be traffic, weather, a closed runway, or a training exercise, and controllers' instructions are not part of this data. Loops close to an airport can also be practice circuits, which the site labels separately so they do not crowd out the rarer holds. Gaps in reception can hide part of a hold, so the number of loops describes the saved positions.",
     ],
     sources: [SOURCES.aimHolding],
@@ -296,7 +296,7 @@ export const topicCopy = {
       "Aircraft that circled down through 1,500 ft or more, measured from saved positions, with what a flight shape can and cannot tell you.",
     intro: [
       "Most flights go more or less straight from one place to another. Some tracks circle instead, and the circles that become stories here lose height as they turn: an aircraft spiraling down over one area. Pilots practice steep spirals in training, and skydiving aircraft often spiral down after a drop.",
-      "The site measures each shape from the saved positions. It counts closed loops from the turning that adds up to a full circle and allows for wind drift. A spiral descent needs that verified circling, a loss of at least 1,500 ft, and a track that descends through most of its reports. Loops close to a runway at low altitude are routine traffic around an airport and do not count. Single circles, repeated passes, long loiters, and sharp course reversals are measured too; they add context to other stories and do not get stories of their own.",
+      "The site measures each shape from the saved positions. It counts closed loops from the turning that adds up to a full circle and allows for wind drift. A spiral descent needs that verified circling, a loss of at least 1,500 ft, and a track that descends through most of its reports. Aerobatic-style practice also gets stories: at least five climb and dive reversals of 800 ft or more within ten minutes, inside an area 5 nautical miles across. Loops close to a runway at low altitude are routine traffic around an airport and do not count. Single circles, repeated passes, long loiters, and sharp course reversals are measured too; they add context to other stories and do not get stories of their own.",
       "A shape does not tell you why an aircraft flew it. A descending circle can be training, a jump plane coming back down, or a pilot losing height before landing, and the record cannot tell these apart. Gaps in the data can also hide part of a loop, so the counts describe the saved positions only, and the track maps show where the gaps fall.",
     ],
     sources: [SOURCES.patterns, SOURCES.trafficPattern],
@@ -331,6 +331,19 @@ export const topicCopy = {
     sources: [SOURCES.phak, SOURCES.adsb, SOURCES.tcds, SOURCES.openMeteo],
     guide: ["ground-speed", "geometric-altitude"],
     related: ["rapid-descents", "high-altitude-balloons", "ads-b-glitches"],
+  },
+  "winds-aloft": {
+    title: "Winds aloft: eastbound and westbound jet speeds",
+    heading: "Winds aloft: days when eastbound jets far outran westbound ones",
+    description:
+      "Days when jets at cruising height moved much faster over the ground eastbound than westbound, with the counts and medians behind each comparison.",
+    intro: [
+      "Jets at cruising height fly through air that is itself moving. On a day with strong winds aloft, eastbound flights over this receiver run far faster over the ground than westbound ones at the same heights. This topic collects days when the median ground speed of eastbound jets at or above 28,000 feet exceeded the westbound median by 150 knots or more, with at least 30 aircraft each way.",
+      "Ground speed is an aircraft's speed through the air plus the wind along its track, so a gap this large between the two directions is consistent with a strong westerly wind at those heights. The site measures ground speeds and never the wind itself. When a story shows a wind speed and direction from Open-Meteo, those figures are a model forecast for one grid cell at the 250 hPa pressure level, near 34,000 feet, not an observation. A story here is about the day, so no single aircraft is its subject. It may name the day's fastest eastbound jet once, as an example.",
+    ],
+    sources: [SOURCES.openMeteo, SOURCES.phak],
+    guide: ["ground-speed"],
+    related: ["speed-and-altitude"],
   },
   "squawk-codes": {
     title: "Squawk 7700, 7600, and 7500 sightings",
@@ -387,6 +400,19 @@ export const topicCopy = {
     ],
     sources: [SOURCES.readsb, SOURCES.aimGps],
     guide: ["ads-b"],
+    related: ["ads-b-glitches"],
+  },
+  "unlisted-addresses": {
+    title: "Unlisted addresses: transponders no registry lists",
+    heading: "Unlisted addresses: ADS-B transmitters with no registry entry",
+    description:
+      "Aircraft broadcasting an ADS-B address that no registry the site consults lists, checked again a week after the address first appeared.",
+    intro: [
+      "Every ADS-B transmitter carries a 24-bit address that a State's registry ties to one aircraft. Sometimes no registry the site consults lists the address at all. This topic collects such addresses a week after they first appeared, once the registries have been asked again.",
+      "A missing entry has several ordinary explanations. A registry can lag behind a new registration, some States do not publish their registers in a form the site can read, and an address can be programmed into a transmitter by hand without ever being assigned to that aircraft. The site counts only positions the aircraft broadcast itself and leaves out addresses in blocks set aside for military aircraft. A story here records that the lookups came back empty on the dates shown, and it claims nothing about the aircraft, its owner, or its flight.",
+    ],
+    sources: [SOURCES.tar1090db, SOURCES.mictronics, SOURCES.tar1090],
+    guide: ["ads-b", "type-match"],
     related: ["ads-b-glitches"],
   },
 };

@@ -127,7 +127,7 @@ class DerivedSetsKeepTheirRelations(unittest.TestCase):
     def test_the_unions_the_literals_spelled_out_still_hold(self):
         self.assertEqual(
             curation.SERIES_KINDS,
-            frozenset({"identity_conflict"}) | curation.RECORD_KINDS | rules.RATED_KINDS,
+            frozenset({"identity_conflict", "winds_aloft_day"}) | curation.RECORD_KINDS | rules.RATED_KINDS,
         )
         self.assertLessEqual(stories.FIRST_SIGHTING_KINDS, set(kinds.where(cross_day=True)))
         self.assertEqual(curation.FIRST_KINDS, frozenset(stories.FIRST_SIGHTING_KINDS))
@@ -228,6 +228,18 @@ class FormatsAgreeWithTheRegistry(unittest.TestCase):
             for name in entry["kinds"]:
                 with self.subTest(topic=topic, kind=name):
                     self.assertEqual(kinds.kind(name).section, entry["section"])
+
+    def test_new_kinds_are_routed(self):
+        topics = story_facts.table("topics")["topics"]
+        routed = {kind: topic for topic, entry in topics.items() for kind in entry["kinds"]}
+        self.assertEqual(routed["winds_aloft_day"], "winds-aloft")
+        self.assertEqual(routed["foreign_military"], "notable-aircraft")
+        self.assertEqual(routed["first_operator_here"], "first-sightings")
+        self.assertEqual(routed["aerobatic_practice"], "flight-shapes")
+        self.assertEqual(routed["unregistered_address"], "unlisted-addresses")
+        self.assertEqual(routed["racetrack_orbit"], "holding-patterns")
+        self.assertEqual(topics["winds-aloft"]["section"], "performance")
+        self.assertEqual(topics["unlisted-addresses"]["section"], "data-quality")
 
     def test_the_theme_key_facts_map_names_registered_kinds_or_sections(self):
         named = theme_key_facts(JOURNAL.read_text())
