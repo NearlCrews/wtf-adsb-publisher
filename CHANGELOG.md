@@ -87,6 +87,11 @@ versions, and evidence contract versions are tracked separately.
   ranks after every other candidate. Research explains the event first and
   gives the type at most one sentence. Event sections and the explainer pass
   deterministic prose checks before they are saved.
+- Theme 0.7.0: story pages explain the evidence in plain language and show one
+  photo per story. They link related stories and background explainers, lay
+  out subjectless pages, and draw altitude profile figures. The field guide
+  explains every kind of story, and the home page hides empty topics and a
+  missing weekly pick.
 
 ## 0.1.0 (2026-11-01)
 
