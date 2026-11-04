@@ -1727,19 +1727,28 @@ class NewKindEvidenceTests(unittest.TestCase):
             event.pop("headline_measurements")
         self.assertEqual(public.validate_snapshot(redigest(older)), older)
 
-    def test_snapshot_events_flag_an_identity_conflict(self):
+    def test_snapshot_events_say_whether_the_registration_photo_may_show(self):
         conflicted = packet(kind="watch_type")
         conflicted["identity_checks"] = {"conflict": True}
         add(self.ledger, evidence=conflicted, metadata=editorial(path=EVENT_PATH))
         add(self.ledger, key="episode-b", evidence=packet())
         good = published(self.ledger)
         by_kind = {event["kind"]: event for event in good["events"]}
-        self.assertIs(by_kind["watch_type"]["identity_conflict"], True)
-        self.assertNotIn("identity_conflict", by_kind["circling"])
+        # An identity conflict refuses the photo; an ordinary story allows it.
+        self.assertIs(by_kind["watch_type"]["registration_photo"], False)
+        self.assertIs(by_kind["circling"]["registration_photo"], True)
+        self.assertNotIn("identity_conflict", by_kind["watch_type"])
         # The flag sits outside the evidence, so adding it is no revision.
         self.assertEqual(
             by_kind["watch_type"]["evidence_version"],
             public.evidence_version(by_kind["watch_type"]),
+        )
+        for kind in public.IDENTITY_DISPUTED_KINDS | public.SUBJECTLESS_KINDS:
+            with self.subTest(kind=kind):
+                self.assertFalse(public.registration_photo({"kind": kind, "limitations": []}))
+        self.assertEqual(
+            public.IDENTITY_DISPUTED_KINDS,
+            {"identity_conflict", "type_speed_mismatch", "type_altitude_mismatch", "unregistered_address"},
         )
         flagged = good["events"].index(by_kind["watch_type"])
         clear = good["events"].index(by_kind["circling"])
@@ -1749,9 +1758,10 @@ class NewKindEvidenceTests(unittest.TestCase):
             return value
 
         for index, change in (
-            (flagged, lambda item: item.update(identity_conflict=1)),
-            (flagged, lambda item: item.update(identity_conflict=False)),
-            (clear, lambda item: item.update(identity_conflict=True)),
+            (flagged, lambda item: item.update(registration_photo=True)),
+            (flagged, lambda item: item.update(registration_photo=0)),
+            (clear, lambda item: item.update(registration_photo=False)),
+            (clear, lambda item: item.update(registration_photo=1)),
         ):
             bad = deepcopy(good)
             change(bad["events"][index])
@@ -1759,7 +1769,7 @@ class NewKindEvidenceTests(unittest.TestCase):
                 public.validate_snapshot(redigest(bad))
         # Older snapshots without the flag still validate.
         older = deepcopy(good)
-        older["events"][flagged].pop("identity_conflict")
+        older["events"][flagged].pop("registration_photo")
         self.assertEqual(public.validate_snapshot(redigest(older)), older)
 
     def test_a_subjectless_event_names_no_aircraft(self):

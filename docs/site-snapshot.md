@@ -39,6 +39,34 @@ outputs use their intended public file mode. These commands do not call Ghost.
 Use the automatic publisher to apply eligible revisions and deploy the
 checked site; direct ledger approval commands are optional maintenance tools.
 
+## Event fields beyond the evidence
+
+These fields sit outside the evidence revision, so adding or changing one never
+revises an article. An export always writes `headline_measurements` and
+`registration_photo`; an older snapshot without them still validates.
+
+- `headline_measurements`: the measurement keys the evidence card leads with,
+  in order, at most five. The validator requires the kind's own list,
+  `stories.HEADLINE_MEASUREMENTS`.
+- `related`: at most five links to other pages, each with `path`, `title`, and
+  `observed_start`, newest first: the stories of the same registration from the
+  60 days before the event, then any explainer that covers it, whose
+  `observed_start` is null. The exporter rebuilds each link from the page it
+  names in the same export, so a link always leads to a page the release builds.
+- `subjectless`: true, and present only, for a story about a day rather than an
+  aircraft (`winds_aloft_day`). Its `aircraft` block is empty and its routing
+  names no type, registration, or operator.
+- `registration_photo`: whether a page may show the photo found by the listed
+  registration. It is false for a subjectless story, a kind about disputed
+  identifiers (`public_events.IDENTITY_DISPUTED_KINDS`), and an event whose
+  identity checks found a conflict; the validator requires it to follow those
+  rules.
+
+A snapshot with an explainer page lists it under the top-level `explainers` key,
+in path order: its key, path, title, summary, sections, sources, limitations,
+the facts it was written from, and its write time. Every explainer link in an
+event's `related` list must match one of those pages by path and title.
+
 ## Research, cards and media
 
 Weekly dossiers retain cited source identities, applicable context and limits.

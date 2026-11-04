@@ -87,6 +87,11 @@ OPTIONAL_EVIDENCE_FIELDS = ("priority_evidence", "watchlist", "participants")
 KIND_TYPES = kinds.table("section")
 # Stories about a day rather than an aircraft: their events name no aircraft and say so.
 SUBJECTLESS_KINDS = kinds.where(subjectless=True)
+# Kinds whose story is that the aircraft's identifiers disagree, so a photo found by the listed
+# registration may show another aircraft (registration_photo).
+IDENTITY_DISPUTED_KINDS = frozenset(
+    {"identity_conflict", "unregistered_address"} | enrichment_rules.REGISTRY_TYPE_KINDS
+)
 # Other stories of the same registration a page links to (autopilot.related_stories), and how
 # many a record keeps, so an export that drops unpublished ones can still fill the page.
 MAX_RELATED = 5
@@ -2059,8 +2064,7 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
                 **publication,
                 "publication_status": "published" if mode == "published" else "unpublished",
                 "headline_measurements": list(stories.HEADLINE_MEASUREMENTS[event["kind"]]),
-                # The theme shows no photo of the listed registration for such an event.
-                **({"identity_conflict": True} if IDENTITY_CONFLICT in event["limitations"] else {}),
+                "registration_photo": registration_photo(event),
             }
         )
     # A related story links only to a page this export lists, so no link leads to a story
@@ -2124,6 +2128,17 @@ def _was_released(record):
         and any(
             isinstance(item, dict) and item.get("state") == "approved" and released(item) for item in history
         )
+    )
+
+
+def registration_photo(event):
+    """Whether a page may show the photo found by the event's listed registration: not for a
+    subjectless story, a kind about disputed identifiers (IDENTITY_DISPUTED_KINDS), or an
+    event whose identity checks found a conflict (IDENTITY_CONFLICT)."""
+    return not (
+        event["kind"] in SUBJECTLESS_KINDS
+        or event["kind"] in IDENTITY_DISPUTED_KINDS
+        or IDENTITY_CONFLICT in event["limitations"]
     )
 
 
@@ -2663,9 +2678,9 @@ EVENT_OPTIONAL = (
     # events carry.
     "related",
     "subjectless",
-    # Set when the identity checks found a conflict (its limitation is listed); an export
+    # Whether a page may show the listed registration's photo (registration_photo); an export
     # always writes it, and an older snapshot without it still validates.
-    "identity_conflict",
+    "registration_photo",
 )
 
 
@@ -2767,10 +2782,8 @@ def _snapshot_event(event, mode, status, as_of):
         subjectless and (event["subjectless"] is not True or event["aircraft"])
     ):
         raise ValueError("Only a subjectless kind's event names no aircraft, and it names none")
-    if "identity_conflict" in event and (
-        event["identity_conflict"] is not True or IDENTITY_CONFLICT not in event["limitations"]
-    ):
-        raise ValueError("Only an event with the identity conflict limitation carries the flag")
+    if "registration_photo" in event and event["registration_photo"] is not registration_photo(event):
+        raise ValueError("The registration photo flag must follow the event's kind and identity checks")
     if (
         "related" in event
         and _related(event["related"], event["article_path"], MAX_RELATED, pages=True) != event["related"]

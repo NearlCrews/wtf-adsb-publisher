@@ -677,6 +677,13 @@ class RareKindMediaTests(unittest.TestCase):
         self.assertEqual(svg.count('fill="none" stroke-linejoin="round"'), 3)
         self.assertEqual(svg.count("Other aircraft"), 1)
 
+    def test_the_media_and_its_validator_share_the_figure_heights(self):
+        media = self.runner.media_module()
+        import validate_media
+
+        self.assertEqual((media.HEIGHT, media.PROFILE_HEIGHT), validate_media.HEIGHTS)
+        self.assertIs(media.PROFILE_HEIGHT, validate_media.PROFILE_HEIGHT)
+
     def test_a_feed_record_without_positions_keeps_its_summary_card(self):
         import story_fixtures as fixtures
 

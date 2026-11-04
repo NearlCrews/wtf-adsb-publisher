@@ -22,7 +22,7 @@ class Uncorrected(unittest.TestCase):
             headline_measurements=["gs", "alt_baro"],
             related=[{"path": "/stories/x/", "title": "X", "observed_start": "2026-11-01T00:00:00Z"}],
             weekly_spotlight={"note": "research"},
-            identity_conflict=True,
+            registration_photo=False,
         )
         self.assertTrue(receive.uncorrected({"a": event()}, {"a": added}))
 

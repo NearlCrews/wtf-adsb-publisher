@@ -253,10 +253,13 @@ license name records stay in each file.
   identity to make those links look populated.
 - The observation card the exporter writes (`publication.py`) carries the story's
   evidence block, so Ghost and the static build show the same markup: up to five
-  of the event's `headline_measurements`, each with a one-line meaning, then a
+  key facts, picked by `publication.key_facts` from the kind's list in the
+  publisher's `stories.HEADLINE_MEASUREMENTS` (which an event's
+  `headline_measurements` repeats), each with a one-line meaning, then a
   collapsed details element with every measurement, its scope and time, and the
-  evidence version, then the kind's own limitations and a link to the field
-  guide. The theme styles it in `journal.css` and `event-cards.css`.
+  evidence version (an event with no measurements shows the evidence version
+  alone), then the kind's own limitations and a link to the field guide. The
+  theme styles it in `journal.css` and `event-cards.css`.
 
 On journal pages, the compact Search button and header magnifier open the same
 dialog. Filter edits remain drafts until Show results succeeds. Close or Escape
@@ -384,11 +387,12 @@ show an airframe photo, so a card keeps the type photo, else the class photo,
 either way, and the type photo can still be the social image. A type photo
 that does not lead moves to "About the {type}"; an airframe photo under a map
 keeps its 420-pixel width. `storyPhotos` in `site-model.mjs` applies these
-rules in one place. A story about a disputed identity (`identity_conflict`,
-`type_speed_mismatch`, `type_altitude_mismatch`, and `unregistered_address`)
-or one whose identity checks found a conflict (the snapshot event's
-`identity_conflict` flag) gets no airframe photo, since the photo of the listed
-registration may show another aircraft. A subjectless story, such as a winds
+rules in one place. A story gets an airframe photo only when its event's
+`registration_photo` flag is true; the publisher sets it false for a disputed
+identity (`identity_conflict`, `type_speed_mismatch`, `type_altitude_mismatch`,
+and `unregistered_address`) or a conflict the identity checks found, since the
+photo of the listed registration may show another aircraft, and a snapshot
+without the flag shows none. A subjectless story, such as a winds
 aloft day, gets no photo at all: its page shows no type box, map, or "More
 about this aircraft" list, its day summary card leads, and the evidence block
 still lists the winds numbers.
@@ -448,7 +452,13 @@ build. Topic routing reads the story engine's `src/wtf_adsb_publisher/data/topic
 its section, as `story_facts.topic_for` does.
 
 Every event also carries `headline_measurements`, the measurement keys the
-page leads with, in order; the validator accepts only the kind's own list.
+card leads with, in order: the publisher's `stories.HEADLINE_MEASUREMENTS` for
+the kind, which the validator requires. The theme does not pick key facts
+itself; the card the exporter wrote already shows them. `registration_photo`
+says whether a page may show the photo found by the listed registration: false
+for a subjectless story, a kind about disputed identifiers
+(`public_events.IDENTITY_DISPUTED_KINDS`), and an event whose identity checks
+found a conflict.
 `related` holds up to five links (`path`, `title`, `observed_start`), newest
 first: the stories of the same registration from the 60 days before the event.
 The exporter rebuilds each link from the event it names in the same export, so

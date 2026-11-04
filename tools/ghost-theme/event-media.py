@@ -19,6 +19,7 @@ sys.path.insert(0, str(PROJECT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from airport_patterns import classify as airport_pattern
 from geographic_context import backdrop
+from validate_media import MAP_HEIGHT, PROFILE_HEIGHT
 
 from wtf_adsb_publisher import airport_context, editorial
 from wtf_adsb_publisher.airport_context import MAX_GAP, ground_fix
@@ -28,7 +29,7 @@ from wtf_adsb_publisher.public_events import _projection, epoch_utc
 from wtf_adsb_publisher.rules import distance_nm, number
 from wtf_adsb_publisher.stories import evidence_packet, participant_entries
 
-WIDTH, HEIGHT = 1200, 800
+WIDTH, HEIGHT = 1200, MAP_HEIGHT
 MAX_POINTS = 256
 # Decoded archive objects kept while one selection renders.
 ARCHIVE_CACHE = 8
@@ -44,7 +45,6 @@ COLORS = {
 SECOND_TRACK_KINDS = frozenset({"formation_flight", "tcas_ra"})
 # Kinds that add an altitude profile below the map; TCAS plots the other aircraft too.
 PROFILE_KINDS = frozenset({"tcas_ra", "stratospheric_balloon", "thermal_soaring", "aerobatic_practice"})
-PROFILE_HEIGHT = 400
 
 
 def instant(value):

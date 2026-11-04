@@ -233,6 +233,8 @@ type mismatch stories about addresses in Canada's allocation exist. It saves
 the receipt as `weekly/explainer-canadian-addresses.json` under `state_dir`,
 records the page in the ledger under `explainers`, and reports its state under
 `explainers` in the run status and in `--plan`. A failed attempt waits a day.
+After three refusals the explainer is recorded as `given_up` with its date and
+is tried again, once, only after 30 days; `--plan` shows it as given up.
 Each export links the covered stories to `/explainers/canadian-addresses/`
 through `related` and carries the page in the snapshot's `explainers` key.
 Without `reference_dir`, no address resolves to an allocation, so no explainer
@@ -242,11 +244,15 @@ is written.
 
 - Copy the new `deploy/ghost-preview/receive-autopilot.py` to the static release
   host before the first release. It never counts a change to an event's
-  `related` list as a correction, and it accepts `headline_measurements` on an
-  event that lacked it, so the first release keeps the earlier generations.
+  `related` list as a correction, and it accepts `headline_measurements` and
+  `registration_photo` on an event that lacked them. Any other change is still a
+  correction to the receiver: revised template text, a story rewritten for its
+  new context line, and a story suspended by the plausibility gate all count.
 - The first refresh after the deploy revises stories whose facts changed: every
   kind gained a context line, and a story with an earlier story of its
-  registration within 60 days gained a repeat fact and related links.
+  registration within 60 days gained a repeat fact and related links. A story
+  still held back is skipped by `refresh_prose`, so it gains no related links,
+  context line, or `type.profile` until it is released.
 - Stories published earlier keep their older frames. The new prose checks
   apply to new text only.
 - Records rendered by this release carry `type.profile` in their routing, which

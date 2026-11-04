@@ -89,6 +89,8 @@ function event({
     revised_at: revised || `${day}T12:30:00Z`,
     ...(contentRevised ? { content_revised_at: contentRevised } : {}),
     aircraft: { registration, type_code: type?.code },
+    // The publisher allows the registration photo for an ordinary story.
+    registration_photo: true,
     ...(weekly ? { weekly_spotlight: { week_start: day } } : {}),
     ...(paragraphs
       ? {
@@ -1085,21 +1087,14 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     typePhoto: null,
     cardPhoto: type,
   });
-  for (const kind of [
-    "identity_conflict",
-    "type_speed_mismatch",
-    "type_altitude_mismatch",
-    "unregistered_address",
-  ])
+  // The publisher's registration_photo flag decides: false for a disputed
+  // identity or an identity conflict, and a snapshot without it shows none.
+  for (const flag of [false, undefined])
     assert.deepEqual(
-      storyPhotos(event({ kind }), photos),
+      storyPhotos({ ...event({}), registration_photo: flag }, photos),
       { ...none, typePhoto: type, cardPhoto: type },
-      kind,
+      String(flag),
     );
-  assert.deepEqual(
-    storyPhotos({ ...event({}), identity_conflict: true }, photos),
-    { ...none, typePhoto: type, cardPhoto: type },
-  );
   assert.deepEqual(storyPhotos(event({}), { type, stock }), {
     ...none,
     typePhoto: type,
@@ -1112,10 +1107,10 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     cardPhoto: stock,
   });
   assert.deepEqual(
-    storyPhotos(event({ kind: "type_speed_mismatch" }), {
-      registration,
-      stock,
-    }),
+    storyPhotos(
+      { ...event({ kind: "type_speed_mismatch" }), registration_photo: false },
+      { registration, stock },
+    ),
     { ...none, cardPhoto: stock },
   );
   assert.deepEqual(storyPhotos(event({}), {}), none);

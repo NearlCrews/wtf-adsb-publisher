@@ -97,11 +97,14 @@ def _embedded_png(element):
     kinds[prefix](raw)
 
 
-# Accepted figure heights at the full 1200 px width: a map or chart, and an altitude profile.
-HEIGHTS = (800, 400)
+# Accepted figure heights at the full 1200 px width: a map, chart, or summary, and an
+# altitude profile below the map. event-media.py draws with these.
+MAP_HEIGHT = 800
+PROFILE_HEIGHT = 400
+HEIGHTS = (MAP_HEIGHT, PROFILE_HEIGHT)
 
 
-def validate(svg, height=800):
+def validate(svg, height=MAP_HEIGHT):
     """Reject active content, URL references, foreign namespaces and XML entities.
 
     ``height`` is the figure's declared height; only a 1200 by 800 figure may hold a map image.
@@ -130,7 +133,7 @@ def validate(svg, height=800):
             raise ValueError("Diagram contains a private name or receiver field")
         if element.tag == NAMESPACE + "image":
             images += 1
-            if images > 1 or height != 800 or element not in root or root.get("transform") is not None:
+            if images > 1 or height != MAP_HEIGHT or element not in root or root.get("transform") is not None:
                 raise ValueError("A diagram may have one untransformed map image")
             _embedded_png(element)
             continue
@@ -143,7 +146,7 @@ def validate(svg, height=800):
 
 def main():
     for record in json.load(sys.stdin):
-        validate(record["svg"], record.get("height", 800))
+        validate(record["svg"], record.get("height", MAP_HEIGHT))
 
 
 if __name__ == "__main__":

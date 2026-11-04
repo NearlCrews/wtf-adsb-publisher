@@ -247,19 +247,11 @@ export function cardVisual(lead, cardPhoto) {
     : lead || null;
 }
 
-// Kinds whose story is that the aircraft's identifiers disagree, so a photo
-// found by its listed registration may show another aircraft.
-export const NO_REGISTRATION_PHOTO = new Set([
-  "identity_conflict",
-  "type_speed_mismatch",
-  "type_altitude_mismatch",
-  "unregistered_address",
-]);
-
 // The photos a story may show. Its page shows at most one of the aircraft:
-// the registration photo (Planespotters) unless the kind disputes the
-// identity or the identity checks found a conflict (the publisher's
-// identity_conflict flag), else the representative type photo. Cards never
+// the registration photo (Planespotters) when the publisher's
+// registration_photo flag allows it (not for a kind about disputed
+// identifiers or after an identity conflict; an older snapshot without the
+// flag shows none), else the representative type photo. Cards never
 // show a registration photo, so the card photo is the type photo, else the
 // representative photo of the type's class, whatever the page shows. A
 // subjectless story names no aircraft, so it shows none.
@@ -267,11 +259,7 @@ export function storyPhotos(event, { registration, type, stock } = {}) {
   if (event.subjectless)
     return { registrationPhoto: null, typePhoto: null, cardPhoto: null };
   const registrationPhoto =
-    registration &&
-    !NO_REGISTRATION_PHOTO.has(event.kind) &&
-    event.identity_conflict !== true
-      ? registration
-      : null;
+    registration && event.registration_photo === true ? registration : null;
   return {
     registrationPhoto,
     typePhoto: registrationPhoto ? null : type || null,
