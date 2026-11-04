@@ -820,6 +820,65 @@ class WriterTests(unittest.TestCase):
         # Another kind's own limit stays the story's only limit sentence.
         self.assertNotIn("who was aboard", writer.kind_note("rapid_descent"))
 
+    def test_notes_exist_for_new_kinds_and_instructions_carry_the_new_rules(self):
+        for kind in (
+            "winds_aloft_day",
+            "foreign_military",
+            "first_operator_here",
+            "aerobatic_practice",
+            "unregistered_address",
+            "racetrack_orbit",
+        ):
+            with self.subTest(kind=kind):
+                note = writer.kind_note(kind)
+                self.assertTrue(note, kind)
+                # Plain copy: no purpose words, nothing about who is aboard.
+                self.assertNotRegex(note, r"(?i)\b(?:patrol|surveillance|mission|sortie|exercise|aboard)\b")
+                self.assertNotRegex(note, "[—–&]")
+        text = writer.PUBLIC_STORY_INSTRUCTIONS
+        flat = " ".join(text.split())
+        self.assertIn("ctx.kind", text)
+        self.assertIn("never repeat a type box fact", text.lower())
+        self.assertEqual(writer.MIN_WORDS, 90)
+        self.assertEqual(writer.STORY_WORDS, (90, 200))
+        # The context line is matched by its words, so the writer quotes it as written.
+        self.assertIn("word for word", flat[flat.index("ctx.kind") :][:400])
+        self.assertIn("even light rewording fails", flat)
+        self.assertNotIn("lightly rephrased", flat)
+        # Required sentences and fixed or house headlines are followed exactly.
+        self.assertIn("when it gives a sentence to include word for word, include it exactly once", flat)
+        self.assertIn("when it gives a fixed headline or a headline form, use that headline exactly", flat)
+        self.assertIn("The dek must carry at least one fact value the headline lacks", flat)
+        self.assertIn("Stop when the facts run out: 90 words is a complete story.", flat)
+        self.assertIn("desc.typical_fpm", flat)
+        self.assertIn("repeat.previous", flat)
+        for frame in ("gives a sense of the flight", "rounds out the picture"):
+            self.assertIn(f'"{frame}"', flat)
+        # Each new kind's required sentence and house headline reach its note.
+        winds = writer.kind_note("winds_aloft_day")
+        self.assertIn(f'"{public_prose.REQUIRED_SENTENCES["winds_aloft_day"]}"', winds)
+        self.assertIn("jet stream", winds)
+        self.assertIn("never name a specific weather system or storm", winds)
+        foreign = writer.kind_note("foreign_military")
+        self.assertIn(
+            '"' + public_prose.REQUIRED_SENTENCES["foreign_military"].format(fm_basis="<fm.basis>") + '"',
+            foreign,
+        )
+        self.assertIn('", listed as military from <fm.country>, spotted"', foreign)
+        self.assertTrue(
+            public_prose.FOREIGN_MILITARY_HEADLINE.match(
+                "Airbus A400M Atlas 5401, listed as military from Germany, spotted"
+            )
+        )
+        # A mismatch story may offer one listed hypothesis, as a possibility, with its support.
+        for kind in ("type_speed_mismatch", "type_altitude_mismatch"):
+            with self.subTest(kind=kind):
+                note = writer.kind_note(kind)
+                self.assertIn("one listed hypothesis at most, labeled as a possibility", note)
+                self.assertIn("the callsign designator, the second registry's type, or the reading", note)
+                self.assertNotIn("Offer no cause, hedged or not", note)
+        self.assertIn("Offer no cause, hedged or not", writer.kind_note("outlier_gs"))
+
     def test_every_watchlist_entry_reaches_the_request_named_with_its_reasons(self):
         for source, category in (
             ("Don't you know who I am?", "Public figure association"),
@@ -2039,7 +2098,7 @@ class WriterUnitTests(unittest.TestCase):
         self.assertIn("recent_profile_facts", instructions)
         self.assertNotIn("two or three short paragraphs", instructions)
         self.assertNotIn("80 to 220 words", instructions)
-        self.assertIn("120 to 220 words", instructions)
+        self.assertIn("90 to 200 words", instructions)
         self.assertIn("never as the story's last sentence", instructions)
         plain = json.loads(writer.request_data(facts, [], "snapshot", avoid))
         self.assertNotIn("recent_profile_facts", json.loads(plain["input"]))
@@ -2118,9 +2177,10 @@ class WriterUnitTests(unittest.TestCase):
     def test_the_instructions_set_the_length_by_what_the_facts_give(self):
         instructions = " ".join(writer.PUBLIC_STORY_INSTRUCTIONS.split())
         self.assertIn(
-            "Write 120 to 220 words. Use three paragraphs when the facts give three things to say, in this "
-            "order: what happened, the context around it, and the type's background. Use two when they give "
-            "two, and one only when the facts are thin.",
+            "Write 90 to 200 words. Stop when the facts run out: 90 words is a complete story. Use three "
+            "paragraphs when the facts give three things to say, in this order: what happened, the context "
+            "around it, and the aircraft's own background. Use two when they give two, and one only when the "
+            "facts are thin.",
             instructions,
         )
         self.assertNotIn("80 to 220", instructions)
@@ -2284,16 +2344,16 @@ class WriterUnitTests(unittest.TestCase):
             return {"index": index, "story": story, "problems": [], "words": words}
 
         # The preferred range is the instructed one.
-        self.assertEqual(writer.STORY_WORDS, (120, 220))
-        self.assertIn("Write 120 to 220 words.", writer.PUBLIC_STORY_INSTRUCTIONS)
-        short, long = checked(1, 95), checked(2, 130)
+        self.assertEqual(writer.STORY_WORDS, (90, 200))
+        self.assertIn("Write 90 to 200 words.", writer.PUBLIC_STORY_INSTRUCTIONS)
+        short, long = checked(1, 85), checked(2, 130)
         self.assertIs(writer.choose([short, long], []), long["story"])
-        first = checked(1, 95)
-        self.assertIs(writer.choose([first, checked(2, 98)], []), first["story"])
-        over = checked(1, 230)
+        first = checked(1, 85)
+        self.assertIs(writer.choose([first, checked(2, 88)], []), first["story"])
+        over = checked(1, 210)
         self.assertIs(writer.choose([over, long], []), long["story"])
         self.assertEqual(
-            writer.choose([checked(1, 110), checked(2, 120)], [])["paragraphs"][0].count("word"), 120
+            writer.choose([checked(1, 80), checked(2, 90)], [])["paragraphs"][0].count("word"), 90
         )
         self.assertEqual(writer.words({"paragraphs": ["one two  three", "four\nfive"]}), 5)
 

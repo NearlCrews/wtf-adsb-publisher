@@ -61,7 +61,7 @@ CANDIDATE_KEYS = ("angle", "headline", "dek", "paragraphs", "facts_used")
 # The words the paragraphs are asked to total, which a passing candidate is preferred within,
 # and the floor under which a candidate goes to the retry with WORD_FLOOR. Length alone never
 # sends a story back to its template.
-STORY_WORDS = (120, 220)
+STORY_WORDS = (90, 200)
 MIN_WORDS = 90
 WORD_FLOOR = "paragraphs:too_few_words"
 PUBLIC_STORY_INSTRUCTIONS = """Write the public text for one aircraft observation on a small site about
@@ -87,10 +87,10 @@ so never write one that is not there. Each fact has an id, a value, and a basis:
   as", "registered as", "database records give", "its database entry". Never call
   that database a registry.
 - reference: sourced background about the type, a callsign designator, or a code.
-  State it plainly; the page lists the sources. One or two of the most telling
-  type facts are enough. A recent story of this type used the type facts listed
-  under recent_profile_facts; prefer the others, and use a listed one only when
-  nothing else fits. A type with no name comes as id.type_class, a class phrase,
+  State it plainly; the page lists the sources. Type facts (tp.*) fill the type
+  box the page shows beside the story. When the dek uses one, prefer a type fact
+  not listed under recent_profile_facts, which a recent story of this type used.
+  A type with no name comes as id.type_class, a class phrase,
   with its code: name it once as "type code A129, a twin-turboshaft helicopter",
   attributed to the aircraft database as a type name would be, and never use the
   bare code as a name. A certified figure belongs to the listed type code's data
@@ -116,6 +116,16 @@ so never write one that is not there. Each fact has an id, a value, and a basis:
   flies, or was aboard it.
 - hypothesis: a possible explanation. Use "may", "could", or "is consistent
   with".
+- context (ctx.kind): one general sentence about what this kind of observation
+  usually is. Include it once in a paragraph, word for word, as a sentence of its
+  own: it is checked by its words, so even light rewording fails. Never turn it
+  into a claim about this flight.
+- typical (desc.typical_fpm): the usual descent rate for the class. State it once
+  beside the observed rate so the number has a reference.
+- repeat (repeat.previous): this registration had a story recently. Open with
+  what differs this time: altitude, callsign, direction, or the kind of event.
+Never repeat a type box fact (tp.*) in the paragraphs, word for word or reworded;
+the page shows the box.
 Write no number, name, date, time, year, or place that is not in the facts,
 including what you may know about the type: counts of engines, seats, or decks,
 dimensions, and build or service dates. Round readings to whole knots and to the
@@ -137,9 +147,11 @@ a speed, altitude, time, or place in a headline only when it is the point. Ask n
 question in a headline unless it is about a TCAS advisory, whose meaning the
 story answers.
 dek: {dek[0]} to {dek[1]} characters in one or two complete sentences that add what the
-headline lacks without repeating it.
-paragraphs: Write {words[0]} to {words[1]} words. Use three paragraphs when the facts give three
-things to say, in this order: what happened, the context around it, and the type's
+headline lacks without repeating it. The dek must carry at least one fact value the
+headline lacks: a figure, a date, or a name.
+paragraphs: Write {words[0]} to {words[1]} words. Stop when the facts run out: {words[0]} words is
+a complete story. Use three paragraphs when the facts give three things to say, in
+this order: what happened, the context around it, and the aircraft's own
 background. Use two when they give two, and one only when the facts are thin. Open
 with the reading, the aircraft, the place, or the type, whichever the facts make
 most interesting, in a way none of the recent stories listed under avoid opened.
@@ -150,9 +162,9 @@ how long the record ran. Give an airframe's age only from an age fact, as a comp
 "an 83-year-old B-25". Write at most one sentence about what the data cannot
 show, picked for the story's main claim, such as who was aboard, why it flew, or
 whether a code meant an emergency. Put it inside a paragraph, never as the story's
-last sentence. Leave every other caveat to the evidence card on the page,
-including archive timing, altitude references, MLAT, and how the database match
-was made. Scope a first, best, record, or rarity claim inside a paragraph ("the
+last sentence; the page lists the limitations. Leave every other caveat to the
+evidence card on the page, including archive timing, altitude references, MLAT,
+and how the database match was made. Scope a first, best, record, or rarity claim inside a paragraph ("the
 first in these records"), never in the headline or dek, which name no scope at all
 ("these records", "these flight records", "this site"). Never count days,
 describe an absence, or mention this site, its stories, its checks, or how many
@@ -174,11 +186,15 @@ fact gives it, what the type is certified to, never why they disagree. A
 certified speed is an airspeed: name it as one ("a maximum operating airspeed of
 340 knots") in a sentence of its own, and never set it beside a ground speed or
 say a reading went past, over, or above it. Follow kind_note when the input has
-one.
+one: when it gives a sentence to include word for word, include it exactly once,
+as written, inside a paragraph and not as the last sentence; when it gives a fixed
+headline or a headline form, use that headline exactly, filling a form only with
+the names the facts give.
 
 Write no em or en dashes, exclamation marks, links, or Markdown. Avoid filler such
 as "worth noting", "a concrete picture", "another point of interest", "caught the
-eye", or "brought it into view". Do not write "type match", "qualifying reports",
+eye", "brought it into view", "gives a sense of the flight", "adds context", or
+"rounds out the picture". Do not write "type match", "qualifying reports",
 "analysis window", "saved reports", or "not independently verified". Do not reuse
 an opening, headline, dek, or database-attribution shape listed under avoid.
 When the input has feedback, earlier candidates failed the listed checks: fix
@@ -204,11 +220,13 @@ SPEED_HEDGES = {
     basis: public_prose.REQUIRED_SENTENCES["above_rated_speed"].format(airspeed_origin=origin)
     for basis, origin in public_prose.AIRSPEED_ORIGINS.items()
 }
-GLITCH_NOTE = (
+GLITCH_READING = (
     "Give the reading, the readings around it, the type as the database lists it, and, when a fact gives it, "
-    "what the type is certified to, a speed limit named as an airspeed in a sentence of its own. Offer no "
-    "cause, hedged or not: name no error, glitch, fault, or interference, and nothing that caused, produced, "
-    "or explains the reading."
+    "what the type is certified to, a speed limit named as an airspeed in a sentence of its own."
+)
+GLITCH_NOTE = (
+    f"{GLITCH_READING} Offer no cause, hedged or not: name no error, glitch, fault, or interference, and nothing "
+    "that caused, produced, or explains the reading."
 )
 # Short kind-specific guidance, sent in the input so the instructions stay one cacheable prefix.
 KIND_NOTES = (
@@ -290,10 +308,12 @@ KIND_NOTES = (
     ),
     (
         ("type_speed_mismatch", "type_altitude_mismatch"),
-        f'{GLITCH_NOTE} You may say "{engine.MISMATCH_LINE}" tc.source names the second registry asked about '
-        "this address; tc.type is the type that registry lists when it differs. State it once, as a fact "
-        "attributed to the registry by name, beside the database's type. Say nothing about which is right or "
-        "why they differ.",
+        f"{GLITCH_READING} Offer no cause of your own: name no error, glitch, fault, or interference. You may "
+        'offer one listed hypothesis at most, labeled as a possibility ("it could be <hypothesis>"), and point '
+        "to the facts that support it: the callsign designator, the second registry's type, or the reading. "
+        f'You may say "{engine.MISMATCH_LINE}" tc.source names the second registry asked about this address; '
+        "tc.type is the type that registry lists when it differs. State it once, as a fact attributed to the "
+        "registry by name, beside the database's type. Say nothing about which is right.",
     ),
     (("outlier_",), GLITCH_NOTE),
     (
@@ -315,6 +335,47 @@ KIND_NOTES = (
         "State this limit once, in your own words: " + public.KIND_LIMITATIONS["formation_flight"][0],
     ),
     (("rapid_descent",), "A fast descent in these reports is not an emergency determination."),
+    (
+        ("winds_aloft_day",),
+        "The subject is the day, not an aircraft. Give both medians and both counts once (wind.east_median, "
+        "wind.west_median, wind.east_count, wind.west_count). Name the fastest eastbound aircraft (p.1) once as "
+        "an example, scoped to these records. Say the difference is consistent with strong winds aloft or with a "
+        "jet stream, a kind of wind, and never name a specific weather system or storm. Include this sentence "
+        "once, word for word, where it fits, not as the story's last sentence; it is the story's one caveat, so "
+        f'write no other wind or data caveat: "{public_prose.REQUIRED_SENTENCES["winds_aloft_day"]}"',
+    ),
+    (
+        ("foreign_military",),
+        'Headline: the type and registration or identifier, then ", listed as military from <fm.country>, '
+        'spotted", with nothing else. The State is fm.country. Include this sentence once, word for word, with '
+        "the fm.basis value in place, where it fits, not as the story's last sentence; it names the basis, so "
+        "name the basis nowhere else: "
+        f'"{public_prose.REQUIRED_SENTENCES["foreign_military"].format(fm_basis="<fm.basis>")}" The data show '
+        "the airframe; write nothing about why it flew, where it was going, or what it did there.",
+    ),
+    (
+        ("first_operator_here",),
+        "The operator is the subject: call fs.designator the designator of fs.operator. Say once that a callsign "
+        "is a label, so the designator does not confirm who operates the aircraft. Name the type and registration "
+        "as the aircraft database lists them, and claim no rarity beyond these records.",
+    ),
+    (
+        ("aerobatic_practice",),
+        "Call the pattern aerobatic-style. Give the reversals, the height range, and the area once (aer.reversals, "
+        "aer.excursion, aer.span). Never state as fact that aerobatics were flown or practiced. Offer one "
+        'hypothesis at most, and only this one: the pattern "is consistent with aerobatic practice".',
+    ),
+    (
+        ("unregistered_address",),
+        "The address is the subject; there is no type or registration. Say when it was first seen "
+        "(unr.first_seen) and that the registries (unr.registries) were asked again after a week. Offer one "
+        "listed hypothesis at most, as a possibility.",
+    ),
+    (
+        ("racetrack_orbit",),
+        "Give the legs, their length, the spacing, and the duration once (rt.legs, rt.leg_length, rt.spacing, "
+        "rt.duration). Offer one listed hypothesis at most, as a possibility; never a purpose.",
+    ),
 )
 # Guidance for an observation whose packet provenance is an archive.
 ARCHIVE_NOTE = (

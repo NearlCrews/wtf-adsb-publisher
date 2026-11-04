@@ -2547,6 +2547,42 @@
     "value": [
      "rapid_descent"
     ]
+   },
+   {
+    "type": "tuple",
+    "value": [
+     "winds_aloft_day"
+    ]
+   },
+   {
+    "type": "tuple",
+    "value": [
+     "foreign_military"
+    ]
+   },
+   {
+    "type": "tuple",
+    "value": [
+     "first_operator_here"
+    ]
+   },
+   {
+    "type": "tuple",
+    "value": [
+     "aerobatic_practice"
+    ]
+   },
+   {
+    "type": "tuple",
+    "value": [
+     "unregistered_address"
+    ]
+   },
+   {
+    "type": "tuple",
+    "value": [
+     "racetrack_orbit"
+    ]
    }
   ]
  },
