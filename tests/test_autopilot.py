@@ -1279,7 +1279,9 @@ class StoryPublicationTests(unittest.TestCase):
                     ],
                 )
                 # The fact names the earlier story by its kind, never by its headline.
-                self.assertEqual(values["repeat.previous"]["value"], "Watched type on 11 September 2026")
+                self.assertEqual(
+                    values["repeat.previous"]["value"], "Watched aircraft type on 11 September 2026"
+                )
                 self.assertEqual(values["repeat.path"]["value"], earlier["editorial"]["article_path"])
                 metadata = autopilot.editorial(packet, later["key"], **inputs)
                 self.assertEqual(

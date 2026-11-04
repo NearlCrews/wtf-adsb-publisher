@@ -955,9 +955,7 @@ for (const story of model.stories) {
   const typePhoto = story.photo && story.photo !== visual ? story.photo : null;
   const sources = story.profile.sources;
   const typeBackground =
-    typeName &&
-    !story.typeInBody &&
-    (story.profile.facts.length || typePhoto)
+    typeName && !story.typeInBody && (story.profile.facts.length || typePhoto)
       ? {
           name: typeName,
           hubUrl: story.typeHub.url,

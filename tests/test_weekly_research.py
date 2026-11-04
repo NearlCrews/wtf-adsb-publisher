@@ -135,7 +135,7 @@ class WeeklyResearchTests(unittest.TestCase):
             data["event"],
             {
                 "kind": "watch_type",
-                "kind_name": "Watched type",
+                "kind_name": "Watched aircraft type",
                 "causeless": False,
                 "measurements": [{"label": "Ground speed", "value": 70.0, "unit": "kn"}],
             },

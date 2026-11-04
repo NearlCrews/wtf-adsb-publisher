@@ -1537,7 +1537,7 @@ class NewKindFacts(unittest.TestCase):
 class KindTitleTests(unittest.TestCase):
     def test_every_published_kind_has_a_plain_display_title(self):
         self.assertEqual(set(story_facts.KIND_TITLES), set(public_events.KIND_TYPES))
-        self.assertEqual(story_facts.KIND_TITLES["tcas_ra"], "TCAS advisory")
+        self.assertEqual(story_facts.KIND_TITLES["tcas_ra"], "TCAS resolution advisory")
         self.assertEqual(story_facts.KIND_TITLES["gnss_integrity_loss"], "GPS integrity")
         for kind, title in story_facts.KIND_TITLES.items():
             with self.subTest(kind=kind):

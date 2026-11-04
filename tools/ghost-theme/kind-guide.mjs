@@ -64,14 +64,14 @@ export const KIND_GUIDE = {
       "The database does not say why it set the flag, and the flag can be years old.",
   },
   rare_here: {
-    name: "Rare type here",
+    name: "Type sighting",
     what: "An aircraft type these records seldom contain, judged against the receiver's own last 30 days.",
     why: "A type can be common elsewhere and still rarely pass this receiver, and the rare visitors are the ones worth a look.",
     falseAlarms:
       "Rarity depends on coverage, so a gap in reception or a quiet month can make a type look rare. A wrong type in the database has the same effect.",
   },
   foreign_military: {
-    name: "Foreign military visitor",
+    name: "Foreign military aircraft",
     what: "A military aircraft whose address comes from a block assigned to a country other than the United States.",
     why: "Military aircraft from other countries are a small share of the traffic here, and they often fly types and markings seldom seen in these records.",
     falseAlarms:
@@ -127,7 +127,7 @@ export const KIND_GUIDE = {
       "One transponder appearing under two addresses can make a false pair. Parallel approaches to an airport can look similar for a minute or two.",
   },
   survey_grid: {
-    name: "Survey-style flight lines",
+    name: "Grid of straight lines",
     what: "Long, straight, evenly spaced lines flown back and forth, like a mowed lawn on a map.",
     why: "Aerial photography, mapping, and geophysical survey work fly this pattern, and it is one of the easiest shapes to recognize.",
     falseAlarms:
@@ -141,7 +141,7 @@ export const KIND_GUIDE = {
       "Practice circuits and repeated approaches near an airport can loop the same way, which is why holds close to a runway do not count. Gaps in reception can hide part of a hold.",
   },
   holding_stack: {
-    name: "Holding stack",
+    name: "Circling group",
     what: "Several aircraft holding over the same area at once, stacked at different altitudes.",
     why: "Stacks form when an airport or route is busy or weather slows arrivals, and they show the traffic waiting its turn.",
     falseAlarms:

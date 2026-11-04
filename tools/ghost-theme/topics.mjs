@@ -155,7 +155,7 @@ export const topicCopy = {
       "Large freighters, military transports, and other aircraft types that seldom appear in these records, with the data behind each match.",
     intro: [
       "Most aircraft in these records are airliners, business jets, and small private planes. This topic collects the others: large airliners and freighters such as the Airbus A380 and the Boeing 747 Dreamlifter, military transports and tankers, government jets, and types the records rarely contain. Military aircraft from other States belong here too, when the aircraft database marks the airframe as military or its address falls in a block another State sets aside for military use.",
-      "Every ADS-B transmitter broadcasts a 24-bit ICAO address. The site looks that address up in an aircraft database to find the registration, the ICAO type designator, and a description, then checks the type against a curated list of notable types and variants. A notable type gets a story at most once every 14 days, whichever airframe flies it. A type recorded on 24 or more of the last 60 days of coverage counts as routine and gets at most one identity story every 30 days, which leaves room for rarer visitors.",
+      "Every ADS-B transmitter broadcasts a 24-bit ICAO address. The site looks that address up in an aircraft database to find the registration, the ICAO type designator, and a description, then checks the type against a curated list of notable types and variants. A type on the watch list gets a story at most once every 30 days, whichever airframe flies it, and a notable variant at most once every 14 days. A type recorded on 24 or more of the last 60 days of coverage counts as routine and gets at most one identity story every 30 days, which leaves room for rarer visitors.",
       "A database match describes the aircraft that holds the address now. It cannot prove that the same airframe flew on the day of the story, and it says nothing about who was aboard, where the flight was going, or why. Military aircraft are usually listed by serial number instead of a civil registration, so some of these stories identify the aircraft that way. The field guide explains how a type match works and which parts of a story come from the database.",
     ],
     sources: [SOURCES.doc8643, SOURCES.mictronics, SOURCES.tar1090db],
@@ -167,7 +167,7 @@ export const topicCopy = {
     heading:
       "First sightings: aircraft types, countries, and operators new to these records",
     description:
-      "The first time an aircraft type, an address block assigned to a country, or an operator's callsign designator appears in these records, with the dates behind the claim.",
+      "The first time an aircraft type, a country's address block, or an operator's callsign designator appears in these records, with the dates behind each claim.",
     intro: [
       "A first sighting is the first time something appears in this site's own records: an aircraft type designator never seen before, an aircraft whose ICAO address comes from a block assigned to a country that has not shown up here, or a callsign carrying an operator's designator for the first time. The claim is local and dated. It says the records had not contained the type, the country, or the operator before that day, and how often the type flies elsewhere is a question these records cannot answer.",
       "The check waits for at least 90 days with an hour or more of recorded traffic before it trusts a first. Group designators such as ZZZZ, used when a type has no code of its own, never count, and neither do addresses that begin with a tilde, which mark tracks without a real ICAO address. An address that appeared under a different type on more than two earlier days points to a database change, so it does not count as a new type. Country firsts start only after a 30-day warm-up. Operator firsts wait 30 days as well: the first airline-style callsign with a known three-letter designator, such as DLH for Lufthansa, marks that operator's first sighting, though the crew enters the callsign and it does not confirm who operates the aircraft.",
@@ -248,14 +248,15 @@ export const topicCopy = {
     related: ["flight-shapes", "holding-patterns"],
   },
   "holding-patterns": {
-    title: "Holding stacks: aircraft holding together",
-    heading: "Holding patterns: aircraft stacked in racetrack holds",
+    title: "Holding patterns: long holds and holding stacks",
+    heading:
+      "Holding patterns: long holds, racetracks, and aircraft stacked together",
     description:
       "Groups of aircraft holding at the same time at different altitudes, and single aircraft flying long racetracks over the same two lines.",
     intro: [
       "When an airport or route is busy, or weather closes a runway, air traffic control can tell aircraft to hold: to fly a racetrack pattern over a fixed point until they are cleared onward. A standard hold uses right turns, and its inbound leg takes about a minute at or below 14,000 ft and a minute and a half above that.",
       "The site finds a hold when a track circles for at least ten minutes and closes three or more loops. A single aircraft's hold shorter than 20 minutes only adds context to another story about it, and one that lasts longer, away from an airport's circuit, gets a story of its own. A much longer racetrack is the exception: one aircraft flying at least four straight legs of 10 nautical miles or more, back and forth over the same two lines for 40 minutes or longer, gets a story of its own as a racetrack orbit. When three or more aircraft circle at the same time within 10 nautical miles of one another, at least 500 ft apart vertically, and at 5,000 ft or higher, the site treats them as a stack and tells one story about the group, listing the other aircraft and their altitudes.",
-      "A racetrack shape does not show why an aircraft held. The reason can be traffic, weather, a closed runway, or a long hold flown for other reasons the data do not show, and controllers' instructions are not part of this data. Loops close to an airport can also be practice circuits, which the site labels separately so they do not crowd out the rarer holds. Gaps in reception can hide part of a hold, so the number of loops describes the saved positions.",
+      "A racetrack shape does not show why an aircraft held. The reason can be traffic, weather, a closed runway, or something else the data do not show, and controllers' instructions are not part of this data. Loops close to an airport can also be practice circuits, which the site labels separately so they do not crowd out the rarer holds. Gaps in reception can hide part of a hold, so the number of loops describes the saved positions.",
     ],
     sources: [SOURCES.aimHolding],
     guide: ["ads-b"],
@@ -304,10 +305,10 @@ export const topicCopy = {
     related: ["holding-patterns", "survey-flights", "hovering"],
   },
   "rapid-descents": {
-    title: "Rapid descents of 4,500 ft per minute or more",
+    title: "Rapid descents of 6,000 ft per minute, or 4,500 down low",
     heading: "Rapid descents: aircraft dropping thousands of feet a minute",
     description:
-      "Aircraft that descended at 4,500 ft per minute or more, measured from their reported vertical rates and altitudes, with what a fast descent can and cannot show.",
+      "Descents of 6,000 ft per minute from 10,000 ft and up, or 4,500 below that, from reported rates and altitudes, and what a fast descent can and cannot show.",
     intro: [
       "A typical airliner descent runs at a few thousand feet per minute. A much faster descent can follow a loss of cabin pressure, when the crew takes the aircraft down to air that is safe to breathe, but steep descents are also routine for skydiving aircraft, some military jets, and some approaches. This topic collects descents of 6,000 ft per minute or more from 10,000 ft and higher, and of 4,500 ft per minute or more below that.",
       "The site needs a high vertical rate that neighboring reports confirm, measured after repeated identical reports are collapsed into one, so a single bad value cannot make a story. A descent that starts at 10,000 ft or higher must hold 6,000 ft per minute for 60 seconds and six reports; below that, 4,500 ft per minute for 30 seconds and four reports is enough. A descent can count as an exceptional event, beyond the daily story limit, when the reported rate holds at 7,000 ft per minute or more for at least 30 seconds and four reports, and the altitude itself falls at least 6,000 ft a minute over that time. A jump-plane type descending near a runway loses that status. So does an aircraft that made a separate descent within six hours, unless the descent began at 25,000 ft or higher with the profile of an emergency descent.",
@@ -422,12 +423,53 @@ export const topicCopy = {
   },
 };
 
+// The live status triggers: a code, or a status the ADS-B emergency field
+// declares (with the codes it must not carry, when the code would say the
+// same), each in two reports eight seconds apart; and the archived codes,
+// which stay in review.
+const TWO_REPORTS = "in at least two reports eight seconds or more apart";
+const NOT_AN_EMERGENCY_CODE =
+  ", while the transponder code is none of the emergency codes";
+const STATUS_TRIGGERS = {
+  general: ["a general emergency", NOT_AN_EMERGENCY_CODE],
+  lifeguard: ["lifeguard status", ""],
+  minfuel: ["minimum fuel", ""],
+  nordo: ["a radio failure", NOT_AN_EMERGENCY_CODE],
+  unlawful: ["unlawful interference", NOT_AN_EMERGENCY_CODE],
+  downed: ["a downed aircraft", ""],
+};
+const SQUAWK_CODES = ["7400", "7500", "7600", "7700"];
+function squawkTriggers() {
+  return {
+    ...Object.fromEntries(
+      SQUAWK_CODES.map((code) => [
+        `special_squawk_${code}`,
+        `The transponder reports ${code} ${TWO_REPORTS}.`,
+      ]),
+    ),
+    ...Object.fromEntries(
+      Object.entries(STATUS_TRIGGERS).map(([status, [meaning, code]]) => [
+        `special_squawk_${status}`,
+        `The emergency field in the aircraft's ADS-B reports declares ${meaning} ${TWO_REPORTS}${code}.`,
+      ]),
+    ),
+  };
+}
+function archiveTriggers() {
+  return Object.fromEntries(
+    SQUAWK_CODES.map((code) => [
+      `archive_squawk_${code}`,
+      `The code ${code} turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.`,
+    ]),
+  );
+}
+
 // What sets off each kind of story, for the field guide's entries. Keyed by the
 // kinds the guide explains (kind-guide.mjs); like the intros above, every
 // threshold here must follow the detectors.
 export const kindTriggers = {
   watch_type:
-    "The aircraft database lists a type on the site's watch list of large, rare, and historic designs, such as the Boeing B-52, the Airbus Beluga, and the Douglas DC-3. A type gets a story at most once every 14 days, whichever airframe flies it.",
+    "The aircraft database lists a type on the site's watch list of large, rare, and historic designs, such as the Boeing B-52, the Airbus Beluga, and the Douglas DC-3. A type gets a story at most once every 30 days, whichever airframe flies it.",
   notable_variant:
     "The database description names a variant on the site's list, and either the database marks the airframe as military or its registration is a military serial number. A few variants also need a matching callsign prefix.",
   military:
@@ -492,36 +534,10 @@ export const kindTriggers = {
     "At least five reports over a minute put the airspeed 10% or more over the type's certified maximum. The airspeed is the ground speed with a modeled wind taken out, unless the aircraft reports its own true airspeed, and a second aircraft registry must list the same type.",
   winds_aloft_day:
     "Over one day, the median ground speed of eastbound jets at or above 28,000 ft beats the westbound median by 150 knots or more, with at least 30 aircraft each way. A winds-aloft story runs at most once every three days.",
-  special_squawk_7400:
-    "The transponder reports 7400 in at least two reports eight seconds or more apart.",
-  special_squawk_7500:
-    "The transponder reports 7500 in at least two reports eight seconds or more apart.",
-  special_squawk_7600:
-    "The transponder reports 7600 in at least two reports eight seconds or more apart.",
-  special_squawk_7700:
-    "The transponder reports 7700 in at least two reports eight seconds or more apart.",
-  special_squawk_general:
-    "The emergency field in the aircraft's ADS-B reports declares a general emergency in at least two reports eight seconds or more apart, while the transponder code is none of the emergency codes.",
-  special_squawk_lifeguard:
-    "The emergency field in the aircraft's ADS-B reports declares lifeguard status in at least two reports eight seconds or more apart.",
-  special_squawk_minfuel:
-    "The emergency field in the aircraft's ADS-B reports declares minimum fuel in at least two reports eight seconds or more apart.",
-  special_squawk_nordo:
-    "The emergency field in the aircraft's ADS-B reports declares a radio failure in at least two reports eight seconds or more apart, while the transponder code is none of the emergency codes.",
-  special_squawk_unlawful:
-    "The emergency field in the aircraft's ADS-B reports declares unlawful interference in at least two reports eight seconds or more apart, while the transponder code is none of the emergency codes.",
-  special_squawk_downed:
-    "The emergency field in the aircraft's ADS-B reports declares a downed aircraft in at least two reports eight seconds or more apart.",
+  ...squawkTriggers(),
   special_use_code:
     "The transponder reports a code the FAA sets aside for a particular use, such as 1255 for firefighting aircraft or 4000 for military pilots in restricted or warning areas, in at least two reports eight seconds or more apart. Squawk 1202 from a glider only adds context to a soaring story.",
-  archive_squawk_7400:
-    "The code 7400 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
-  archive_squawk_7500:
-    "The code 7500 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
-  archive_squawk_7600:
-    "The code 7600 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
-  archive_squawk_7700:
-    "The code 7700 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
+  ...archiveTriggers(),
   tcas_ra:
     "An airborne aircraft's ADS-B broadcasts report an active resolution advisory in at least two messages within 30 seconds. Advisories decoded from Mode S replies are held back.",
   outlier_gs:

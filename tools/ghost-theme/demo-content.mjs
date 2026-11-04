@@ -380,7 +380,7 @@ export const pages = [
     // The date of the last content change, and that content's pageDigest.
     updated: "2026-11-04T00:00:00Z",
     contentSha256:
-      "de083fc4c0987557e839a0c4b8138d96e7ef107dc2aa66a4a415db42ff4be9af",
+      "3e341dfe442cf800449fa0fe2e93e7bc4c47a58b698fead794f56eeffb627c7b",
     custom_excerpt:
       "How to read aircraft identities, positions, and measurements, and how to tell a report from an explanation.",
     html: `<p>Aircraft tracking combines messages about identity and movement into a sequence of observations. The source, timing, and quality of those messages decide which conclusions a record supports.</p>
