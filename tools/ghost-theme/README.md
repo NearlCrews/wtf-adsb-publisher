@@ -246,6 +246,15 @@ license name records stay in each file.
   account of what remains unknown. Verified callsigns and registrations can
   support tracking or photo links; this preview does not invent an aircraft
   identity to make those links look populated.
+- A story page's evidence block comes from `evidence.mjs` and
+  `partials/evidence-block.hbs`. In the static build it takes the place of the
+  observation card's measurement list and limitations: up to five of the
+  event's `headline_measurements`, each with a one-line meaning (the first five
+  measurements when none of them was recorded), then a collapsed details
+  element with the other measurements and the evidence version, then the
+  kind's own limitations and a link to the field guide. The general caveats
+  every record repeats are left to the field guide. Ghost's native render keeps
+  the exporter's full card.
 
 On journal pages, the compact Search button and header magnifier open the same
 dialog. Filter edits remain drafts until Show results succeeds. Close or Escape

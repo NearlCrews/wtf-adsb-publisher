@@ -40,6 +40,12 @@ import {
   imageCreditsPage,
   loadTypeTable,
 } from "./aircraft-photos.mjs";
+import {
+  BOILERPLATE_LIMITATIONS,
+  FIELD_GUIDE_LIMITATION,
+  KEY_FACT_LIMIT,
+  evidenceView,
+} from "./evidence.mjs";
 import { engineTopics, output, theme } from "./paths.mjs";
 import { fixtureTableSha256, writeTypeTable } from "./reference-fixture.mjs";
 import {
@@ -999,6 +1005,166 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     assert.equal(at > section, Boolean(photo.classes), photo.id);
   }
 }
+// The story evidence block: at most five plain-language key facts from the
+// event's headline list, the rest folded away, and only the kind's own
+// limitations, ending with the field guide link.
+{
+  const at = "2026-09-20T12:05:00Z";
+  const reading = (key, label, value, unit, scope = "saved-report") => ({
+    key,
+    label,
+    value,
+    unit,
+    scope,
+    ...(scope === "saved-report" ? { at_utc: at } : {}),
+  });
+  const formation = {
+    kind: "formation_flight",
+    evidence_version: "a".repeat(64),
+    headline_measurements: [
+      "min_separation_nm",
+      "vertical_separation_ft",
+      "participant_count",
+      "duration_seconds",
+      "alt_baro",
+    ],
+    measurements: [
+      reading("gs", "Ground speed", 212, "kn"),
+      reading("alt_baro", "Pressure altitude", 4500, "ft"),
+      reading("nic", "Navigation integrity category", 8, "category"),
+      reading("min_separation_nm", "Closest horizontal separation", 0.25, "NM"),
+      reading("vertical_separation_ft", "Vertical separation", 100, "ft"),
+      reading("participant_count", "Aircraft in formation", 3, "aircraft"),
+      reading(
+        "duration_seconds",
+        "Episode duration",
+        270,
+        "s",
+        "analysis-window",
+      ),
+    ],
+    limitations: [
+      "Aircraft metadata is a current database match; historical assignment is not independently verified.",
+      "Archive timestamps do not establish individual message freshness.",
+      "Individual field ages are unknown; correlated measurements are not independent verification.",
+      "Close formation is inferred from position reports; it does not establish intent.",
+    ],
+  };
+  const view = evidenceView(formation);
+  assert.ok(view.keyFacts.length <= KEY_FACT_LIMIT);
+  assert.equal(KEY_FACT_LIMIT, 5);
+  assert.deepEqual(
+    view.keyFacts.map((fact) => fact.label),
+    [
+      "Closest horizontal separation",
+      "Vertical separation",
+      "Aircraft in formation",
+      "Episode duration",
+      "Pressure altitude",
+    ],
+  );
+  for (const fact of view.keyFacts) {
+    assert.equal(typeof fact.meaning, "string", fact.label);
+    assert.ok(fact.meaning.trim(), fact.label);
+  }
+  // Under a nautical mile, the separation reads in feet, rounded to ten.
+  assert.deepEqual(
+    (({ value, unit, meaning }) => ({ value, unit, meaning }))(
+      view.keyFacts[0],
+    ),
+    { value: "1,520", unit: "ft", meaning: "about 1,520 feet apart" },
+  );
+  assert.equal(
+    view.keyFacts[1].meaning,
+    "the height difference at that moment",
+  );
+  assert.equal(view.keyFacts[3].value, "4 min 30 sec");
+  assert.ok(
+    view.detailMeasurements.some(
+      (item) => item.label === "Navigation integrity category",
+    ),
+  );
+  assert.deepEqual(
+    view.detailMeasurements.map((item) => item.key),
+    ["gs", "nic"],
+  );
+  const texts = view.limitations.map((item) => item.text);
+  for (const sentence of [
+    "Aircraft metadata is a current database match",
+    "Archive timestamps do not establish",
+    "Individual field ages are unknown",
+  ]) {
+    assert.ok(BOILERPLATE_LIMITATIONS.includes(sentence), sentence);
+    assert.ok(!texts.some((text) => text.startsWith(sentence)), sentence);
+  }
+  assert.deepEqual(view.limitations, [
+    {
+      text: "Close formation is inferred from position reports; it does not establish intent.",
+    },
+    FIELD_GUIDE_LIMITATION,
+  ]);
+  assert.deepEqual(FIELD_GUIDE_LIMITATION, {
+    text: "How to read these numbers",
+    href: "/field-guide/",
+  });
+  assert.equal(view.evidenceHash, formation.evidence_version);
+  // A separation of a nautical mile or more keeps its own unit and meaning.
+  const wide = evidenceView({
+    ...formation,
+    measurements: [
+      reading("min_separation_nm", "Closest horizontal separation", 1.2, "NM"),
+    ],
+  });
+  assert.deepEqual(
+    (({ value, unit, meaning }) => ({ value, unit, meaning }))(
+      wide.keyFacts[0],
+    ),
+    {
+      value: "1.2",
+      unit: "NM",
+      meaning: "the closest the two aircraft came horizontally",
+    },
+  );
+  // With no headline list, or none of its keys recorded, the first five
+  // measurements lead; a detection-rule setting never does.
+  const rule = reading(
+    "threshold_kn",
+    "Threshold",
+    600,
+    "kn",
+    "detection-rule",
+  );
+  for (const headline of [[], ["peak_rate_fpm"]]) {
+    const fallback = evidenceView({
+      ...formation,
+      headline_measurements: headline,
+      measurements: [rule, ...formation.measurements],
+    });
+    assert.deepEqual(
+      fallback.keyFacts.map((fact) => fact.label),
+      [
+        "Ground speed",
+        "Pressure altitude",
+        "Navigation integrity category",
+        "Closest horizontal separation",
+        "Vertical separation",
+      ],
+    );
+    assert.deepEqual(
+      fallback.detailMeasurements.map((item) => item.key),
+      ["threshold_kn", "participant_count", "duration_seconds"],
+    );
+    assert.ok(fallback.keyFacts.every((fact) => fact.meaning.trim()));
+  }
+  // A record whose limitations are all general still links the field guide.
+  assert.deepEqual(
+    evidenceView({
+      ...formation,
+      limitations: formation.limitations.slice(0, 3),
+    }).limitations,
+    [FIELD_GUIDE_LIMITATION],
+  );
+}
 console.log(
-  "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, and list page links.",
+  "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, list page links, and the story evidence block.",
 );

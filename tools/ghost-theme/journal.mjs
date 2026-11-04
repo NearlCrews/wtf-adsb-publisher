@@ -66,7 +66,7 @@ const timeFormatter = new Intl.DateTimeFormat("en-GB", {
 const numberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 3,
 });
-const displayNumber = (value) =>
+export const displayNumber = (value) =>
   (value !== 0 && Math.abs(value) < 0.001) || Math.abs(value) >= 1e12
     ? value.toExponential(2).replace(/\.?0+(?=e)/, "")
     : numberFormatter.format(value);

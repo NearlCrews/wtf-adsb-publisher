@@ -771,6 +771,60 @@ try {
   ]);
   await parts.page.goto(fixtureSite.base + weeklyStory);
   assert.equal(await parts.page.locator(".weekly-research").count(), 1);
+  // A story's evidence block: the headline measurements with their meanings,
+  // the rest of the record and the evidence version folded away, and only
+  // the kind's own limitations, ending with the field guide link.
+  await parts.page.goto(
+    fixtureSite.base +
+      "/stories/embraer-e195-e2-n295rl-above-certified-ceiling-24-sep-2026/",
+  );
+  const record = parts.page.locator(".observation-record");
+  assert.deepEqual(
+    await text(".observation-record .event-key-facts > div > dt"),
+    ["Ground speed", "Pressure altitude"],
+  );
+  assert.deepEqual(
+    await text(".observation-record .event-key-facts .event-key-meaning"),
+    [
+      "speed over the ground; wind adds to or subtracts from it",
+      "pressure altitude, the figure pilots and controllers use",
+    ],
+  );
+  assert.equal(await record.locator(".record-measurements-group").count(), 0);
+  assert.equal(
+    await record.locator("h3", { hasText: "Measurements" }).count(),
+    1,
+  );
+  const folded = record.locator("details.evidence-details");
+  assert.equal(await folded.count(), 1);
+  assert.equal(await folded.evaluate((node) => node.open), false);
+  assert.equal(
+    (await folded.locator("summary").innerText()).trim(),
+    "All measurements and the evidence record",
+  );
+  assert.ok((await folded.locator("tbody tr").count()) > 0);
+  assert.equal(
+    await folded.locator(".evidence-hash code").textContent(),
+    await record.getAttribute("data-evidence-version"),
+  );
+  assert.equal(
+    await record
+      .locator(".record-details", { hasText: "Evidence version" })
+      .count(),
+    0,
+  );
+  const limits = await text(".observation-record .record-limits li");
+  assert.ok(limits.length >= 2);
+  assert.ok(
+    !limits.some((line) =>
+      line.startsWith("Aircraft metadata is a current database match"),
+    ),
+  );
+  assert.equal(limits.at(-1), "How to read these numbers");
+  assert.equal(
+    await record.locator(".record-limits li:last-child a").getAttribute("href"),
+    "/field-guide/",
+  );
   // Source badges: the reception source beside the topic on a story page
   // and in the meta line of every archive entry, home tile, and search
   // card. A badge reads as [the short label a reader sees, the text a screen

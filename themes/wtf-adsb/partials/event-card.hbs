@@ -38,7 +38,7 @@
           {{#if details.aircraftNote}}<p class="event-fact-note">{{details.aircraftNote}}</p>{{/if}}
           {{#if details.participants}}<table class="event-fact-table event-aircraft-table event-participant-table"><caption>Other aircraft</caption><tbody>{{#foreach details.participants}}<tr><th scope="row">{{label}}</th><td>{{value}}</td></tr>{{/foreach}}</tbody></table>{{/if}}
         </div>
-        {{#if details.allMeasurementGroups}}<div class="event-full-measurements"><h4>All recorded measurements</h4>{{#foreach details.allMeasurementGroups}}{{> "measurement-table"}}{{/foreach}}</div>{{/if}}
+        {{#if details.allMeasurementGroups}}<div class="event-full-measurements"><h4>All recorded measurements</h4>{{#foreach details.allMeasurementGroups}}{{> "measurement-group"}}{{/foreach}}</div>{{/if}}
       </div>
       {{#if details.notes}}<div class="event-record-notes"><h4>Evidence and limitations</h4>{{#foreach details.notes}}<p>{{this}}</p>{{/foreach}}</div>{{/if}}
     </div>

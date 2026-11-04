@@ -244,6 +244,16 @@
   font-weight: 400;
 }
 
+/* What a key fact means, in a line for a reader new to the data. */
+.event-key-facts .event-key-meaning {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 400;
+  font-variant-numeric: normal;
+}
+
 .event-entry.has-event-visual:where(:not(.event-lead)) .event-key-facts {
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
