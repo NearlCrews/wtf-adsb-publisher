@@ -54,6 +54,7 @@ TABLES = {
     "type_names": ("type_names.json", "types"),
     "airline_designators": ("airline_designators.json", "designators"),
     "topics": ("topics.json", "topics"),
+    "display_names": ("display_names.json", "names"),
 }
 MAX_TABLE_BYTES = 2 * 1024 * 1024
 KIND = re.compile(r"[a-z0-9_]{2,60}")
@@ -147,6 +148,11 @@ FIELD_UNITS = {
     field: public_prose.FIELD_UNITS[field]
     for field in ("gs", "alt_baro", "archive_alt", "alt_geom", "baro_rate", "geom_rate")
 }
+# A participant's own measurements: its readings, and a winds-aloft day's median ground speed.
+PARTICIPANT_UNITS = {
+    **FIELD_UNITS,
+    **{key: unit for key, (_label, unit) in episode_evidence.PARTICIPANT_METRICS.items()},
+}
 # A detection rule's own threshold is a site setting, not a fact; it has no basis here.
 SCOPE_BASIS = {
     "saved-report": "telemetry",
@@ -167,6 +173,91 @@ HYPOTHESES = {
     "thermal_soaring": ("soaring in rising air",),
     "formation_flight": ("formation flight",),
 }
+# One general sentence per kind on what such an observation usually is, never what this flight
+# was: the writer may restate it once as context (ctx.kind).
+KIND_CONTEXT = {
+    "descending_spiral": "A descending spiral is a standard maneuver, practiced to lose height over one spot.",
+    "stratospheric_balloon": "Callsigns beginning HBAL are used for high-altitude balloon flights.",
+    "rapid_descent": "Airliners usually descend at 2,000 to 3,500 feet a minute; faster descents are brisk but "
+    "not rare.",
+    "tcas_ra": "A TCAS resolution advisory tells a crew how to change their vertical motion to keep clear of "
+    "another aircraft; Level Off tells a climbing or descending crew to stop.",
+    "formation_flight": "Two aircraft holding position within a few hundred feet for minutes is the signature of "
+    "formation flight, which is routine for military trainers and some civil groups.",
+    "winds_aloft_day": "Ground speed is airspeed plus wind, so a jet stream shows up as eastbound aircraft running "
+    "far faster over the ground than westbound ones.",
+    "foreign_military": "Military aircraft from allied States regularly cross this region; the data show the "
+    "airframe, not the reason for the flight.",
+    "first_operator_here": "An operator designator is the three-letter code that starts an airline-style callsign.",
+    "aerobatic_practice": "Repeated climbs and dives inside a small area are what aerobatic practice looks like on "
+    "a track map.",
+    "unregistered_address": "Registries lag new registrations by days or weeks, and some States publish no public "
+    "registry at all.",
+    "racetrack_orbit": "A racetrack of long reciprocal legs is how tankers, airborne radar aircraft, and long holds "
+    "use one piece of sky for an hour or more.",
+    "identity_conflict": "The three identifiers an aircraft carries usually agree; a disagreement is usually a "
+    "database or settings artifact.",
+    "type_speed_mismatch": "A reading a type cannot produce usually means the database has the wrong aircraft for "
+    "the address.",
+    "type_altitude_mismatch": "A reading a type cannot produce usually means the database has the wrong aircraft "
+    "for the address.",
+    "seasonal_speed_record": "Ground-speed records in one season mostly track the wind, which is why the margin "
+    "matters.",
+    "thermal_soaring": "Gliders and motor gliders gain height by circling in rising air.",
+    "first_type_here": "A first sighting says only that the type had not appeared in these records before.",
+    "first_country_here": "An address block names the State that issued the address, which usually matches the "
+    "registry.",
+    "vintage": "Airframes past their eightieth year are rare in the air and usually fly to shows or from private "
+    "strips.",
+    "watch_type": "A watch type is one the site follows because it is large, rare, or historic.",
+    "watchlist_match": "Plane Alert DB is a community list of aircraft spotters find interesting; a listing says "
+    "why spotters follow an aircraft and nothing about who is aboard.",
+    "notable_variant": "A notable variant is a military or government version of a type the database names "
+    "precisely.",
+    "altitude_gap": "Pressure and GPS altitudes differ with the weather; a gap beyond a few thousand feet is "
+    "unusual.",
+}
+# The usual descent rate for a type class (desc.typical_fpm), beside a rapid descent's reading.
+TYPICAL_DESCENT_FPM = {
+    "airliner": "2,000 to 3,500 ft/min",
+    "business_jet": "2,500 to 4,000 ft/min",
+    "turboprop": "1,500 to 2,500 ft/min",
+    "light_piston": "500 to 1,500 ft/min",
+}
+# Curated type categories (type_names.json) that set the descent class: business jets always,
+# the rest only for a designator the Doc 8643 table lacks.
+BUSINESS_JET_CATEGORIES = frozenset({"business jet", "light jet"})
+DESCENT_CATEGORIES = {
+    "airliner": "airliner",
+    "double-deck airliner": "airliner",
+    "regional jet": "airliner",
+    "turboprop": "turboprop",
+    "light aircraft": "light_piston",
+}
+# What marked a foreign military aircraft (fm.basis), in the order a story names them.
+FOREIGN_BASIS_WORDS = {"dbFlags": "the aircraft database", "military_allocation": "the address block"}
+# A shape kind's facts, each read from one episode metric with the metric's own unit.
+SHAPE_FACTS = {
+    "aerobatic_practice": (
+        ("aer.reversals", "reversals"),
+        ("aer.excursion", "altitude_excursion_ft"),
+        ("aer.span", "span_nm"),
+        ("aer.turn_rate", "max_turn_rate_dps"),
+    ),
+    "racetrack_orbit": (
+        ("rt.legs", "racetrack_legs"),
+        ("rt.leg_length", "leg_length_nm"),
+        ("rt.spacing", "lateral_spacing_nm"),
+        ("rt.duration", "duration_seconds"),
+        ("rt.axis", "axis_heading_deg"),
+    ),
+}
+# What qualified an aerobatic-style episode (aer.basis), in story words.
+AEROBATIC_BASIS_WORDS = {"type": "an aerobatic type", "turn_rate": "a sustained hard turn"}
+RECORD_KINDS = kinds.where(record=True)
+# An earlier story of the same registration counts as a repeat (repeat.previous) for this long.
+REPEAT_DAYS = 60
+ARTICLE_PATH = re.compile(r"/stories/(?P<slug>[a-z0-9-]{1,120})/")
 # Transmitted status meanings in story words (FAA JO 7110.66H Appendix A; ADS-B emergency status values).
 STATUS_MEANINGS = {
     "7400": "an unmanned aircraft's lost link",
@@ -285,6 +376,31 @@ def table(name):
     except (OSError, ValueError, TypeError, UnicodeError, RecursionError) as error:
         LOG.warning("Story table %s unavailable (%s: %s)", name, type(error).__name__, error)
         return None
+
+
+def display_name(text, *, registration=None):
+    """The text with the database misspellings in display_names.json replaced, whole names only.
+
+    A plain entry always applies; an entry with when_registration_prefix applies only to an
+    airframe whose registration starts with it. Any other text comes back unchanged.
+    """
+    if not isinstance(text, str):
+        return text
+    names = (table("display_names") or {}).get("names", {})
+    for wrong in sorted(names, key=len, reverse=True):
+        right = names[wrong]
+        if isinstance(right, dict):
+            prefix = right.get("when_registration_prefix")
+            if not (
+                isinstance(prefix, str) and isinstance(registration, str) and registration.startswith(prefix)
+            ):
+                continue
+            right = right.get("name")
+        if isinstance(right, str):
+            text = re.sub(
+                rf"(?<![A-Za-z0-9]){re.escape(wrong)}(?![A-Za-z0-9])", lambda _match, name=right: name, text
+            )
+    return text
 
 
 def _text(value, limit=200):
@@ -557,9 +673,9 @@ def _type_class(facts, sources, code):
         sources.append(dict(MICTRONICS_TYPES))
 
 
-def _type_fact(facts, prefix, code, description):
+def _type_fact(facts, prefix, code, description, *, registration=None):
     """The type's name fact and its entry, or None for a type with no name."""
-    entry = type_entry(code, description)
+    entry = type_entry(code, display_name(description, registration=registration))
     if not entry:
         return None
     _fact(
@@ -790,26 +906,22 @@ def _profiles(facts, sources, profiles, entry, kind):
         added += 1
 
 
-def _participants(facts, packet, projection):
+def _participants(facts, packet, projection, *, start=1):
+    """The other aircraft as p.<n> facts, numbered from start (2 when p.1 is the finding's own)."""
     raw = projection.get("participants") if isinstance(projection, dict) else None
     raw = raw if isinstance(raw, list) else packet.get("participants", [])
     if not isinstance(raw, list):
         return []
-    allowed = set(FIELD_UNITS) | set(episode_evidence.METRICS)
+    allowed = set(PARTICIPANT_UNITS) | set(episode_evidence.METRICS)
     entries = []
-    for index, item in enumerate(raw[:MAX_PARTICIPANTS], start=1):
+    for index, item in enumerate(raw[:MAX_PARTICIPANTS], start=start):
         if not isinstance(item, dict):
             continue
         prefix = f"p.{index}"
         role = item.get("role") if item.get("role") in {"lead", "member", "wingman", "threat"} else "member"
         _fact(facts, f"{prefix}.role", role, "derived")
-        _fact(
-            facts,
-            f"{prefix}.registration",
-            identifier(item.get("registration"), IDENTIFIERS["registration"]),
-            "database",
-            field="registration",
-        )
+        registration = identifier(item.get("registration"), IDENTIFIERS["registration"])
+        _fact(facts, f"{prefix}.registration", registration, "database", field="registration")
         _fact(
             facts,
             f"{prefix}.callsign",
@@ -824,7 +936,13 @@ def _participants(facts, packet, projection):
             "telemetry",
             field="icao_address",
         )
-        entry = _type_fact(facts, f"{prefix}.type", item.get("type_code"), item.get("type_description"))
+        entry = _type_fact(
+            facts,
+            f"{prefix}.type",
+            item.get("type_code"),
+            item.get("type_description"),
+            registration=registration,
+        )
         measurements = item.get("measurements")
         if isinstance(measurements, list):
             pairs = [
@@ -833,7 +951,7 @@ def _participants(facts, packet, projection):
                 if isinstance(m, dict) and isinstance(m.get("key"), str)
             ]
         elif isinstance(measurements, dict):
-            pairs = [(key, value, FIELD_UNITS.get(key)) for key, value in measurements.items()]
+            pairs = [(key, value, PARTICIPANT_UNITS.get(key)) for key, value in measurements.items()]
         else:
             pairs = []
         for key, value, unit in pairs:
@@ -907,10 +1025,10 @@ def _operator(facts, sources, identity, checks):
         _fact(
             facts,
             "op.callsign",
-            operator["name"],
+            display_name(operator["name"]),
             "reference",
             field="operator",
-            short=operator["short"],
+            short=display_name(operator["short"]),
             slug=operator["slug"],
             designator=operator["designator"],
             telephony=operator.get("telephony"),
@@ -1030,7 +1148,13 @@ def _season(facts, packet, observed):
         season_day, season_name = rules.season_start(observed.timestamp())
         whole = baseline <= season_day
         _fact(facts, "season.start", baseline, "derived", field="date", name=season_name if whole else None)
-    _fact(facts, "season.previous", number(season.get("previous_max_gs")), "derived", unit="kn", field="gs")
+    previous = number(season.get("previous_max_gs"))
+    _fact(facts, "season.previous", previous, "derived", unit="kn", field="gs")
+    # How far the record passed the previous best: a margin of a few knots is the wind's to give.
+    observation = _dict(packet, "observation")
+    record = number(observation.get("metric_value"))
+    if record is not None and previous and observation.get("metric_unit") == "kn" and record > previous:
+        _fact(facts, "rec.margin_kn", round(record - previous, 1), "telemetry", unit="kn", field="gs")
 
 
 # The flight phases a norm is kept for, as the story says each.
@@ -1064,6 +1188,151 @@ def _norm(facts, packet, kind):
     ):
         _fact(facts, fact_id, value, "baseline", unit=unit, scope="these records", field="type_norm")
     _fact(facts, "norm.phase", phase, "baseline", scope="these records")
+
+
+def _winds(facts, sources, packet, identity):
+    """A winds-aloft day: its date, both medians and counts, their difference, the modelled wind
+    when the engine attached one, and the finding's own aircraft, the fastest eastbound, as p.1."""
+    block = _dict(packet, "winds_aloft")
+    if not block:
+        return
+    _fact(facts, "wind.day", _iso_date(block.get("day")), "telemetry", field="date")
+    for fact_id, key, unit in (
+        ("wind.east_median", "east_median_kn", "kn"),
+        ("wind.west_median", "west_median_kn", "kn"),
+        ("wind.east_count", "east_addresses", "aircraft"),
+        ("wind.west_count", "west_addresses", "aircraft"),
+    ):
+        _fact(facts, fact_id, number(block.get(key)), "telemetry", unit=unit)
+    _fact(facts, "wind.asymmetry", number(block.get("asymmetry_kn")), "derived", unit="kn")
+    wind = _dict(block, "wind_250_hpa")
+    speed, direction = number(wind.get("speed_kn")), number(wind.get("direction_deg"))
+    if speed is not None and direction is not None:
+        cited = {"source": OPEN_METEO["id"], "level_hpa": 250, "at": wind.get("hour")}
+        _fact(facts, "wind.open_meteo_speed", speed, "reference", unit="kn", **cited)
+        _fact(facts, "wind.open_meteo_direction", direction, "reference", unit="degrees", **cited)
+        sources.append(dict(OPEN_METEO))
+    _fact(facts, "p.1.registration", identity["registration"], "database", field="registration")
+    _fact(facts, "p.1.callsign", identity["callsign"], "telemetry", field="callsign")
+    _fact(facts, "p.1.hex", identity["hex"], "telemetry", field="icao_address")
+    _type_fact(
+        facts,
+        "p.1.type",
+        identity["type_code"],
+        identity["description"],
+        registration=identity["registration"],
+    )
+
+
+def _foreign_military(facts, packet):
+    """The allocation State of a foreign military aircraft and what marked it military."""
+    block = _dict(packet, "foreign_military")
+    name = _text(block.get("country_name"), 60)
+    if not name:
+        return
+    _fact(facts, "fm.country", name, "database", field="allocation_country", code=block.get("country"))
+    basis = set(_list(block, "basis"))
+    words = [text for key, text in FOREIGN_BASIS_WORDS.items() if key in basis]
+    _fact(facts, "fm.basis", " and ".join(words) or None, "database")
+
+
+def _first_operator(facts, sources, packet):
+    """A first operator sighting: the operator, its designator, and the earlier days compared.
+
+    The engine's operator name wins; without one, the pinned designator table names it.
+    """
+    block = _dict(packet, "first_sighting")
+    designator = block.get("designator")
+    if block.get("scope") != "operator" or not isinstance(designator, str):
+        return
+    entry = (table("airline_designators") or {}).get("designators", {}).get(designator) or {}
+    name = display_name(_text(block.get("operator"), 120) or entry.get("name"))
+    if name:
+        _fact(facts, "fs.operator", name, "reference", field="operator", source=MICTRONICS["id"])
+        sources.append(dict(MICTRONICS))
+    _fact(facts, "fs.designator", designator, "reference", field="callsign")
+    _fact(facts, "fs.coverage_days", number(block.get("coverage_days")), "derived", unit="days")
+    _fact(facts, "fs.since", _iso_date(block.get("since")), "derived", field="date")
+
+
+def _shape(facts, packet, kind):
+    """An aerobatic or racetrack episode's headline metrics, each with its metric's unit."""
+    episode = _dict(packet, "maneuver") or _dict(packet, "pattern")
+    for fact_id, key in SHAPE_FACTS.get(kind, ()):
+        unit = episode_evidence.METRICS[key][1]
+        _fact(facts, fact_id, number(episode.get(key)), "derived", unit=unit, field=key)
+    if kind == "aerobatic_practice":
+        _fact(facts, "aer.basis", AEROBATIC_BASIS_WORDS.get(episode.get("basis")), "derived")
+
+
+def _unregistered(facts, packet):
+    """An address no registry lists: what it transmitted, the registries asked, and when it appeared."""
+    block = _dict(packet, "unregistered")
+    if not block:
+        return
+    callsign = identifier(block.get("callsign"), IDENTIFIERS["callsign"])
+    _fact(facts, "unr.callsign", callsign, "telemetry", field="callsign")
+    category = identifier(block.get("category"), r"[A-C][0-7]")
+    _fact(
+        facts,
+        "unr.category",
+        category,
+        "telemetry",
+        field="emitter_category",
+        label=EMITTER_LABELS.get(category),
+    )
+    _fact(facts, "unr.registries", " and ".join(sorted(enrichment_rules.REGISTRIES)), "reference")
+    first = _utc(_dict(packet, "observation").get("start_utc"))
+    _fact(facts, "unr.first_seen", first, "telemetry", field="observed_start")
+
+
+def _descent_class(code, entry):
+    """The TYPICAL_DESCENT_FPM class of a type, or None: business jets by their curated category,
+    then the Doc 8643 description (airliners are medium or heavy jets, turboprops turbine, light
+    pistons light piston airplanes), then the curated category for a designator Doc 8643 lacks."""
+    category = (entry or {}).get("category")
+    if category in BUSINESS_JET_CATEGORIES:
+        return "business_jet"
+    info = reference.type_info(code) if code else None
+    if info:
+        if info["group"] or info["class"] != "airplane":
+            return None
+        engine, wake = info["engine_type"], info["wake_category"]
+        if engine == "J" and wake in {"M", "H", "J"}:
+            return "airliner"
+        if engine == "T":
+            return "turboprop"
+        return "light_piston" if engine == "P" and wake == "L" else None
+    return DESCENT_CATEGORIES.get(category)
+
+
+def _repeat(facts, related, observed):
+    """The latest earlier story of this registration inside REPEAT_DAYS (repeat.previous): its
+    kind's name, or the story's title for a kind with none, and its date; and its path."""
+    if not observed:
+        return
+    latest = None
+    for item in related or ():
+        if not isinstance(item, dict):
+            continue
+        day, kind, path = _iso_date(item.get("date")), item.get("kind"), item.get("path")
+        if not (day and isinstance(kind, str) and KIND.fullmatch(kind) and isinstance(path, str)):
+            continue
+        match = ARTICLE_PATH.fullmatch(path)
+        if not match or not story_urls.is_new_slug(match["slug"]):
+            continue
+        if not 0 <= (observed.date() - date.fromisoformat(day)).days <= REPEAT_DAYS:
+            continue
+        phenomenon = story_urls.PHENOMENA.get(kind)
+        title = phenomenon[0].replace("-", " ").capitalize() if phenomenon else _text(item.get("title"), 120)
+        if title and (latest is None or (day, path) > (latest[0], latest[1])):
+            latest = (day, path, kind, title)
+    if latest:
+        day, path, kind, title = latest
+        when = date.fromisoformat(day)
+        value_ = f"{title} on {when.day} {story_urls.MONTH_NAMES[when.month - 1]} {when.year}"
+        _fact(facts, "repeat.previous", value_, "derived", kind=kind, date=day)
+        _fact(facts, "repeat.path", path, "derived")
 
 
 def _registry_named(code):
@@ -1139,7 +1408,12 @@ def _watchlist(facts, sources, packet, projection, entities=None):
         # The entry's own link backs the association it names.
         source = PLANE_ALERT_ID + ".link" if link else PLANE_ALERT_ID
         _fact(
-            facts, "wl.association", association, "community-list", field="association_label", source=source
+            facts,
+            "wl.association",
+            display_name(association),
+            "community-list",
+            field="association_label",
+            source=source,
         )
         if link and watchlists.describable(association, watchlist.get("list_category"), category):
             entity = (entities or {}).get(entity_rules.cache_key(link, association))
@@ -1208,7 +1482,14 @@ def _watchlist_who(facts, sources, entity, association):
     source_id = f"src.wikidata.{item}"
     revision = entity.get("revision")
     revised = f", revision {revision}" if isinstance(revision, int) and not isinstance(revision, bool) else ""
-    _fact(facts, "wl.who", f"{label}, {description}", "reference", source=source_id, label=label)
+    _fact(
+        facts,
+        "wl.who",
+        display_name(f"{label}, {description}"),
+        "reference",
+        source=source_id,
+        label=display_name(label),
+    )
     sources.append(
         {
             "id": source_id,
@@ -1375,7 +1656,7 @@ def _rated_comparison(facts, sources, packet, code):
     _fact(facts, "lim.seconds", number(sustained.get("seconds")), "derived", unit="s")
 
 
-def build(packet, projection=None, *, place=None, airport=None, profiles=None, entities=None):
+def build(packet, projection=None, *, place=None, airport=None, profiles=None, entities=None, related=()):
     """Facts for one observation from allowlisted packet and projection fields.
 
     place:   {"name": "Coleman, Michigan", "short": "Coleman, MI", "state": "Michigan"} or None.
@@ -1384,6 +1665,8 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
              as weekly_research.story_profiles() gives them.
     entities: {entity_rules.cache_key(entry link, association): cached Wikidata answer}, as the
              host's entities.json holds them.
+    related: [{"date", "kind", "path", "title"}] for the same registration's earlier stories,
+             as the autopilot gives them.
     """
     if not isinstance(packet, dict):
         raise ValueError("Story facts need an evidence packet")
@@ -1408,7 +1691,13 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
     )
     _fact(facts, "id.hex", identity["hex"], "telemetry", field="icao_address")
     _fact(facts, "id.type_code", identity["type_code"], "database", field="type_code")
-    entry = _type_fact(facts, "id.type", identity["type_code"], identity["description"])
+    entry = _type_fact(
+        facts,
+        "id.type",
+        identity["type_code"],
+        identity["description"],
+        registration=identity["registration"],
+    )
     if not entry:
         _type_class(facts, sources, identity["type_code"])
     emitter = identifier(received.get("emitter_category"), r"[A-C][0-7]")
@@ -1454,8 +1743,23 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
     _neighbors(facts, packet, kind, public_prose.moment(received.get("saved_readings_at_utc")))
     # Kind-specific facts. A first sighting is a first in these records; a count of the
     # days without one reads as filler.
-    if kind == "seasonal_speed_record":
+    _fact(facts, "ctx.kind", KIND_CONTEXT.get(kind), "reference")
+    if kind in RECORD_KINDS:
         _season(facts, packet, observed)
+    if kind == "rapid_descent" and not conflict:
+        typical = TYPICAL_DESCENT_FPM.get(_descent_class(identity["type_code"], entry))
+        # A range in words ("2,000 to 3,500 ft/min"), not one measurement, so it carries no unit.
+        _fact(facts, "desc.typical_fpm", typical, "reference")
+    if kind == "winds_aloft_day":
+        _winds(facts, sources, packet, identity)
+    if kind == "foreign_military":
+        _foreign_military(facts, packet)
+    if kind == "first_operator_here":
+        _first_operator(facts, sources, packet)
+    if kind == "unregistered_address":
+        _unregistered(facts, packet)
+    _shape(facts, packet, kind)
+    _repeat(facts, related, observed)
     limits = _limits(packet, projection)
     if kind == "notable_variant" and identity["description"]:
         variant = reference.notable_variant(identity["description"])
@@ -1486,7 +1790,7 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
             _fact(facts, "idc.samples", 1, "derived", unit="samples")
     if kind == "stratospheric_balloon":
         _balloon_spike(facts, packet)
-    _participants(facts, packet, projection)
+    _participants(facts, packet, projection, start=2 if kind == "winds_aloft_day" else 1)
     _profiles(facts, sources, profiles, entry, kind)
     result = {
         "version": FACTS_VERSION,

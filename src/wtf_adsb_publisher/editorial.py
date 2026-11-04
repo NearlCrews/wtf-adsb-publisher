@@ -2742,8 +2742,10 @@ BUILDERS = {
         "{east_count|cap} aircraft flew east and {west_count} aircraft flew west in the comparison.",
     ),
     "wind_example": (
-        "In these records, the fastest eastbound jet of the day was {fast_reg}[, {fast_type_a}].",
-        "The fastest eastbound jet in these records that day was {fast_reg}[, {fast_type_a}].",
+        "In these records, the fastest eastbound jet of the day was the one the aircraft database lists as "
+        "{fast_reg}[, {fast_type_a}].",
+        "The fastest eastbound jet in these records that day was {fast_reg}[, {fast_type_a}] by its aircraft "
+        "database record.",
     ),
     "wind_hyp": (
         "Ground speed includes the wind along the track, so the {asymmetry_adj} gap reflects wind at those "
@@ -4777,9 +4779,10 @@ WINDS_EXAMPLE = Angle(
         "On {wind_day}, the eastbound median ground speed ran {asymmetry} above the westbound one.",
     ),
     openers=(
-        "On {date}, {fast_reg}[, {fast_type_a},] was the fastest eastbound jet at cruising height in these "
-        "records.",
-        "The fastest eastbound jet in these records on {date} was {fast_reg}[, {fast_type_a}].",
+        "On {date}, the aircraft the database lists as {fast_reg}[, {fast_type_a},] was the fastest eastbound "
+        "jet at cruising height in these records.",
+        "The fastest eastbound jet in these records on {date} was {fast_reg}[, {fast_type_a}] by its aircraft "
+        "database record.",
     ),
     body=("wind_medians", "wind_counts", "/", "wind_hyp", "limit"),
     tier=2,

@@ -797,6 +797,120 @@ def _kind_event(kind, base=None):
                 "leg_length_nm": 11.5,
             },
         )
+    if kind == "winds_aloft_day":
+        # The fastest eastbound aircraft is the finding's own; the next ones are participants.
+        others = [
+            {
+                "hex": f"a0{index}c{index}d",
+                "role": "member",
+                "registration": f"N{index}12QK",
+                "type": "B738",
+                "desc": "BOEING 737-800",
+                "source": "adsb_icao",
+                "measurements": {"median_gs_kn": 580.0 - index * 5},
+            }
+            for index in (1, 2)
+        ]
+        return event(
+            kind,
+            **{**common, "callsign": None},
+            typecode="A21N",
+            desc="AIRBUS A-321neo",
+            readings={"alt_baro": 37000, "gs": 596.0},
+            samples=track(base, 20, gs=596.0, alt=37000),
+            maneuver={**window, "duration_seconds": 720},
+            participants=others,
+            winds_aloft={
+                "day": start[:10],
+                "east_addresses": 35,
+                "west_addresses": 33,
+                "east_median_kn": 560.0,
+                "west_median_kn": 380.0,
+                "east_quartiles_kn": [540.0, 575.0],
+                "west_quartiles_kn": [360.0, 395.0],
+                "asymmetry_kn": 180,
+                "altitude_floor_ft": 28000,
+                "evaluated_at": base + 86400,
+            },
+        )
+    if kind == "foreign_military":
+        return event(
+            kind,
+            **{**common, "registration": "130336", "callsign": None, "hexcode": "c2b0a1"},
+            typecode="C130",
+            desc="Lockheed C-130 Hercules",
+            readings={"alt_baro": 28000, "gs": 420.0, "dbFlags": 1},
+            samples=track(base, 14, gs=420.0, alt=28000),
+            foreign_military={
+                "country": "CA",
+                "country_name": "Canada",
+                "basis": ["dbFlags", "military_allocation"],
+                "registration_country": "CA",
+            },
+        )
+    if kind == "first_operator_here":
+        return event(
+            kind,
+            **{**common, "registration": "VH-ZNJ", "callsign": "QFA12", "hexcode": "7c7a3f"},
+            typecode="B789",
+            desc="BOEING 787-9 Dreamliner",
+            readings={"alt_baro": 38000, "gs": 520.0},
+            samples=track(base, 16, gs=520.0, alt=38000),
+            first_sighting={
+                "scope": "operator",
+                "coverage_days": 120,
+                "since": "2026-05-23",
+                "designator": "QFA",
+                "operator": "Qantas",
+            },
+        )
+    if kind == "aerobatic_practice":
+        return event(
+            kind,
+            **{**common, "callsign": None},
+            typecode="E300",
+            desc="EXTRA EA-300",
+            readings={"alt_baro": 4500, "gs": 150.0},
+            samples=track(base, 30, gs=150.0, alt=4500, turn=30),
+            maneuver={
+                **window,
+                "duration_seconds": 720,
+                "reversals": 6,
+                "altitude_excursion_ft": 1800,
+                "span_nm": 2.5,
+                "max_turn_rate_dps": 24.0,
+                "basis": "turn_rate",
+            },
+        )
+    if kind == "racetrack_orbit":
+        return event(
+            kind,
+            **{**common, "registration": "63-8871", "callsign": None, "hexcode": "ae01ce"},
+            typecode="K35R",
+            desc="Boeing KC-135R Stratotanker",
+            readings={"alt_baro": 24000, "gs": 300.0},
+            samples=track(base, 40, step=75, gs=300.0, alt=24000),
+            maneuver={
+                **window,
+                "ended_at": base + 3000,
+                "duration_seconds": 3000,
+                "racetrack_legs": 5,
+                "leg_length_nm": 12.5,
+                "axis_heading_deg": 300,
+                "lateral_spacing_nm": 6.0,
+                "line_repeat_nm": 0.8,
+            },
+        )
+    if kind == "unregistered_address":
+        return event(
+            kind,
+            hexcode=common["hexcode"],
+            callsign="TEST12",
+            start=start,
+            readings={"alt_baro": 6500, "gs": 160.0, "category": "A1"},
+            samples=track(base, 12, gs=160.0, alt=6500),
+            unregistered={"callsign": "TEST12", "category": "A1", "source": "adsb_icao"},
+        )
     # Remaining geometry kinds: circles, passes, holds, spirals and reversals.
     metrics = {"duration_seconds": 720.0, "sample_count": 46}
     if kind in {"circling", "prolonged_holding", "descending_spiral"}:

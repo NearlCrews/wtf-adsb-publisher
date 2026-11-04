@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "names": {
+    "BEECH 18 Expetitor": "Beech 18 Expeditor",
+    "Russel Wilson": "Russell Wilson",
+    "KREIDER_REISNER": "Kreider-Reisner",
+    "Citation 10": "Citation X",
+    "Eclipse 550": "Eclipse 500",
+    "T-45 Goshawk": {"name": "Hawk T1", "when_registration_prefix": "XX"}
+  },
+  "content_sha256": "9ae0d65394af9e20dd63bb150192234f2f60392c643de0cda9b66904b46eb088"
+}

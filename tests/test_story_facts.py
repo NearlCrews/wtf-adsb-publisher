@@ -1243,6 +1243,263 @@ class RegistryType(unittest.TestCase):
         )
 
 
+def packet_for(kind, *, type_code=None, **evidence):
+    """The fixture packet for a kind, with its evidence blocks replaced and, optionally, another type."""
+    raw = fixtures.kind_event(kind)
+    raw["evidence"].update(evidence)
+    if type_code:
+        raw["evidence"]["aircraft"]["t"] = type_code
+        raw["evidence"]["aircraft"].pop("desc", None)
+    return fixtures.packet(raw)
+
+
+WINDS = {
+    "day": "2026-11-05",
+    "east_addresses": 35,
+    "west_addresses": 33,
+    "east_median_kn": 560.0,
+    "west_median_kn": 380.0,
+    "east_quartiles_kn": [540.0, 575.0],
+    "west_quartiles_kn": [360.0, 395.0],
+    "asymmetry_kn": 180,
+    "altitude_floor_ft": 28000,
+    "evaluated_at": 1.0,
+}
+
+
+class NewKindFacts(unittest.TestCase):
+    def test_winds_facts(self):
+        facts = story_facts.build(packet_for("winds_aloft_day", winds_aloft=WINDS))
+        ids = {item["id"]: item for item in facts["facts"]}
+        self.assertEqual(ids["wind.asymmetry"]["value"], 180)
+        self.assertEqual(ids["wind.asymmetry"]["basis"], "derived")
+        self.assertIn("ctx.kind", ids)
+        self.assertEqual(ids["wind.day"]["value"], "2026-11-05")
+        for fact_id, value, unit in (
+            ("wind.east_median", 560.0, "kn"),
+            ("wind.west_median", 380.0, "kn"),
+            ("wind.east_count", 35, "aircraft"),
+            ("wind.west_count", 33, "aircraft"),
+        ):
+            with self.subTest(fact=fact_id):
+                self.assertEqual((ids[fact_id]["value"], ids[fact_id]["unit"]), (value, unit))
+        self.assertFalse([key for key in ids if key.startswith("wind.open_meteo")])
+        # The fastest eastbound aircraft, the finding's own, is the example; the next follow it.
+        self.assertEqual(ids["p.1.registration"]["value"], ids["id.registration"]["value"])
+        self.assertEqual(ids["p.1.type"]["value"], ids["id.type"]["value"])
+        self.assertEqual(ids["p.2.m.median_gs_kn"]["unit"], "kn")
+
+    def test_a_modelled_wind_is_a_cited_reference(self):
+        wind = {"speed_kn": 140.0, "direction_deg": 260.0, "source": "open-meteo", "hour": "2026-11-05T23:00"}
+        built = story_facts.build(packet_for("winds_aloft_day", winds_aloft={**WINDS, "wind_250_hpa": wind}))
+        ids = values(built)
+        self.assertEqual(
+            (ids["wind.open_meteo_speed"]["value"], ids["wind.open_meteo_speed"]["unit"]), (140.0, "kn")
+        )
+        self.assertEqual(ids["wind.open_meteo_direction"]["value"], 260.0)
+        self.assertEqual(ids["wind.open_meteo_speed"]["basis"], "reference")
+        self.assertIn(story_facts.OPEN_METEO["id"], {source["id"] for source in built["sources"]})
+
+    def test_foreign_military_names_the_state_and_what_marked_it(self):
+        for basis, words in (
+            (["dbFlags"], "the aircraft database"),
+            (["military_allocation"], "the address block"),
+            (["dbFlags", "military_allocation"], "the aircraft database and the address block"),
+        ):
+            block = {"country": "DE", "country_name": "Germany", "basis": basis, "registration_country": None}
+            ids = values(story_facts.build(packet_for("foreign_military", foreign_military=block)))
+            with self.subTest(basis=basis):
+                self.assertEqual(
+                    (ids["fm.country"]["value"], ids["fm.country"]["basis"]), ("Germany", "database")
+                )
+                self.assertEqual((ids["fm.basis"]["value"], ids["fm.basis"]["basis"]), (words, "database"))
+
+    def test_first_operator_facts(self):
+        block = {"scope": "operator", "coverage_days": 120, "since": "2026-05-23", "designator": "QFA"}
+        ids = values(story_facts.build(packet_for("first_operator_here", first_sighting=block)))
+        # Without the engine's name, the pinned designator table names the operator.
+        self.assertEqual((ids["fs.operator"]["value"], ids["fs.operator"]["basis"]), ("Qantas", "reference"))
+        self.assertEqual(ids["fs.designator"]["value"], "QFA")
+        self.assertEqual((ids["fs.coverage_days"]["value"], ids["fs.coverage_days"]["unit"]), (120, "days"))
+        self.assertEqual(ids["fs.since"]["value"], "2026-05-23")
+        named = values(
+            story_facts.build(
+                packet_for("first_operator_here", first_sighting={**block, "operator": "Qantas Airways"})
+            )
+        )
+        self.assertEqual(named["fs.operator"]["value"], "Qantas Airways")
+        # A type first sighting has no operator facts.
+        typed = values(fixtures.facts(fixtures.kind_event("first_type_here")))
+        self.assertFalse([key for key in typed if key.startswith("fs.")])
+
+    def test_aerobatic_and_racetrack_metrics(self):
+        aerobatic = values(fixtures.facts(fixtures.kind_event("aerobatic_practice")))
+        for fact_id, value, unit in (
+            ("aer.reversals", 6, "reversals"),
+            ("aer.excursion", 1800, "ft"),
+            ("aer.span", 2.5, "NM"),
+            ("aer.turn_rate", 24.0, "deg/s"),
+        ):
+            with self.subTest(fact=fact_id):
+                self.assertEqual((aerobatic[fact_id]["value"], aerobatic[fact_id]["unit"]), (value, unit))
+        self.assertEqual(aerobatic["aer.basis"]["value"], "a sustained hard turn")
+        raw = fixtures.kind_event("aerobatic_practice")
+        del raw["evidence"]["maneuver"]["max_turn_rate_dps"]
+        self.assertNotIn("aer.turn_rate", values(fixtures.facts(raw)))
+        racetrack = values(fixtures.facts(fixtures.kind_event("racetrack_orbit")))
+        for fact_id, value, unit in (
+            ("rt.legs", 5, "legs"),
+            ("rt.leg_length", 12.5, "NM"),
+            ("rt.spacing", 6.0, "NM"),
+            ("rt.duration", 3000, "s"),
+            ("rt.axis", 300, "degrees"),
+        ):
+            with self.subTest(fact=fact_id):
+                self.assertEqual((racetrack[fact_id]["value"], racetrack[fact_id]["unit"]), (value, unit))
+        self.assertFalse([key for key in racetrack if key.startswith("aer.")])
+
+    def test_unregistered_address_facts(self):
+        block = {"callsign": "TEST12", "category": "A1", "source": "adsb_icao"}
+        raw = fixtures.kind_event("unregistered_address")
+        raw["evidence"]["unregistered"] = block
+        ids = values(fixtures.facts(raw))
+        self.assertEqual(ids["unr.callsign"]["value"], "TEST12")
+        self.assertEqual((ids["unr.category"]["value"], ids["unr.category"]["label"]), ("A1", "light"))
+        self.assertEqual(
+            (ids["unr.registries"]["value"], ids["unr.registries"]["basis"]),
+            ("adsbdb and hexdb", "reference"),
+        )
+        self.assertEqual(ids["unr.first_seen"]["value"], ids["obs.start"]["value"])
+
+    def test_typical_descent_fact_for_an_airliner(self):
+        facts = story_facts.build(packet_for("rapid_descent", type_code="A21N"))
+        ids = {item["id"]: item for item in facts["facts"]}
+        self.assertEqual(ids["desc.typical_fpm"]["value"], "2,000 to 3,500 ft/min")
+        self.assertEqual(ids["desc.typical_fpm"]["basis"], "reference")
+
+    def test_typical_descent_follows_the_type_class(self):
+        for code, expected in (
+            ("C25C", "2,500 to 4,000 ft/min"),
+            ("A748", "1,500 to 2,500 ft/min"),
+            ("C172", "500 to 1,500 ft/min"),
+            ("A342", "2,000 to 3,500 ft/min"),
+        ):
+            with self.subTest(code=code):
+                self.assertEqual(
+                    values(story_facts.build(packet_for("rapid_descent", type_code=code)))[
+                        "desc.typical_fpm"
+                    ]["value"],
+                    expected,
+                )
+        # A helicopter or an unknown type has no usual rate, and only a rapid descent gets one.
+        for code in ("B407", "ZZZZ"):
+            self.assertNotIn(
+                "desc.typical_fpm", values(story_facts.build(packet_for("rapid_descent", type_code=code)))
+            )
+        self.assertNotIn(
+            "desc.typical_fpm", values(story_facts.build(packet_for("rapid_climb", type_code="A21N")))
+        )
+
+    def test_kind_context_lines(self):
+        ids = values(fixtures.facts(fixtures.kind_event("formation_flight")))
+        self.assertEqual(ids["ctx.kind"]["value"], story_facts.KIND_CONTEXT["formation_flight"])
+        self.assertEqual(ids["ctx.kind"]["basis"], "reference")
+        self.assertNotIn("ctx.kind", values(fixtures.facts(fixtures.kind_event("circling"))))
+        # Each line is plain copy a story may restate: no dash, ampersand, purpose, or speculation word.
+        for kind, line in story_facts.KIND_CONTEXT.items():
+            with self.subTest(kind=kind):
+                self.assertIn(kind, public_events.KIND_TYPES)
+                self.assertIsNone(public_prose.DASH.search(line))
+                self.assertNotIn("&", line)
+                self.assertIsNone(public_prose.SPECULATION.search(line))
+                self.assertIsNone(public_prose.MISSION_CLAIM.search(line))
+                self.assertEqual(public_prose.serial_comma_issues(line), [])
+                self.assertNotRegex(line, r"\bhere\b")
+                self.assertIsNone(story_facts.PLACE_WORDS.search(line))
+
+    def test_a_season_record_states_its_margin(self):
+        ids = values(fixtures.facts(fixtures.kind_event("seasonal_speed_record")))
+        self.assertEqual((ids["rec.margin_kn"]["value"], ids["rec.margin_kn"]["unit"]), (29.0, "kn"))
+        self.assertEqual(ids["rec.margin_kn"]["basis"], "telemetry")
+        self.assertNotIn("rec.margin_kn", values(fixtures.facts(fixtures.kind_event("fast"))))
+
+    def test_an_earlier_story_of_the_registration_is_a_repeat(self):
+        packet = fixtures.packet(fixtures.kind_event("vintage"))
+        start = story_facts.value(story_facts.build(packet), "obs.date")
+        related = [
+            {
+                "date": "2026-08-01",
+                "kind": "watch_type",
+                "path": "/stories/old-1-aug-2026/",
+                "title": "Older",
+            },
+            {
+                "date": "2026-09-01",
+                "kind": "rapid_descent",
+                "path": "/stories/n8704-descent-1-sep-2026/",
+                "title": "A descent",
+            },
+            {
+                "date": "2026-06-01",
+                "kind": "fast",
+                "path": "/stories/too-old-1-jun-2026/",
+                "title": "Too old",
+            },
+        ]
+        ids = values(story_facts.build(packet, related=related))
+        self.assertTrue(start > "2026-09-01")
+        self.assertEqual(ids["repeat.previous"]["value"], "Rapid descent on 1 September 2026")
+        self.assertEqual(ids["repeat.previous"]["basis"], "derived")
+        self.assertEqual(ids["repeat.path"]["value"], "/stories/n8704-descent-1-sep-2026/")
+        # A kind with no phenomenon name keeps the story's own title.
+        ids = values(story_facts.build(packet, related=related[:1]))
+        self.assertEqual(ids["repeat.previous"]["value"], "Older on 1 August 2026")
+        for bad in (
+            [],
+            related[2:],
+            [{**related[1], "path": "https://example.com/x"}],
+            [{**related[1], "date": "soon"}],
+        ):
+            with self.subTest(related=bad):
+                self.assertNotIn("repeat.previous", values(story_facts.build(packet, related=bad)))
+
+
+class DisplayNameTests(unittest.TestCase):
+    def test_display_names_replace_database_typos(self):
+        self.assertEqual(story_facts.display_name("BEECH 18 Expetitor"), "Beech 18 Expeditor")
+        self.assertEqual(story_facts.display_name("Russel Wilson"), "Russell Wilson")
+        self.assertEqual(story_facts.display_name("Unknown text"), "Unknown text")
+        # Whole names only: a longer model number is another type.
+        self.assertEqual(story_facts.display_name("Citation 10"), "Citation X")
+        self.assertEqual(story_facts.display_name("Citation 100"), "Citation 100")
+        self.assertEqual(story_facts.display_name("KREIDER_REISNER C-4"), "Kreider-Reisner C-4")
+
+    def test_a_registration_rule_applies_only_to_its_airframes(self):
+        self.assertEqual(story_facts.display_name("T-45 Goshawk", registration="XX177"), "Hawk T1")
+        self.assertEqual(story_facts.display_name("T-45 Goshawk", registration="165080"), "T-45 Goshawk")
+        self.assertEqual(story_facts.display_name("T-45 Goshawk"), "T-45 Goshawk")
+
+    def test_types_operators_and_watchlist_names_use_display_names(self):
+        raw = fixtures.kind_event("vintage")
+        raw["evidence"]["aircraft"].update(t="ZB18", desc="BEECH 18 Expetitor")
+        ids = values(fixtures.facts(raw))
+        self.assertEqual(ids["id.type"]["value"], "Beech 18 Expeditor")
+        self.assertNotIn("BEECH 18 Expetitor", json.dumps(ids["id.type"]))
+        raw = fixtures.kind_event("watchlist_match")
+        raw["evidence"]["watchlist"]["association"] = "Russel Wilson"
+        self.assertEqual(values(fixtures.facts(raw))["wl.association"]["value"], "Russell Wilson")
+        with patch.dict(story_facts.table("display_names")["names"], {"Qantas": "Qantas Airways"}):
+            ids = values(fixtures.facts(fixtures.kind_event("first_operator_here")))
+        self.assertEqual(ids["op.callsign"]["value"], "Qantas Airways")
+        self.assertEqual(ids["fs.operator"]["value"], "Qantas Airways")
+
+    def test_the_display_name_table_is_pinned(self):
+        table = story_facts.table("display_names")
+        self.assertEqual(
+            table["names"]["T-45 Goshawk"], {"name": "Hawk T1", "when_registration_prefix": "XX"}
+        )
+
+
 class RoutingTests(unittest.TestCase):
     def test_every_kind_maps_to_one_topic_in_its_section(self):
         topics = story_facts.table("topics")

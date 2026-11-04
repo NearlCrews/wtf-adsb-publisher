@@ -90,9 +90,11 @@ Public text that relies on the Mictronics designator codes keeps the attribution
 
 `type_names.json` (curated display names, aliases, slugs and category words),
 `airline_designators.json` (operator designators and names derived from the
-Mictronics database, ODC Attribution License 1.0) and `topics.json` (public
-topics and their sections) are read by the story engine through
-`story_facts.TABLES`, which checks their schema and content hash. The site
+Mictronics database, ODC Attribution License 1.0), `topics.json` (public
+topics and their sections), and `display_names.json` (corrected spellings for
+database type descriptions, watchlist associations, and operator names, some
+limited to registrations with a given prefix) are read by the story engine
+through `story_facts.TABLES`, which checks their schema and content hash. The site
 build reads the same `topics.json`.
 `tools/type_name_gaps.py` lists designators seen in a journal copy or ledger that
 the table does not name (its output is local traffic data and stays under
