@@ -254,7 +254,7 @@ export const topicCopy = {
       "Groups of aircraft holding at the same time at different altitudes, and single aircraft flying long racetracks over the same two lines.",
     intro: [
       "When an airport or route is busy, or weather closes a runway, air traffic control can tell aircraft to hold: to fly a racetrack pattern over a fixed point until they are cleared onward. A standard hold uses right turns, and its inbound leg takes about a minute at or below 14,000 ft and a minute and a half above that.",
-      "The site finds a hold when a track circles for at least ten minutes and closes three or more loops. A single aircraft's hold only adds context to another story about it. A much longer racetrack is the exception: one aircraft flying at least four straight legs of 10 nautical miles or more, back and forth over the same two lines for 40 minutes or longer, gets a story of its own as a racetrack orbit. When three or more aircraft circle at the same time within 10 nautical miles of one another, at least 500 ft apart vertically, and at 5,000 ft or higher, the site treats them as a stack and tells one story about the group, listing the other aircraft and their altitudes.",
+      "The site finds a hold when a track circles for at least ten minutes and closes three or more loops. A single aircraft's hold shorter than 20 minutes only adds context to another story about it, and one that lasts longer, away from an airport's circuit, gets a story of its own. A much longer racetrack is the exception: one aircraft flying at least four straight legs of 10 nautical miles or more, back and forth over the same two lines for 40 minutes or longer, gets a story of its own as a racetrack orbit. When three or more aircraft circle at the same time within 10 nautical miles of one another, at least 500 ft apart vertically, and at 5,000 ft or higher, the site treats them as a stack and tells one story about the group, listing the other aircraft and their altitudes.",
       "A racetrack shape does not show why an aircraft held. The reason can be traffic, weather, a closed runway, or a long hold flown for other reasons the data do not show, and controllers' instructions are not part of this data. Loops close to an airport can also be practice circuits, which the site labels separately so they do not crowd out the rarer holds. Gaps in reception can hide part of a hold, so the number of loops describes the saved positions.",
     ],
     sources: [SOURCES.aimHolding],
@@ -420,6 +420,138 @@ export const topicCopy = {
     guide: ["ads-b", "type-match"],
     related: ["ads-b-glitches"],
   },
+};
+
+// What sets off each kind of story, for the field guide's entries. Keyed by the
+// kinds the guide explains (kind-guide.mjs); like the intros above, every
+// threshold here must follow the detectors.
+export const kindTriggers = {
+  watch_type:
+    "The aircraft database lists a type on the site's watch list of large, rare, and historic designs, such as the Boeing B-52, the Airbus Beluga, and the Douglas DC-3. A type gets a story at most once every 14 days, whichever airframe flies it.",
+  notable_variant:
+    "The database description names a variant on the site's list, and either the database marks the airframe as military or its registration is a military serial number. A few variants also need a matching callsign prefix.",
+  military:
+    "The aircraft database sets its military flag on the address. On its own the flag is a routine label, so it seldom leads a story.",
+  database_watch:
+    "The aircraft database sets its interesting-aircraft flag on the address. Like the military flag, it seldom leads a story on its own.",
+  rare_here:
+    "Three or fewer aircraft carried the type in the last 30 days of records, no more than 1% of the aircraft seen, and the type appeared on at most one earlier day.",
+  foreign_military:
+    "The database's military flag is set, or the address falls in a block a State sets aside for military use, and the address comes from a State other than the United States.",
+  first_type_here:
+    "A type designator appears for the first time after at least 90 days with an hour or more of recorded traffic. Group designators such as ZZZZ never count, and neither does an address seen under a different type on more than two earlier days.",
+  first_country_here:
+    "An address from a block assigned to a country appears for the first time, after a 30-day warm-up. Addresses that begin with a tilde, which mark tracks without a real ICAO address, never count.",
+  first_operator_here:
+    "An airline-style callsign carries a known three-letter designator for the first time in the retained records, after 30 days of designator records.",
+  vintage:
+    "By its database year, the airframe is at least 80 years old on the day it was observed. A type recorded on one or two of the last 60 days needs 83 years, one recorded on three to six days needs 85, and any other type needs 87. An airframe waits 90 days between stories.",
+  watchlist_match:
+    "The broadcast address matches an entry in a pinned copy of Plane Alert DB, and the registration in the aircraft database matches the entry's. When the two disagree, the site withholds the match.",
+  stratospheric_balloon:
+    "An aircraft stays at 50,000 ft or higher for at least ten minutes, with a median ground speed of 80 knots or less and a slowly changing altitude. It also needs corroboration: agreeing pressure and geometric altitudes, a lighter-than-air emitter category, a balloon type code, a balloon callsign prefix, or a flight of half an hour or more.",
+  formation_flight:
+    "Both aircraft broadcast their own positions and stay within 0.5 nautical miles and 400 ft of each other, with tracks within 20 degrees and ground speeds within 25 knots, for at least two minutes. They must be at 3,000 ft or higher, or at 1,500 ft and well away from a runway.",
+  survey_grid:
+    "At least six alternating straight legs, each 3 nautical miles or longer and within 10 degrees of a common axis, flown over at least 30 minutes. Each line steps to the same side by 0.2 to 2 nautical miles, and the altitude stays within a 300 ft band.",
+  prolonged_holding:
+    "One aircraft holds, circling for at least ten minutes and closing three or more loops. A hold that lasts 20 minutes or more, away from an airport's circuit, gets a story; a shorter one only adds context to another story.",
+  holding_stack:
+    "Three or more aircraft circle at the same time within 10 nautical miles of one another, at 5,000 ft or higher and at least 500 ft apart vertically.",
+  racetrack_orbit:
+    "One aircraft flies at least four straight legs of 10 nautical miles or more, back and forth over the same two lines, for 40 minutes or longer, away from runways.",
+  hovering:
+    "A rotorcraft reports a ground speed of 8 knots or less while its altitude changes by less than 200 ft, with forward flight before and after, or a clear climb or descent. A hover longer than ten minutes is held back, and so is one built from multilateration positions.",
+  thermal_soaring:
+    "An aircraft with glider evidence, such as a glider emitter category, squawk 1202, or a glider type code, circles while gaining at least 500 ft at 200 to 1,000 ft per minute, with a median ground speed of 40 to 80 knots.",
+  descending_spiral:
+    "Verified circling that loses at least 1,500 ft, with the track descending through most of its reports. Loops close to a runway at low altitude do not count.",
+  departure_return:
+    "An aircraft leaves the ground, climbs at least 500 ft, flies 3 nautical miles or more from the runway, and comes back lined up with the runway it left, three minutes or more after takeoff.",
+  possible_go_around:
+    "Within five minutes, an aircraft lined up with a runway descends at least 400 ft to a low point at or below 6,000 ft, then climbs at least 400 ft again, with no ground reports in between.",
+  extreme_turn_rate:
+    "An aircraft whose emitter category marks it as large or heavy turns faster than 6 degrees per second, as worked out from its positions, for at least 20 seconds.",
+  aerobatic_practice:
+    "At least five climb and dive reversals of 800 ft or more within ten minutes, inside an area 5 nautical miles across, by an aerobatic type or a light aircraft turning hard. Near an airport's circuit they only add context.",
+  rapid_descent:
+    "A descent at 4,500 ft per minute or more that neighboring reports confirm, held for at least 30 seconds and four reports. A rate of 7,000 ft per minute or more held as long, while the altitude itself falls at least 6,000 ft a minute, can make it an exceptional event.",
+  vertical:
+    "The aircraft reports a barometric descent rate of 4,500 to 12,000 ft per minute, confirmed over sustained reports. A climb at that rate only adds context.",
+  seasonal_speed_record:
+    "The fastest sustained ground speed for a type this season, from reports the aircraft broadcast itself for at least a minute, once at least 20 aircraft of the type are recorded this season. A record never counts above 900 knots or the type's listed limit.",
+  fast: "A fixed-wing aircraft's ground speed reaches a spotting threshold learned from its type's usual speeds in these records, by flight phase and altitude band, or 600 knots where none has been learned. The speed must hold over sustained reports and stay within what the type can fly.",
+  high: "The reported pressure altitude reaches a threshold learned from the type's usual heights in these records, or 49,000 ft where none has been learned, over sustained reports and below the type's listed ceiling.",
+  wind_boost:
+    "The aircraft reports a true airspeed of 100 to 700 knots and a ground speed 100 to 300 knots higher.",
+  selected_altitude_overshoot:
+    "An aircraft climbing or descending at 1,000 ft per minute or more passes its unchanged selected altitude by at least 300 ft, in three reports over 20 seconds or more, then turns back toward it.",
+  above_rated_altitude:
+    "At least five reports over a minute sit 1,000 ft or more above the ceiling in the type's certificate data sheet, and a second aircraft registry lists the same type.",
+  above_rated_speed:
+    "At least five reports over a minute put the airspeed 10% or more over the type's certified maximum. The airspeed is the ground speed with a modeled wind taken out, unless the aircraft reports its own true airspeed, and a second aircraft registry must list the same type.",
+  winds_aloft_day:
+    "Over one day, the median ground speed of eastbound jets at or above 28,000 ft beats the westbound median by 150 knots or more, with at least 30 aircraft each way. A winds-aloft story runs at most once every three days.",
+  special_squawk_7400:
+    "The transponder reports 7400 in at least two reports eight seconds or more apart.",
+  special_squawk_7500:
+    "The transponder reports 7500 in at least two reports eight seconds or more apart.",
+  special_squawk_7600:
+    "The transponder reports 7600 in at least two reports eight seconds or more apart.",
+  special_squawk_7700:
+    "The transponder reports 7700 in at least two reports eight seconds or more apart.",
+  special_squawk_general:
+    "The emergency field in the aircraft's ADS-B reports declares a general emergency in at least two reports eight seconds or more apart, while the transponder code is none of the emergency codes.",
+  special_squawk_lifeguard:
+    "The emergency field in the aircraft's ADS-B reports declares lifeguard status in at least two reports eight seconds or more apart.",
+  special_squawk_minfuel:
+    "The emergency field in the aircraft's ADS-B reports declares minimum fuel in at least two reports eight seconds or more apart.",
+  special_squawk_nordo:
+    "The emergency field in the aircraft's ADS-B reports declares a radio failure in at least two reports eight seconds or more apart, while the transponder code is none of the emergency codes.",
+  special_squawk_unlawful:
+    "The emergency field in the aircraft's ADS-B reports declares unlawful interference in at least two reports eight seconds or more apart, while the transponder code is none of the emergency codes.",
+  special_squawk_downed:
+    "The emergency field in the aircraft's ADS-B reports declares a downed aircraft in at least two reports eight seconds or more apart.",
+  special_use_code:
+    "The transponder reports a code the FAA sets aside for a particular use, such as 1255 for firefighting aircraft or 4000 for military pilots in restricted or warning areas, in at least two reports eight seconds or more apart. Squawk 1202 from a glider only adds context to a soaring story.",
+  archive_squawk_7400:
+    "The code 7400 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
+  archive_squawk_7500:
+    "The code 7500 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
+  archive_squawk_7600:
+    "The code 7600 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
+  archive_squawk_7700:
+    "The code 7700 turns up when the site replays saved archives of past reports. These stay in review and never publish on their own, because an archive cannot show how long a code lasted.",
+  tcas_ra:
+    "An airborne aircraft's ADS-B broadcasts report an active resolution advisory in at least two messages within 30 seconds. Advisories decoded from Mode S replies are held back.",
+  outlier_gs:
+    "A reported ground speed above 900 knots, repeated over at least five reports in a minute, so one bad report never makes a story.",
+  outlier_alt_baro:
+    "A reported pressure altitude above 65,000 ft or below minus 1,500 ft, repeated over at least five reports in a minute.",
+  outlier_baro_rate:
+    "A reported climb or descent rate beyond 12,000 ft per minute, repeated over at least five reports in a minute.",
+  outlier_archive_alt:
+    "The altitude bounds for an altitude spike, applied to saved archive reports, which do not record whether an altitude was pressure or geometric.",
+  position_jump:
+    "Two fresh positions 2 to 45 seconds apart lie at least 12 nautical miles apart, which would take 1,200 knots or more. Position jumps are always held for review.",
+  altitude_gap:
+    "Geometric and pressure altitude differ by 3,000 ft or more below 18,000 ft, or by 4,000 ft or more above it. A gap beyond 5,000 ft counts as bad data instead.",
+  type_speed_mismatch:
+    "A sustained ground speed beyond the listed type's envelope: the fastest the type can fly, plus an allowance for wind.",
+  type_altitude_mismatch:
+    "A sustained pressure altitude above the highest the listed type can fly.",
+  identity_conflict:
+    "The site's identity checks disagree: the transmitted address, the database registration, the address block's country, and a registration-style callsign do not all point to the same aircraft.",
+  unusual_emitter:
+    "The transmitter declares a glider, lighter-than-air, parachutist, ultralight, or unmanned aircraft category. A story needs the listed type to agree: a glider type for the glider category, or a balloon or airship type for the lighter-than-air one.",
+  space_category:
+    "The transmitter declares category B7, for space and trans-atmospheric vehicles. These reports are always held for review.",
+  correlated_data_anomaly:
+    "Three or more aircraft heard through the same kind of source show the same fault within one minute, either a sudden drop in position quality or a position jump.",
+  gnss_integrity_cluster:
+    "Three or more airborne aircraft lose navigation integrity within ten minutes and about 60 nautical miles of one another. A loss means good values, NIC 6 or more and NACp 8 or more, for at least a minute, then 1 or less for at least three reports over 20 seconds.",
+  unregistered_address:
+    "An aircraft broadcasts its own positions under an address that no registry the site consults lists, checked again a week after the address first appeared. Addresses in blocks set aside for military aircraft are left out.",
 };
 
 export const indexCopy = {

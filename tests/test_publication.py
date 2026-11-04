@@ -586,11 +586,28 @@ class EvidenceBlockTests(unittest.TestCase):
             card.index('<aside class="record-limits"') : card.index("</aside>", card.index("record-limits"))
         ]
         self.assertNotIn("Aircraft metadata is a current database match", limits)
+        # A context kind (this one circles) has no entry of its own, so the link opens the guide.
+        self.assertNotIn(event["kind"], publication.GUIDE_KINDS)
         self.assertTrue(
             limits.endswith(
                 '<li><a href="https://example.com/field-guide/">How to read these numbers</a></li></ul>'
             )
         )
+
+    def test_the_field_guide_link_opens_at_the_kinds_entry(self):
+        from wtf_adsb_publisher import stories
+
+        with patch.object(publication.site_origin, "get", return_value="https://site.example"):
+            self.assertEqual(
+                publication.field_guide_url("rapid_descent"),
+                "https://site.example/field-guide/#kind-rapid-descent",
+            )
+            # A long hold is a story, so it has an entry; a short one adds context to another story.
+            self.assertTrue(
+                publication.field_guide_url("prolonged_holding").endswith("#kind-prolonged-holding")
+            )
+            self.assertEqual(publication.field_guide_url("circling"), "https://site.example/field-guide/")
+        self.assertLessEqual(publication.GUIDE_KINDS, set(stories.STORY_KINDS))
 
 
 class PublicOutputCardTests(unittest.TestCase):

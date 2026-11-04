@@ -1,5 +1,6 @@
 import Handlebars from "handlebars";
 import { replayCard } from "./illustrations.mjs";
+import { kindGuideSection } from "./kind-guide.mjs";
 import { renderMarkdown } from "./markdown.mjs";
 import {
   SITE_NAME,
@@ -377,9 +378,9 @@ export const pages = [
     slug: "field-guide",
     title: "Reading aircraft observations",
     // The date of the last content change, and that content's pageDigest.
-    updated: "2026-10-07T00:00:00Z",
+    updated: "2026-11-04T00:00:00Z",
     contentSha256:
-      "07e75c6bd91b76143d80f9eeb6aa4545f7790aa6c46b0c1094d197bc61941dc4",
+      "b20c7e72f4b9f5759bebff18d60aa1341825449ca0f3a818a2bbdf6334c55283",
     custom_excerpt:
       "How to read aircraft identities, positions, and measurements, and how to tell a report from an explanation.",
     html: `<p>Aircraft tracking combines messages about identity and movement into a sequence of observations. The source, timing, and quality of those messages decide which conclusions a record supports.</p>
@@ -405,6 +406,7 @@ export const pages = [
 <p>A track describes movement. An operator's account or another checked source may explain a mission, but the data alone cannot. An aircraft's owner does not establish who was aboard, and a pattern that looks like training, a search, or a survey may be something else.</p>
 <h2 id="counting">How the journal counts observations</h2>
 <p>One published observation episode counts as one story, even when several detection rules describe it. The daily chart uses the episode's start date in UTC. Later edits do not add stories. Totals describe the journal's selected record, not every aircraft or flight in a region.</p>
+${kindGuideSection()}
 <p><a class="text-link" href="/stories/">Read every story <span aria-hidden="true">↗</span></a></p>`,
   },
   {

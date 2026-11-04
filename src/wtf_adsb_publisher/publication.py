@@ -13,7 +13,7 @@ from copy import deepcopy
 from html import escape
 from urllib.parse import quote
 
-from . import public_prose, site_origin, stories, story_facts
+from . import kinds, public_prose, site_origin, stories, story_facts
 from .public_events import (
     PARTICIPANT_ROLES,
     TYPE_LABELS,
@@ -281,6 +281,21 @@ BOILERPLATE_LIMITATIONS = (
 )
 FIELD_GUIDE_LINK = "How to read these numbers"
 FEET_PER_NM = 6076.12
+# The kinds the field guide explains, each under the anchor #kind-<kind> (tools/ghost-theme/
+# kind-guide.mjs): every kind a site topic routes that can lead a story. A context kind only adds
+# to another story, except a hold, which becomes a story once it lasts long enough
+# (curation.HOLDING_STORY_SECONDS).
+GUIDE_KINDS = frozenset(
+    name
+    for name, entry in kinds.KINDS.items()
+    if entry.site_topic and (not entry.context_only or name == "prolonged_holding")
+)
+
+
+def field_guide_url(kind):
+    """The field guide, opened at the kind's entry when it has one."""
+    anchor = "#kind-" + kind.replace("_", "-") if kind in GUIDE_KINDS else ""
+    return f"{site_origin.get()}/field-guide/{anchor}"
 
 
 def key_facts(event):
@@ -952,7 +967,7 @@ def _event_card(event, *, display_review=True):
         "<h3>What this record cannot show</h3><ul>"
     )
     output.extend("<li>" + escape(limit) + "</li>" for limit in card_limitations(event))
-    output.append(f'<li><a href="{site_origin.get()}/field-guide/">{FIELD_GUIDE_LINK}</a></li></ul></aside>')
+    output.append(f'<li><a href="{field_guide_url(event["kind"])}">{FIELD_GUIDE_LINK}</a></li></ul></aside>')
     references = aircraft_references(event)
     if references:
         lookup = escape("Look up " + (name or "this aircraft"))

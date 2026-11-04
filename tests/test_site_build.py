@@ -477,6 +477,33 @@ class SiteIdentityTests(unittest.TestCase):
             )
 
     @unittest.skipUnless(shutil.which("node"), "Node renders the site pages")
+    def test_the_field_guide_explains_every_kind_that_can_lead_a_story(self):
+        """Each kind a story can lead with has an entry the story's limits link to, with its four
+        labeled parts; context kinds, which never lead a story, have none."""
+        from wtf_adsb_publisher import publication
+
+        script = (
+            f"const {{pages}} = await import({json.dumps((TOOLS / 'demo-content.mjs').as_uri())});"
+            "console.log(pages.find((page) => page.slug === 'field-guide').html);"
+        )
+        result = subprocess.run(
+            ["node", "--input-type=module", "-e", script], capture_output=True, text=True, timeout=60
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        html = result.stdout
+        anchors = set(re.findall(r'<h4 id="kind-([a-z0-9-]+)">', html))
+        self.assertEqual(anchors, {kind.replace("_", "-") for kind in publication.GUIDE_KINDS})
+        self.assertIn("prolonged-holding", anchors)
+        self.assertNotIn("circling", anchors)
+        for entry in re.split(r'<h4 id="kind-', html)[1:]:
+            with self.subTest(entry=entry[:40]):
+                body = entry[: entry.index("</dl>")]
+                self.assertEqual(
+                    re.findall(r"<dt>([^<]+)</dt>", body),
+                    ["What it is", "Why it can be interesting", "What sets it off", "Common false alarms"],
+                )
+
+    @unittest.skipUnless(shutil.which("node"), "Node renders the site pages")
     def test_the_default_about_page_and_description_name_no_deployment(self):
         """Without an About file or a description, the pages say what the site does and how an
         operator supplies their own text, and name no place, hardware, or host. An About file's

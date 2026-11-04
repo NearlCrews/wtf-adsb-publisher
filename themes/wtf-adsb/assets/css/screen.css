@@ -850,6 +850,29 @@ figcaption {
   line-height: 1.25;
 }
 
+.gh-content h4 {
+  margin-top: 36px;
+  margin-bottom: 12px;
+  font-size: 22px;
+  line-height: 1.3;
+}
+
+/* A field-guide entry's labeled parts: a small label over each paragraph. */
+.kind-guide dt {
+  font-family: var(--sans);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.kind-guide dd {
+  margin: 2px 0 14px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
 .gh-content a:where(:not(.button)) {
   text-decoration-thickness: 1px;
 }

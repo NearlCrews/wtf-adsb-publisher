@@ -33,8 +33,9 @@ import {
   withBrand,
 } from "./seo.mjs";
 import { FEED_SIZE, robots, rss, sitemaps } from "./feeds.mjs";
-import { indexCopy, topicCopy } from "./topics.mjs";
+import { indexCopy, kindTriggers, topicCopy } from "./topics.mjs";
 import { pages, siteNotes } from "./demo-content.mjs";
+import { KIND_GUIDE, KIND_PARTS, kindAnchor } from "./kind-guide.mjs";
 import {
   aircraftPhoto,
   aircraftPhotos,
@@ -228,6 +229,8 @@ const copyTexts = (value) =>
 for (const [where, copy] of [
   ...Object.entries(topicCopy),
   ["index copy", indexCopy],
+  ["kind triggers", kindTriggers],
+  ["kind guide", KIND_GUIDE],
   ...[...pages, imageCreditsPage].map((page) => [page.url, page]),
   ["site notes", siteNotes],
 ])
@@ -250,6 +253,67 @@ for (const page of [...pages, imageCreditsPage]) {
     `${page.url} changed: set its updated date to the day of the change and contentSha256 to ${digest}`,
   );
   assert.match(page.updated, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+}
+
+// The field guide's kinds of story: one entry per guided kind, in topic
+// order, each under its own anchor (a story's limits link there) with the
+// four labeled parts. The trigger text is the topic copy's, so the guide and
+// the topic pages quote the same rules. tests/test_site_build.py checks that
+// the guided kinds are exactly those that can lead a story.
+{
+  const guide = pages.find((page) => page.slug === "field-guide").html;
+  const routed = Object.values(topicsData.topics).flatMap(
+    (topic) => topic.kinds,
+  );
+  const guided = Object.keys(KIND_GUIDE);
+  assert.deepEqual(
+    guided.filter((kind) => !routed.includes(kind)),
+    [],
+    "Field-guide entries for kinds no topic routes",
+  );
+  assert.deepEqual(Object.keys(kindTriggers).sort(), [...guided].sort());
+  assert.deepEqual(
+    [...guide.matchAll(/<h4 id="kind-([a-z0-9-]+)">/g)].map(
+      (match) => `kind-${match[1]}`,
+    ),
+    routed.filter((kind) => guided.includes(kind)).map(kindAnchor),
+  );
+  assert.equal(kindAnchor("rapid_descent"), "kind-rapid-descent");
+  const ids = [...guide.matchAll(/ id="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(
+    ids.filter((id, index) => ids.indexOf(id) !== index),
+    [],
+    "Field-guide anchors repeat",
+  );
+  // Headings descend one level at a time: h2 sections, h3 topics, h4 kinds.
+  const levelsOf = [...guide.matchAll(/<h([2-6])\b/g)].map((match) =>
+    Number(match[1]),
+  );
+  levelsOf.forEach((level, index) =>
+    assert.ok(
+      level <= (levelsOf[index - 1] ?? 2) + 1,
+      `Field-guide heading h${level} skips a level`,
+    ),
+  );
+  for (const entry of guide.split('<h4 id="kind-').slice(1)) {
+    const body = entry.slice(0, entry.indexOf("</dl>"));
+    assert.deepEqual(
+      [...body.matchAll(/<dt>([^<]+)<\/dt>/g)].map((match) => match[1]),
+      KIND_PARTS,
+      `Field-guide entry ${entry.slice(0, 30)} lacks its labeled parts`,
+    );
+    for (const text of body.matchAll(/<dd>([^<]*)<\/dd>/g))
+      assert.ok(
+        text[1].trim().length > 20,
+        `Empty part in ${entry.slice(0, 30)}`,
+      );
+  }
+  for (const [kind, entry] of Object.entries(KIND_GUIDE))
+    for (const field of ["name", "what", "why", "falseAlarms"])
+      assert.ok(
+        typeof entry[field] === "string" && entry[field].trim(),
+        `${kind} has no ${field}`,
+      );
 }
 
 // Hubs at their thresholds, related links, breadcrumbs, and the prose gate.

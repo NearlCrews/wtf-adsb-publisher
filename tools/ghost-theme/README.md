@@ -200,8 +200,12 @@ license name records stay in each file.
 
 - `demo-content.mjs` contains the shared About/field-guide copy and synthetic
   story fixtures. `topics.mjs` holds the topic landings' headings, meta
-  descriptions, sourced intros, and related links. Both are public prose,
-  edited with Humanizer. `illustrations.mjs` makes the example SVG diagrams and
+  descriptions, sourced intros, and related links, and the rule that sets off
+  each kind of story. `kind-guide.mjs` explains each kind that can lead a
+  story for the field guide's "Kinds of story" section, one entry per kind
+  under the anchor `#kind-<kind>` that a story's limits link to; the
+  publisher's `publication.GUIDE_KINDS` names those kinds. All three are
+  public prose, edited with Humanizer. `illustrations.mjs` makes the example SVG diagrams and
   schematic replay data. Flight measurements in the default fixture are
   invented and explicitly labeled. The aircraft background has its own source
   links.

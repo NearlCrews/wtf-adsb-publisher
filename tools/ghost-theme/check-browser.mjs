@@ -879,9 +879,10 @@ try {
     ),
   );
   assert.equal(limits.at(-1), "How to read these numbers");
+  // The link opens the field guide at the story's kind, whose entry exists.
   assert.equal(
     await record.locator(".record-limits li:last-child a").getAttribute("href"),
-    "/field-guide/",
+    "/field-guide/#kind-above-rated-altitude",
   );
   // Source badges: the reception source beside the topic on a story page
   // and in the meta line of every archive entry, home tile, and search
