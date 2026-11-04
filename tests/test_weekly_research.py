@@ -135,6 +135,7 @@ class WeeklyResearchTests(unittest.TestCase):
             {
                 "kind": "watch_type",
                 "kind_name": "Watched type",
+                "causeless": False,
                 "measurements": [{"label": "Ground speed", "value": 70.0, "unit": "kn"}],
             },
         )
@@ -195,11 +196,28 @@ class WeeklyResearchTests(unittest.TestCase):
             ["Design background", "Type history"],
         )
 
+    def test_event_sections_pass_the_prose_checks_before_they_are_saved(self):
+        event = "This synthetic explanation describes this kind of observation and how such readings are reported to the ground."
+        dossier = worker.dossier(response(scopes=["event", "event"], texts=[event, event]), self.event, NOW)
+        self.assertEqual(len(dossier["sections"]), 2)
+        mismatch = {**self.event, "kind": "type_speed_mismatch"}
+        for text, rule in (
+            (event.replace("observation and", "observation \u2014"), "dash"),
+            (event + " The format dates from 1993.", "Unsupported number"),
+            (event + " A stale registry entry pairs the address with another type.", "without a hedge"),
+            (event + " The reading was a decoding glitch.", "Unlisted cause"),
+        ):
+            with self.subTest(rule=rule), self.assertRaisesRegex(ValueError, rule):
+                worker.dossier(response(scopes=["event", "event"], texts=[event, text]), mismatch, NOW)
+        # The headline readings may be quoted.
+        quoted = event + " This one reported a ground speed of 70 knots."
+        worker.dossier(response(scopes=["event", "event"], texts=[event, quoted]), self.event, NOW)
+
     def test_candidates_carry_the_rarity_of_their_kind(self):
         start = worker.weekly.week_start(self.event["observed_start"]).isoformat()
         ranked = worker.candidates(self.ledger, self.snapshot, start)
         self.assertEqual([row["rarity"] for row in ranked], [0.5])
-        with patch.object(worker.weekly, "rank", side_effect=lambda rows: list(rows)) as rank:
+        with patch.object(worker.weekly, "rank", side_effect=lambda rows, **options: list(rows)) as rank:
             worker.candidates(self.ledger, self.snapshot, start)
         rank.assert_called_once()
 
@@ -708,7 +726,7 @@ def explainer_response():
                 },
                 {
                     "heading": "When the registry and the broadcasts disagree",
-                    "text": "This synthetic section explains how a stale registry entry, a re-registration, a transponder set to the wrong address, or a database typo can each pair an address with the wrong type.",
+                    "text": "This synthetic section explains how a stale registry entry, a re-registration, a transponder set to the wrong address, or a database typo could each pair an address with the wrong type.",
                     "sources": ["source-2"],
                 },
             ],
@@ -741,7 +759,10 @@ class ExplainerTests(unittest.TestCase):
         ledger = add_mismatches(public.new_ledger("2026-09-01"), ["c01234", "c3fffe", "a01236"])
         add_mismatches(ledger, ["c01237"], state="withdrawn", first=3)
         self.assertIsNone(worker.explainer_brief(ledger, EXPLAINER))
+        # A pending story may never be published, so it does not count.
         add_mismatches(ledger, ["c20000"], state="pending", first=4)
+        self.assertIsNone(worker.explainer_brief(ledger, EXPLAINER))
+        add_mismatches(ledger, ["c20001"], first=5)
         self.assertEqual(worker.explainer_brief(ledger, EXPLAINER), BRIEF)
         self.assertTrue(worker.add_explainer(ledger, self.page()))
         self.assertFalse(worker.add_explainer(ledger, self.page()))
@@ -763,6 +784,7 @@ class ExplainerTests(unittest.TestCase):
         self.assertIn("explain the event", worker.EXPLAINER_INSTRUCTIONS)
         self.assertNotRegex(worker.EXPLAINER_INSTRUCTIONS, "[\u2014&]")
         page = receipt["page"]
+        self.assertEqual(receipt["brief"], BRIEF)
         self.assertEqual(page["key"], EXPLAINER)
         self.assertEqual(page["path"], "/explainers/canadian-addresses/")
         self.assertEqual(page["facts"], BRIEF)
@@ -774,6 +796,7 @@ class ExplainerTests(unittest.TestCase):
             lambda item: item.update(key="explainer:other"),
             lambda item: item["facts"].update(stories=2),
             lambda item: item["facts"].update(registries=["opensky"]),
+            lambda item: item["facts"].update(hypotheses=["a guess about the flight"]),
             lambda item: item["sections"].pop(),
             lambda item: item.update(written_at="2027-01-01T00:00:00Z"),
         ):
@@ -781,6 +804,25 @@ class ExplainerTests(unittest.TestCase):
             change(broken)
             with self.subTest(change=change), self.assertRaises(ValueError):
                 weekly.validate_explainer(broken, as_of=receipt["at"])
+
+    def test_explainer_prose_passes_the_checks_before_it_is_saved(self):
+        good = explainer_response()
+        text = json.loads(good["output"][1]["content"][0]["text"])["sections"][1]["text"]
+        for change, rule in (
+            (text.replace("explains how", "explains \u2014 how"), "dash"),
+            (text.replace(", or a database typo", " & a database typo"), "dash or an ampersand"),
+            (text.replace("could each pair", "each pair"), "without a hedge"),
+            (text + " The reading was a decoding glitch.", "Unlisted cause"),
+            (text + " Seven registries were checked.", "Unsupported number"),
+            (text + " One such address belonged to a Boeing near Toronto.", "Unlisted name"),
+            (text + " Registration C-GABC is one example.", "Unlisted name"),
+        ):
+            data = json.loads(good["output"][1]["content"][0]["text"])
+            data["sections"][1]["text"] = change
+            broken = deepcopy(good)
+            broken["output"][1]["content"][0]["text"] = json.dumps(data)
+            with self.subTest(rule=rule), self.assertRaisesRegex(ValueError, rule):
+                worker.explainer(broken, EXPLAINER, BRIEF, NOW)
 
     def test_run_writes_the_explainer_once_and_records_its_key(self):
         ledger, snapshot = ordinary()
@@ -812,7 +854,8 @@ class ExplainerTests(unittest.TestCase):
 
     def test_crash_after_the_raw_explainer_response_recovers_without_spending(self):
         ledger, snapshot = ordinary()
-        add_mismatches(ledger, ["c01234", "c01235", "c01236"])
+        # A fourth story arrived after the request; the page keeps the count it was written from.
+        add_mismatches(ledger, ["c01234", "c01235", "c01236", "c01237"])
         public.write_json_atomic(self.path / "ledger.json", ledger, private=True)
         public.write_json_atomic(self.path / "snapshot.json", snapshot, private=True)
         config = {
@@ -829,9 +872,13 @@ class ExplainerTests(unittest.TestCase):
         )
         public.write_json_atomic(
             run_weekly.explainer_file(directory, EXPLAINER).with_suffix(".response.json"),
-            {"response": explainer_response(), "at": NOW},
+            {"response": explainer_response(), "at": NOW, "brief": BRIEF},
             private=True,
         )
+        planned = run_weekly.plan(config, count=1, at=NOW)
+        self.assertEqual(planned["explainers"], [{"key": EXPLAINER, "state": "recover"}])
+        weeks = sum(entry.get("reserved_usd", 0) for entry in planned["weeks"])
+        self.assertAlmostEqual(planned["reserved_usd"], weeks)
         researcher = Mock(
             return_value=({"research": worker.dossier(response(), snapshot["events"][0], NOW)}, "researched")
         )

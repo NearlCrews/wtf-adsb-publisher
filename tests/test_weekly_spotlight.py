@@ -626,6 +626,44 @@ class RankTests(unittest.TestCase):
         ]
         self.assertEqual([row["event"]["id"] for row in weekly.rank(rows)], ["interesting", "newer", "older"])
 
+    def test_a_kind_picked_in_the_last_four_weeks_waits_while_another_remains(self):
+        first_week = [
+            ranked("tcas_ra", 40, "2026-09-22T12:00:00Z", "tcas-1", 0.5),
+            ranked("circling", 30, "2026-09-23T12:00:00Z", "circling-1", 0.25),
+        ]
+        ledger = kind_ledger(("circling", "2026-09-01T12:00:00Z", "approved", False))
+        self.assertEqual(weekly.picked_kinds(ledger, "2026-09-21"), set())
+        pick = weekly.rank(first_week, picked=weekly.picked_kinds(ledger, "2026-09-21"))[0]
+        self.assertEqual(pick["event"]["id"], "tcas-1")
+        ledger["records"].append(
+            {
+                "state": "approved",
+                "evidence": {"kind": "tcas_ra", "observation": {"start_utc": "2026-09-22T12:00:00Z"}},
+                "editorial": {"weekly_spotlight": {"week_start": "2026-09-21"}},
+            }
+        )
+        second_week = [
+            ranked("tcas_ra", 40, "2026-09-29T12:00:00Z", "tcas-2", 0.5),
+            ranked("descending_spiral", 42, "2026-09-30T12:00:00Z", "spiral", 0.25),
+        ]
+        picked = weekly.picked_kinds(ledger, "2026-09-28")
+        self.assertEqual(picked, {"tcas_ra"})
+        self.assertEqual([row["event"]["id"] for row in weekly.rank(second_week, picked=picked)], ["spiral"])
+        # With no other candidate, the repeated kind is still the week's pick.
+        self.assertEqual(weekly.rank(second_week[:1], picked=picked)[0]["event"]["id"], "tcas-2")
+        # The fourth week after the pick still passes it over, the fifth may pick it again,
+        # and a withdrawn pick never counts.
+        self.assertEqual(weekly.picked_kinds(ledger, "2026-10-19"), {"tcas_ra"})
+        self.assertEqual(weekly.picked_kinds(ledger, "2026-10-26"), set())
+        ledger["records"][-1]["state"] = "withdrawn"
+        self.assertEqual(weekly.picked_kinds(ledger, "2026-09-28"), set())
+
+    def test_an_exceptional_story_wins_over_a_newer_ordinary_one_of_equal_rarity_and_interest(self):
+        exceptional = ranked("circling", 30, "2026-09-29T12:00:00Z", "exceptional", 0.5)
+        exceptional["score"]["exceptional"] = True
+        ordinary = ranked("circling", 30, "2026-10-01T12:00:00Z", "ordinary", 0.5)
+        self.assertEqual(weekly.rank([ordinary, exceptional])[0]["event"]["id"], "exceptional")
+
     def test_rarity_counts_live_stories_in_the_ninety_days_before_the_week_ends(self):
         ledger = kind_ledger(
             ("tcas_ra", "2026-07-07T00:00:00Z", "approved", False),
@@ -637,6 +675,74 @@ class RankTests(unittest.TestCase):
         )
         ledger["records"].append({"state": "approved", "evidence": {"kind": "tcas_ra"}, "editorial": {}})
         self.assertEqual(weekly.kind_counts(ledger, "2026-10-05"), {"tcas_ra": 2})
+
+
+class ProseCheckTests(unittest.TestCase):
+    HYPOTHESES = ("a stale registry entry", "a database typo")
+
+    def issues(self, text, **options):
+        return weekly.prose_issues([text], **{"hypotheses": self.HYPOTHESES, **options})
+
+    def test_dashes_and_ampersands_are_refused(self):
+        self.assertEqual(self.issues("A plain sentence about addresses, registries, and broadcasts."), [])
+        for text in (
+            "Addresses \u2014 one per airframe.",
+            "Addresses \u2013 one per airframe.",
+            "Addresses & registries.",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(self.issues(text), ["Research prose has a dash or an ampersand"])
+
+    def test_a_listed_hypothesis_needs_a_hedge(self):
+        self.assertEqual(self.issues("A stale registry entry could pair an address with another type."), [])
+        self.assertEqual(
+            self.issues("A stale registry entry pairs an address with another type."),
+            ["A listed hypothesis is stated without a hedge"],
+        )
+
+    def test_a_causeless_kind_names_no_cause(self):
+        self.assertEqual(
+            self.issues("A database typo may pair an address with another type.", causeless=True), []
+        )
+        for text in (
+            "The reading was a decoding glitch.",
+            "The registry is wrong about this address.",
+            "Interference caused the reading.",
+            "A database typo may reflect a decoding error.",
+        ):
+            with self.subTest(text=text):
+                issues = self.issues(text, causeless=True)
+                self.assertTrue(issues and issues[0].startswith("Unlisted cause"), issues)
+        # A cause noun is a cause only where the kind names none.
+        self.assertEqual(self.issues("The reading was a decoding glitch."), [])
+
+    def test_numbers_come_from_the_facts_or_the_readings(self):
+        self.assertEqual(
+            self.issues("The aircraft reported 651 knots across three reports.", numbers=(651.2, 3)), []
+        )
+        self.assertEqual(self.issues("Each one of the addresses is 24 bits long.", numbers=(24,)), [])
+        for text in ("The system dates from 1993.", "Seven registries list it.", "It reached 652 knots."):
+            with self.subTest(text=text):
+                issues = self.issues(text, numbers=(651.2, 3))
+                self.assertTrue(issues and issues[0].startswith("Unsupported number"), issues)
+
+    def test_names_come_from_the_vocabulary(self):
+        names = {"canada", "icao", "state"}
+        self.assertEqual(
+            self.issues("ICAO gives each State a block, and Canada assigns them.", names=names), []
+        )
+        for text in (
+            "The Boeing listed for one address flew past.",
+            "Registration C-GABC carried the address.",
+            "Air Toronto operates from Toronto.",
+            "John Smith keeps the register.",
+            "Cessna Aircraft builds light airplanes.",
+        ):
+            with self.subTest(text=text):
+                issues = self.issues(text, names=names)
+                self.assertTrue(issues and issues[0].startswith("Unlisted name"), issues)
+        # Without a vocabulary, as for weekly research, names are not checked.
+        self.assertEqual(self.issues("The Boeing listed for one address flew past."), [])
 
 
 if __name__ == "__main__":

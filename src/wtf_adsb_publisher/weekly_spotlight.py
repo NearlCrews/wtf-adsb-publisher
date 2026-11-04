@@ -19,8 +19,14 @@ SCOPES = {
 
 
 # The weekly pick favors kinds the site seldom covers: a kind with n stories observed in
-# the RARITY_DAYS before the week ends has rarity 1 / (1 + n).
+# the RARITY_DAYS before the week ends has rarity 1 / (1 + n). A kind picked in the
+# REPEAT_WEEKS before a week is passed over while another candidate remains.
 RARITY_DAYS = 90
+REPEAT_WEEKS = 4
+# Researched prose that reaches a page writes no em or en dash and no ampersand.
+DASH_OR_AMPERSAND = re.compile("[\u2012-\u2015&]")
+# "one" is a pronoun as often as a number ("each one", "one of"), so it is never refused.
+ANY_TEXT_NUMBERS = frozenset({1.0})
 # One-off explainers: a page written once, when enough stories of its kinds exist, that
 # each such story links to. `allocation` is the ICAO allocation State of the stories'
 # addresses; `minimum` is how many live stories it waits for.
@@ -33,6 +39,10 @@ EXPLAINERS = {
         "allocation": "CA",
         "allocation_name": "Canada",
         "minimum": 3,
+        # The 24 of a 24-bit address, which the page cannot explain without.
+        "numbers": (24,),
+        # Capitalized words the page may use besides the site's fixed vocabulary and its sources.
+        "names": ("Canada", "Canadian", "International", "Civil", "Aviation", "Organization", "State"),
     }
 }
 
@@ -85,21 +95,36 @@ def rarity(count):
     return 1 / (1 + count)
 
 
-def rank(candidates):
-    """Weekly candidates by rarity, then interest, then the latest observation first.
+def picked_kinds(ledger, start):
+    """The kinds of the weekly picks in the REPEAT_WEEKS before the week of `start`."""
+    since = (datetime.fromisoformat(start) - timedelta(weeks=REPEAT_WEEKS)).date().isoformat()
+    kinds = set()
+    for record in ledger.get("records", []):
+        if not isinstance(record, dict) or record.get("state") == "withdrawn":
+            continue
+        picked = ((record.get("editorial") or {}).get("weekly_spotlight") or {}).get("week_start")
+        if isinstance(picked, str) and since <= picked < start:
+            kinds.add((record.get("evidence") or {}).get("kind"))
+    return kinds
 
-    Each row carries its kind's `rarity` and the curation `score`; the published priority,
-    evidence, depth, and the type's recent coverage settle the remaining ties.
+
+def rank(candidates, *, picked=frozenset()):
+    """Weekly candidates by rarity, then interest, then published priority, then the latest
+    observation first.
+
+    Each row carries its kind's `rarity` and the curation `score`; evidence, depth, and the
+    type's recent coverage settle the remaining ties. A candidate of a `picked` kind
+    (picked_kinds) is left out unless no other candidate remains.
     """
     from .public_events import _instant
 
-    return sorted(
+    ranked = sorted(
         candidates,
         key=lambda row: (
             -row["rarity"],
             -row["score"]["interest"],
-            -_instant(row["event"]["observed_start"]).timestamp(),
             -row["score"]["exceptional"],
+            -_instant(row["event"]["observed_start"]).timestamp(),
             -row["score"]["evidence"],
             -row["score"]["depth"],
             row["recent_picks"],
@@ -107,6 +132,7 @@ def rank(candidates):
             row["event"]["id"],
         ),
     )
+    return [row for row in ranked if row["event"]["kind"] not in picked] or ranked
 
 
 def explains(key, kind, address):
@@ -118,6 +144,82 @@ def explains(key, kind, address):
         return False
     found = reference.allocation(address)
     return bool(found) and found["country"] == spec["allocation"]
+
+
+def prose_issues(texts, *, hypotheses=(), causeless=False, numbers=(), names=None):
+    """Why researched prose cannot be saved; [] when it can.
+
+    Each sentence of `texts` writes no em or en dash and no ampersand, names a listed
+    hypothesis only in a sentence the story checks count as hedged (public_prose.HEDGE),
+    and states no number other than `numbers` (and "one"). With `causeless`, as for
+    public_prose.CAUSELESS_KINDS, a sentence names no cause: the listed hypotheses aside,
+    a cause noun or a verdict on a source is refused, and so is a causal verb outside a
+    hedged sentence that offers a hypothesis. With `names`, a set of lowercase words, every
+    capitalized word must be among them or in public_prose.FIXED_VOCABULARY; a sentence's
+    first word passes when the word after it is lowercase.
+    """
+    from . import public_prose as prose
+
+    allowed = {float(abs(value)) for value in numbers} | {float(round(abs(value))) for value in numbers}
+    allowed |= ANY_TEXT_NUMBERS
+    listed = [re.compile(r"(?<![\w-])" + re.escape(item) + r"(?![\w-])", re.I) for item in hypotheses if item]
+    vocabulary = None if names is None else set(names) | prose.FIXED_VOCABULARY
+    issues = []
+    for text in texts:
+        for start, end in prose.sentence_spans(text):
+            sentence = text[start:end].strip()
+            if DASH_OR_AMPERSAND.search(sentence):
+                issues.append("Research prose has a dash or an ampersand")
+            hedged = bool(prose.HEDGE.search(sentence))
+            offered = [pattern for pattern in listed if pattern.search(sentence)]
+            if offered and not hedged:
+                issues.append("A listed hypothesis is stated without a hedge")
+            if causeless:
+                blanked = sentence
+                for pattern in offered:
+                    blanked = pattern.sub(" ", blanked)
+                if offered and hedged:
+                    cause = prose.CAUSE_NOUNS.search(blanked) or (
+                        prose.NAMED_SOURCE.search(blanked) and prose.SOURCE_VERDICT.search(blanked)
+                    )
+                    if cause:
+                        issues.append(f"Unlisted cause ({cause.group().lower()})")
+                elif cause := prose._causeless_issue(blanked):
+                    issues.append(cause.rstrip(": "))
+            for value in _text_numbers(sentence):
+                if value not in allowed:
+                    issues.append(f"Unsupported number ({value:g})")
+            if vocabulary is not None:
+                issues.extend(_name_issues(sentence, vocabulary))
+    return list(dict.fromkeys(issues))
+
+
+def _text_numbers(sentence):
+    """The numbers a sentence states, in digits or in words."""
+    from . import public_prose as prose
+
+    for match in prose.DIGITS.finditer(sentence):
+        yield abs(float(match["n"].replace(",", "")))
+    for match in prose.SPELLED.finditer(sentence):
+        if match["w"].lower() not in {"a", "an"}:
+            yield float(prose._spelled_value(match["w"]))
+
+
+def _name_issues(sentence, vocabulary):
+    """Capitalized words outside `vocabulary`: a type, registration, operator, person, or place."""
+    words = list(re.finditer(r"[A-Za-z][A-Za-z0-9'-]*", sentence))
+    issues = []
+    for index, match in enumerate(words):
+        token = match.group()
+        if not token[0].isupper():
+            continue
+        following = words[index + 1].group() if index + 1 < len(words) else ""
+        if index == 0 and not following[:1].isupper() and not re.search(r"\d", token):
+            continue
+        parts = [part.lower() for part in re.split(r"[-']", token) if part]
+        if any(part not in vocabulary and part.removesuffix("s") not in vocabulary for part in parts):
+            issues.append(f"Unlisted name ({token})")
+    return issues
 
 
 def nominate(report, as_of):
@@ -275,6 +377,14 @@ def _limitations(limitations):
     return [public._text(item, 600) for item in limitations]
 
 
+def explainer_hypotheses(key):
+    """The hypotheses the stories of explainer `key` list (story_facts.HYPOTHESES), in order."""
+    from . import story_facts
+
+    items = [item for kind in EXPLAINERS[key]["kinds"] for item in story_facts.HYPOTHESES.get(kind, ())]
+    return list(dict.fromkeys(items))
+
+
 EXPLAINER_FIELDS = (
     "key",
     "path",
@@ -314,6 +424,10 @@ def validate_explainer(raw, *, as_of=None):
         or not 1 <= len(facts["hypotheses"]) <= 8
     ):
         raise ValueError("Invalid explainer facts")
+    if as_of and facts["hypotheses"] != explainer_hypotheses(raw["key"]):
+        # A new page lists its stories' hypotheses as they stand. A saved page keeps the
+        # list it was written from, so a later change to the stories' list cannot refuse it.
+        raise ValueError("Explainer hypotheses must be the ones its stories list")
     sources = _sources(raw["sources"], as_of)
     ids = {source["id"] for source in sources}
     sections = raw["sections"]

@@ -83,10 +83,13 @@ APPLIES_TO = {
 }
 INSTRUCTIONS = """Research one observation for a weekly aviation article and explain the event.
 The input names the kind of event and its headline readings. Write two or three
-sections with scope "event" that say what this kind of event is, how its readings
-are produced, and why the given readings make this instance stand out from the
-usual case. Write reason as one sentence that gives readers a concrete fact from
-these sections, so they know what they will learn about this kind of event.
+sections with scope "event" that say what this kind of event is, how such readings
+are reported, and why the given readings make this instance stand out from the
+usual case. In these sections and the reason, state no number other than the given
+readings. When the event is causeless, never say what caused, produced, or explains
+its readings. Offer an explanation from hypotheses only with a hedge such as "could"
+or "may". Write reason as one sentence that gives readers a concrete fact from these
+sections, so they know what they will learn about this kind of event.
 
 You may add one section with scope "type" that gives the aircraft type in at most
 one sentence; the publisher keeps only its first sentence. Leave it out when the
@@ -185,7 +188,8 @@ def existing_pick(ledger, start, *, at, snapshot=None):
 
 def candidates(ledger, snapshot, start):
     """Only released, still eligible evidence, ranked by weekly.rank: the kind's rarity in the
-    ledger's last 90 days to the week's end, then interest, then recency."""
+    ledger's last 90 days to the week's end, then interest, priority, and recency, with kinds
+    picked in the last four weeks passed over while another candidate remains."""
     public.validate_snapshot(snapshot)
     if snapshot["publication_status"] != "published":
         raise ValueError("Weekly nominees must come from the published snapshot")
@@ -246,7 +250,7 @@ def candidates(ledger, snapshot, start):
                 "rarity": weekly.rarity(counts[event["kind"]]),
             }
         )
-    return weekly.rank(ranked)
+    return weekly.rank(ranked, picked=weekly.picked_kinds(ledger, start))
 
 
 def reason_openings(snapshot, *, limit=13):
@@ -290,12 +294,18 @@ def _with_search(encoded):
     return explain.checked_request_data(json.dumps(body, allow_nan=False).encode())
 
 
+def causeless(kind):
+    """Whether a story of `kind` names no cause for its readings (public_prose.CAUSELESS_KINDS)."""
+    return kind in public_prose.CAUSELESS_KINDS or kind.startswith(public_prose.CAUSELESS_PREFIXES)
+
+
 def event_brief(event):
     """The kind of event and its headline readings: no identity, time, place, or prose."""
     measured = {item["key"]: item for item in event.get("measurements", ())}
     return {
         "kind": event["kind"],
         "kind_name": story_facts.KIND_TITLES.get(event["kind"], event["kind"].replace("_", " ")),
+        "causeless": causeless(event["kind"]),
         "measurements": [
             {name: measured[key][name] for name in ("label", "value", "unit")}
             for key in event.get("headline_measurements", ())
@@ -454,10 +464,29 @@ def dossier(response, event, at):
         if source["id"] in covered
     ]
     described = "this kind of event and the type in general" if scoped else "the type"
+    reason = raw.get("reason") or default_reason(event, event_led=scoped)
+    if scoped:
+        brief = event_brief(event)
+        texts = [
+            reason,
+            *(
+                str(section[key])
+                for section in sections
+                if section["scope"] == "event_background"
+                for key in ("heading", "text")
+            ),
+        ]
+        if issues := weekly.prose_issues(
+            texts,
+            hypotheses=story_facts.HYPOTHESES.get(event["kind"], ()),
+            causeless=brief["causeless"],
+            numbers=[item["value"] for item in brief["measurements"]],
+        ):
+            raise ValueError("Weekly research prose fails its checks: " + "; ".join(issues[:6]))
     research = {
         "week_start": weekly.week_start(event["observed_start"]).isoformat(),
         "evidence_version": event["evidence_version"],
-        "reason": raw.get("reason") or default_reason(event),
+        "reason": reason,
         "sections": [
             {key: section[key] for key in ("heading", "text", "scope", "sources")} for section in sections
         ],
@@ -478,10 +507,13 @@ consulted, and the possible explanations the stories list. Write two to four
 sections that explain how ICAO 24-bit aircraft addresses are allocated to States and
 assigned to registered aircraft, how a registry entry can disagree with an aircraft's
 own broadcasts, and how each listed explanation could produce such a disagreement.
-Treat every listed explanation as a possibility, never as the cause of any story. Use
-the story count and the registry names exactly as given. Name no aircraft type,
-registration, operator, person, or place other than the allocation State. Write
-reason as one sentence that gives readers a concrete fact from the sections.
+Treat every listed explanation as a possibility, never as the cause of any story, and
+name one only in a sentence with a hedge such as "could" or "may". Use the story count
+and the registry names exactly as given, and state no other number except the 24 of a
+24-bit address. Never call a reading an error, a glitch, or a fault, and never say a
+registry or database is wrong. Name no aircraft type, registration, operator, person,
+or place other than the allocation State. Write reason as one sentence that gives
+readers a concrete fact from the sections.
 
 Use your web search tool before writing. You have ONE search call: write a query that
 finds official pages from aviation authorities, registries, or standards bodies about
@@ -521,8 +553,9 @@ def explainer_brief(ledger, key):
     count = 0
     for record in ledger["records"]:
         evidence, automation = record.get("evidence") or {}, record.get("automation") or {}
+        # Only published stories count: a pending one may never be released.
         if (
-            record.get("state") == "withdrawn"
+            record.get("state") != "approved"
             or automation.get("blocked")
             or automation.get("suspended")
             or (record.get("editorial") or {}).get("synthetic")
@@ -533,11 +566,10 @@ def explainer_brief(ledger, key):
         )
     if count < spec["minimum"]:
         return None
-    hypotheses = [item for kind in spec["kinds"] for item in story_facts.HYPOTHESES.get(kind, ())]
     return {
         "stories": count,
         "registries": sorted(enrichment_rules.REGISTRIES),
-        "hypotheses": list(dict.fromkeys(hypotheses)),
+        "hypotheses": weekly.explainer_hypotheses(key),
     }
 
 
@@ -563,6 +595,17 @@ def explainer(response, key, brief, at):
     raw, sources, sections = _cited(response, "Explainer research", at, scoped=False)
     if not isinstance(raw.get("reason"), str) or not raw["reason"].strip():
         raise ValueError("An explainer needs a one-sentence summary")
+    texts = [raw["reason"], *(str(section[key]) for section in sections for key in ("heading", "text"))]
+    named = [spec["allocation_name"], *spec["names"], *brief["registries"]]
+    named += [source[key] for source in sources for key in ("publisher", "title")]
+    if issues := weekly.prose_issues(
+        texts,
+        hypotheses=brief["hypotheses"],
+        causeless=True,
+        numbers=[brief["stories"], len(brief["registries"]), len(brief["hypotheses"]), *spec["numbers"]],
+        names={word.lower() for value in named for word in re.findall(r"[A-Za-z]+", str(value))},
+    ):
+        raise ValueError("Explainer prose fails its checks: " + "; ".join(issues[:6]))
     page = {
         "key": key,
         "path": spec["path"],
@@ -595,7 +638,14 @@ def one_off(database, topic_key, brief, *, key_file, requester=request, save_res
     if paid is None:
         return None, "budget_exhausted"
     response, at = paid
-    return {"page": explainer(response, topic_key, brief, at), "response": response, "at": at}, "researched"
+    # The receipt keeps the brief sent, so a page rebuilt from it states the facts it was written from.
+    receipt = {
+        "page": explainer(response, topic_key, brief, at),
+        "response": response,
+        "at": at,
+        "brief": brief,
+    }
+    return receipt, "researched"
 
 
 def add_explainer(ledger, page):
@@ -611,8 +661,11 @@ def add_explainer(ledger, page):
     return True
 
 
-def default_reason(event):
-    """The reason a dossier gives when its research supplied none."""
+def default_reason(event, *, event_led=False):
+    """The reason a dossier gives when its research supplied none; an event-led dossier's
+    says why the event stands out."""
+    if event_led:
+        return "Official sources describe this kind of event and what sets these readings apart from the usual case."
     name = event["aircraft"].get("type_description") or event["aircraft"].get("type_code") or "aircraft"
     return f"Official sources describe the {name}'s design and history."
 

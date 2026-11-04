@@ -260,7 +260,11 @@ def rebound(dossier, event, at, check_private):
     """The old dossier bound to the new event's evidence, validated and privacy-checked."""
     research = {**deepcopy(dossier["research"]), "evidence_version": event["evidence_version"]}
     if not isinstance(research.get("reason"), str) or MATCH_PHRASE.search(research["reason"]):
-        research["reason"] = weekly.default_reason(event)
+        event_led = any(
+            isinstance(section, dict) and section.get("scope") == "event_background"
+            for section in research.get("sections", ())
+        )
+        research["reason"] = weekly.default_reason(event, event_led=event_led)
     research = weekly_spotlight.validate_research(research, event, as_of=at)
     check_private(json.dumps(research, ensure_ascii=False).encode())
     return research
@@ -312,10 +316,14 @@ def plan(config, *, count=13, at=None, carry_over=None):
     explainers = []
     for key in weekly_spotlight.EXPLAINERS:
         entry = {"key": key}
+        saved = explainer_file(state / "weekly", key)
         if key in ledger.get("explainers", {}):
             entry["state"] = "written"
         elif (brief := weekly.explainer_brief(ledger, key)) is None:
             entry["state"] = "waiting_for_stories"
+        elif saved.exists() or saved.with_suffix(".response.json").exists():
+            # A saved receipt is attached without a new request.
+            entry["state"] = "recover"
         else:
             cost = weekly.request_reservation(len(weekly.explainer_request_data(key, brief)))
             entry.update(state="research", stories=brief["stories"], reserved_usd=round(cost, 6))
@@ -429,7 +437,9 @@ def recover_explainer(path, key, brief, check_private):
         receipt = public.read_json(path)
     elif raw_path.exists():
         receipt = public.read_json(raw_path)
-        receipt["page"] = weekly.explainer(receipt["response"], key, brief, receipt["at"])
+        # The brief that was sent, so the page's facts match its prose.
+        receipt["brief"] = receipt.get("brief") or brief
+        receipt["page"] = weekly.explainer(receipt["response"], key, receipt["brief"], receipt["at"])
     else:
         return None
     weekly_spotlight.validate_explainer(receipt["page"], as_of=public.now_utc())
@@ -481,8 +491,8 @@ def write_explainers(config, status, *, writer, at, check_private, budget):
                     key,
                     brief,
                     key_file=config["weekly_key_file"],
-                    save_response=lambda value, path=path: public.write_json_atomic(
-                        path.with_suffix(".response.json"), value, private=True
+                    save_response=lambda value, path=path, brief=brief: public.write_json_atomic(
+                        path.with_suffix(".response.json"), {**value, "brief": brief}, private=True
                     ),
                     **({"budget": budget} if budget is not None else {}),
                 )
