@@ -5,8 +5,10 @@ versions, and evidence contract versions are tracked separately.
 
 ## Unreleased
 
-### Added
-
+- `identity_conflict` scores 75, the story bar, so it fills a slot only when
+  nothing else does; the earlier 70 could never publish.
+- A finding that was never type-checked keeps its selection hold; only a
+  failed or outdated check goes stale 30 days after the first sighting.
 - Stories for six engine kinds: winds aloft days, foreign military listings,
   operator first sightings, aerobatic practice, unlisted addresses, and
   racetrack orbits. Each has its wording, facts, limitation lines, and writer

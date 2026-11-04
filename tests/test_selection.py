@@ -201,7 +201,7 @@ class EmitterAndFixedScores(unittest.TestCase):
     def test_fixed_scores_come_from_the_registry(self):
         for kind, score in (
             ("holding_stack", 78),
-            ("identity_conflict", 70),
+            ("identity_conflict", 75),
             ("winds_aloft_day", 80),
             ("foreign_military", 80),
             ("unregistered_address", 75),

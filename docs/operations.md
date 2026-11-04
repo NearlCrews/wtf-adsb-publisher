@@ -220,8 +220,9 @@ sighting the selection report gives `registry_lag`. After that it gives
 `type_check_stale` until a registry answer dated at least seven days after the
 first sighting arrives. A registry that lists the address blocks the story
 (`registry_lists_address`), and this kind's check never goes stale. For every
-other kind, a pending type check stops holding a story 30 days after the first
-sighting and then counts as unavailable. Identity stories about a listed type
+other kind, a failed or outdated type check stops holding a story 30 days after
+the first sighting and then counts as unavailable; a finding that was never
+checked keeps holding, since the absence of a check says nothing. Identity stories about a listed type
 refuse a direct ADS-B ground speed the type cannot reach, or a pressure altitude
 more than 2,000 ft above its ceiling (`reading_implausible`); a published story
 that fails this gate is suspended at the next pass. Aerobatic practice tagged

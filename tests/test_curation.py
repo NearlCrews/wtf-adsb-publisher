@@ -879,6 +879,17 @@ class RegistryLagHold(unittest.TestCase):
         identity = pending_event(first_seen=now - 31 * 86400)
         self.assertNotIn("type_uncorroborated", [rule for rule, _ in curation.gates(identity, now=now)])
 
+    def test_a_finding_never_checked_keeps_holding(self):
+        # No check at all says nothing about the type, so the hold stays however old the finding is.
+        now = 1_700_000_000.0
+        for kind in ("type_speed_mismatch", "seasonal_speed_record", "first_type_here"):
+            with self.subTest(kind=kind):
+                event = pending_event(first_seen=now - 150 * 86400, kind=kind)
+                del event["evidence"]["type_check"]
+                self.assertFalse(curation.stale_check(event, now))
+                self.assertEqual(curation.type_hold(event, now=now)[0], "type_check_pending")
+                self.assertNotIn("type_uncorroborated", [rule for rule, _ in curation.gates(event, now=now)])
+
     def test_an_unlisted_address_check_never_goes_stale(self):
         now = 1_700_000_000.0
         event = unregistered_event(first_seen=now - 40 * 86400, checked_at=None, state="pending")
