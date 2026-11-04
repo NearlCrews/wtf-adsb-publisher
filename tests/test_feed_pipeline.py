@@ -551,6 +551,35 @@ class RunnerTests(unittest.TestCase):
                 self.runner.main()
 
 
+class SubjectlessMediaTests(unittest.TestCase):
+    def test_a_subjectless_story_gets_its_day_summary_and_no_track_map(self):
+        import story_fixtures as fixtures
+
+        raw = fixtures.kind_event("winds_aloft_day")
+        self.assertTrue(raw["evidence"]["pattern_samples"])
+        evidence = fixtures.packet(raw)
+        editorial = {
+            **public_events.PLACEHOLDER_EDITORIAL,
+            "title": "Strong winds aloft on 20 September 2026",
+        }
+        event = {**public_events._projection(evidence, editorial), "id": "winds"}
+        ledger = {"records": [{"id": "winds", "automation": {"source": raw}}]}
+        spec = importlib.util.spec_from_file_location("publisher_runner", ROOT / "tools/run_autopilot.py")
+        runner = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runner)
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = runner.generate_media({"snapshot_id": "s", "events": [event]}, ledger, Path(directory))
+            item = json.loads(manifest.read_text())["events"]["winds"]
+            self.assertEqual(item["kind"], "observation-summary")
+            self.assertNotIn("replaySrc", item)
+            image = (Path(directory) / item["src"].lstrip("/")).read_text()
+        self.assertIn("Day summary", image)
+        self.assertIn("Strong winds aloft", image)
+        self.assertEqual(item["alt"], "Strong winds aloft on 20 September 2026.")
+        for name in (evidence["aircraft"]["registration"], evidence["aircraft"]["type_code"]):
+            self.assertNotIn(name, image)
+
+
 class BudgetMigrationTests(unittest.TestCase):
     def test_failed_migration_keeps_new_destination_paused(self):
         for failure in ("schema", "metadata"):

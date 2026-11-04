@@ -1,5 +1,8 @@
 """Story slugs: /stories/{type}-{registration}[-{phenomenon}]-{day}-{mon}-{year}/.
 
+A subjectless story (a day of winds aloft) has no aircraft subject, so its slug is its
+phenomenon and date alone: /stories/winds-aloft-5-nov-2026/, then winds-aloft-2-5-nov-2026.
+
 Ghost keeps a bare slug unique across every post and page, drafts included, and
 answers a taken slug with a silent "-2". New slugs therefore end with a day, a
 three-letter month and a four-digit year: the third character from the end is a
@@ -75,6 +78,8 @@ RESERVED_LEAVES = frozenset({"page", "rss", "amp"})
 SUBJECT_KINDS = kinds.where(slug_subject=True)
 # Two aircraft share the story; the subject names both types and no identifier.
 PAIR_KINDS = kinds.where(pair=True)
+# Stories about a day rather than an aircraft: the slug is the phenomenon and the date.
+SUBJECTLESS = kinds.where(subjectless=True)
 # Balloons are followed by their callsign rather than a registration.
 CALLSIGN_FIRST = kinds.where(callsign_first=True)
 # Each kind's slug phenomenon and its short form, in their recorded order.
@@ -261,6 +266,9 @@ def slug(facts, observed_start, *, taken=frozenset()):
     """The /stories/{slug}/ segment for one story's facts; never reuses a taken slug."""
     kind, types, identifiers, code, seed = _subject(facts)
     date = date_segment(observed_start)
+    taken = {item for item in taken if isinstance(item, str)}
+    if kind in SUBJECTLESS:
+        return _checked(_subjectless(PHENOMENA[kind][0], date, taken))
     order = (
         ("callsign", "registration", "hex") if kind in CALLSIGN_FIRST else ("registration", "callsign", "hex")
     )
@@ -291,7 +299,6 @@ def slug(facts, observed_start, *, taken=frozenset()):
                 return candidate
         return build(True, True, True, marker=marker)[-MAX_LENGTH:].lstrip("-")
 
-    taken = {item for item in taken if isinstance(item, str)}
     candidate = fitted()
     if candidate in taken:
         moment = _instant(observed_start)
@@ -301,6 +308,19 @@ def slug(facts, observed_start, *, taken=frozenset()):
         mark = hashlib.sha256(f"{seed}|{date}|{counter}".encode()).hexdigest()[:4]
         candidate = fitted(mark)
         counter += 1
+    return _checked(candidate)
+
+
+def _subjectless(term, date, taken):
+    """The phenomenon and date, numbered from 2 while the slug is taken."""
+    candidate, number = _join(term, date), 1
+    while candidate in taken:
+        number += 1
+        candidate = _join(term, str(number), date)
+    return candidate
+
+
+def _checked(candidate):
     if not is_new_slug(candidate) or is_old_slug(candidate) or ghost_post_slug(candidate) != candidate:
         raise ValueError("Generated slug left the dated story scheme")
     return candidate

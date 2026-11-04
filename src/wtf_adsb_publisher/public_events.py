@@ -85,6 +85,10 @@ PUBLIC_EVIDENCE_FIELDS = (
 OPTIONAL_EVIDENCE_FIELDS = ("priority_evidence", "watchlist", "participants")
 # Each kind's public section (data/topics.json routes every topic to one), in registry order.
 KIND_TYPES = kinds.table("section")
+# Stories about a day rather than an aircraft: their events name no aircraft and say so.
+SUBJECTLESS_KINDS = kinds.where(subjectless=True)
+# Other stories of the same registration an event links to (autopilot.related_stories).
+MAX_RELATED = 5
 READINGS = {
     "gs": ("Ground speed", "kn"),
     "tas": ("True airspeed", "kn"),
@@ -642,6 +646,34 @@ def _article_path(value):
 def article_slug(path):
     """The bare Ghost slug of a story path."""
     return STORY_PATH.fullmatch(_article_path(path))["slug"]
+
+
+def _related(raw, own_path):
+    """Other stories of the same registration, newest first, as the theme lists them.
+
+    Each is {"path", "title", "observed_start"}; none is the event's own page. The list
+    sits outside the evidence and content versions, so a change in it is no revision.
+    """
+    if not isinstance(raw, list) or not 1 <= len(raw) <= MAX_RELATED:
+        raise ValueError("Invalid related stories")
+    result = []
+    for item in raw:
+        require_keys(item, ("path", "title", "observed_start"))
+        result.append(
+            {
+                "path": _article_path(item["path"]),
+                "title": _text(item["title"], 160),
+                "observed_start": utc(item["observed_start"]),
+            }
+        )
+    paths = [item["path"] for item in result]
+    if own_path in paths or len(set(paths)) != len(paths):
+        raise ValueError("Invalid related stories")
+    if [item["observed_start"] for item in result] != sorted(
+        (item["observed_start"] for item in result), key=lambda value: -_instant(value).timestamp()
+    ):
+        raise ValueError("Related stories must be newest first")
+    return result
 
 
 def ghost_post_id(value):
@@ -1618,11 +1650,14 @@ def project(packet, editorial, *, strict=True):
         "title": _text(editorial.get("title"), 160),
         "summary": _text(editorial.get("summary"), 1000),
         "article_path": _article_path(editorial.get("article_path")),
-        "aircraft": _identity(packet.get("aircraft", {})),
+        # A subjectless story's aircraft are examples; the event names none of them.
+        "aircraft": {} if kind in SUBJECTLESS_KINDS else _identity(packet.get("aircraft", {})),
         "measurements": _measurements(packet, strict=strict),
         "references": _references(packet.get("links", [])),
         "synthetic": synthetic,
     }
+    if kind in SUBJECTLESS_KINDS:
+        result["subjectless"] = True
     result["source"], result["limitations"] = _context(packet)
     if len(result["limitations"]) > MAX_LIMITATIONS:
         raise ValueError("Too many public limitations")
@@ -1654,6 +1689,8 @@ def project(packet, editorial, *, strict=True):
     if editorial.get("context") is not None:
         # story_facts.context() returns exactly the public routing; any other key is refused.
         result["context"] = _routing(editorial["context"])
+    if editorial.get("related") is not None:
+        result["related"] = _related(editorial["related"], result["article_path"])
     if editorial.get("weekly_spotlight") is not None:
         from .weekly_spotlight import check_source, validate_research
 
@@ -1988,6 +2025,16 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
                 "headline_measurements": list(stories.HEADLINE_MEASUREMENTS[event["kind"]]),
             }
         )
+    # A related story links only to a page this export lists, so no link leads to a story
+    # that is unpublished, withdrawn, or not yet released.
+    listed = {event["article_path"] for event in events}
+    for event in events:
+        if "related" in event:
+            kept = [item for item in event["related"] if item["path"] in listed]
+            if kept:
+                event["related"] = kept
+            else:
+                event.pop("related")
     # Stable UUID tie-breaks do not change when prose or publication times change.
     events.sort(key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["id"]))
     days = _daily_counts(events, ledger["available_from"], as_of)
@@ -2543,6 +2590,10 @@ EVENT_OPTIONAL = (
     # The measurement keys a card leads with (stories.HEADLINE_MEASUREMENTS); an export
     # always writes them, and an older snapshot without them still validates.
     "headline_measurements",
+    # Other stories of the same registration (_related), and the flag a subjectless kind's
+    # events carry.
+    "related",
+    "subjectless",
 )
 
 
@@ -2639,6 +2690,13 @@ def _snapshot_event(event, mode, status, as_of):
     )
     if _identity(event["aircraft"]) != event["aircraft"]:
         raise ValueError("Aircraft identity must be normalized")
+    subjectless = event["kind"] in SUBJECTLESS_KINDS
+    if ("subjectless" in event) != subjectless or (
+        subjectless and (event["subjectless"] is not True or event["aircraft"])
+    ):
+        raise ValueError("Only a subjectless kind's event names no aircraft, and it names none")
+    if "related" in event and _related(event["related"], event["article_path"]) != event["related"]:
+        raise ValueError("Related stories must be normalized")
     if not isinstance(event["source"], str) or event["source"] not in POSITION_SOURCES:
         raise ValueError("Unknown received source")
     if not isinstance(event["limitations"], list) or len(event["limitations"]) > MAX_LIMITATIONS:
@@ -2745,6 +2803,8 @@ def validate_snapshot(snapshot):
         ids.add(event["id"])
         paths.add(_article_path(event["article_path"]))
         _snapshot_event(event, mode, snapshot["publication_status"], as_of)
+    if any(item["path"] not in paths for event in snapshot["events"] for item in event.get("related", ())):
+        raise ValueError("A related story must be an event in the same snapshot")
     ordered = sorted(
         snapshot["events"], key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["id"])
     )

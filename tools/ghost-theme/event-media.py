@@ -391,7 +391,35 @@ def speed_image(event, finding):
     return {"kind": "measurement-chart", "alt": title, "caption": caption, "svg": svg(title, caption, body)}
 
 
+def _wrapped(value, width):
+    """Words of `value` in lines of at most `width` characters (a longer word keeps its own line)."""
+    words, lines = value.split(), []
+    while words:
+        line = words.pop(0)
+        while words and len(line) + len(words[0]) + 1 <= width:
+            line += " " + words.pop(0)
+        lines.append(line)
+    return lines
+
+
+def day_summary_image(event):
+    """A subjectless story's card: its headline and date. The aircraft such a story names are
+    examples, so the card shows no type, registration, or track."""
+    headline = event["title"]
+    title = headline if headline.endswith((".", "!", "?")) else headline + "."
+    caption = "A summary of one UTC day of readings from many aircraft; no single aircraft is its subject."
+    body = text(70, 86, "Day summary", 44, weight=600)
+    body += '<path d="M70 138H1130M70 645H1130" stroke="#aebcaf" stroke-width="3"/>'
+    for index, line in enumerate(_wrapped(headline, 28)[:4]):
+        body += text(70, 260 + index * 84, line, 68, weight=600)
+    body += text(70, 728, observed_date(event) or "Date not recorded", 44, weight=600)
+    body += text(1130, 728, "Many aircraft", 30, anchor="end", color=COLORS["muted"])
+    return {"kind": "observation-summary", "alt": title, "caption": caption, "svg": svg(title, caption, body)}
+
+
 def summary_image(event):
+    if event.get("subjectless"):
+        return day_summary_image(event)
     aircraft = event["aircraft"]
     code = aircraft.get("type_code", "Aircraft record")
     description = aircraft.get("type_description", "Aircraft type was not recorded")
@@ -407,13 +435,7 @@ def summary_image(event):
     body = text(70, 86, "Aircraft record", 44, weight=600)
     body += '<path d="M70 138H1130M70 645H1130" stroke="#aebcaf" stroke-width="3"/>'
     body += text(70, 332, code, 120, weight=600)
-    words, lines = description.split(), []
-    while words:
-        line = words.pop(0)
-        while words and len(line) + len(words[0]) + 1 <= 42:
-            line += " " + words.pop(0)
-        lines.append(line)
-    for index, line in enumerate(lines[:3]):
+    for index, line in enumerate(_wrapped(description, 42)[:3]):
         body += text(74, 428 + index * 54, line, 38)
     body += text(70, 728, aircraft.get("registration", "Tail number not recorded"), 44, weight=600)
     body += text(1130, 728, "Metadata match", 30, anchor="end", color=COLORS["muted"])

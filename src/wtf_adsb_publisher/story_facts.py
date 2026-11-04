@@ -278,6 +278,9 @@ SHAPE_FACTS = {
 # What qualified an aerobatic-style episode (aer.basis), in story words.
 AEROBATIC_BASIS_WORDS = {"type": "an aerobatic type", "turn_rate": "a sustained hard turn"}
 RECORD_KINDS = kinds.where(record=True)
+# Stories about a day rather than an aircraft: the aircraft they name are examples, so they
+# take no type profile and route to no type, airframe, or operator page.
+SUBJECTLESS_KINDS = kinds.where(subjectless=True)
 # A display title for each published kind, for a story that names an earlier one with no title.
 KIND_TITLES = {
     "above_rated_altitude": "Above the rated ceiling",
@@ -725,6 +728,9 @@ def _limits(packet, projection):
 
 def _identity(packet, projection):
     source = projection.get("aircraft") if isinstance(projection, dict) else None
+    if packet.get("kind") in SUBJECTLESS_KINDS:
+        # The public event names no aircraft; the story still names its example by the packet.
+        source = None
     source = source if isinstance(source, dict) else _dict(packet, "aircraft")
     registration = identifier(source.get("registration"), IDENTIFIERS["registration"])
     parts = reference.registration_parts(registration) if registration else None
@@ -1407,8 +1413,9 @@ def _descent_class(code, entry):
 
 
 def _repeat(facts, related, observed):
-    """The latest earlier story of this registration inside REPEAT_DAYS (repeat.previous): its
-    title, or its kind's display title when it has none, and its date; and its path."""
+    """The latest story of this registration from an earlier day inside REPEAT_DAYS
+    (repeat.previous): its kind's display title, never its headline, so the fact carries no
+    figure to source, and its date; and its path. A story of the same day is a sibling."""
     if not observed:
         return
     latest = None
@@ -1421,9 +1428,9 @@ def _repeat(facts, related, observed):
         match = ARTICLE_PATH.fullmatch(path)
         if not match or not story_urls.is_new_slug(match["slug"]):
             continue
-        if not 0 <= (observed.date() - date.fromisoformat(day)).days <= REPEAT_DAYS:
+        if not 1 <= (observed.date() - date.fromisoformat(day)).days <= REPEAT_DAYS:
             continue
-        title = _text(item.get("title"), 120) or KIND_TITLES.get(kind)
+        title = KIND_TITLES.get(kind)
         if title and (latest is None or (day, path) > (latest[0], latest[1])):
             latest = (day, path, kind, title)
     if latest:
@@ -1765,7 +1772,7 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
     entities: {entity_rules.cache_key(entry link, association): cached Wikidata answer}, as the
              host's entities.json holds them.
     related: [{"date", "kind", "path", "title"}] for the same registration's earlier stories,
-             as the autopilot gives them.
+             as the autopilot gives them (autopilot.related_stories).
     """
     if not isinstance(packet, dict):
         raise ValueError("Story facts need an evidence packet")
@@ -1894,7 +1901,8 @@ def build(packet, projection=None, *, place=None, airport=None, profiles=None, e
     if kind == "stratospheric_balloon":
         _balloon_spike(facts, packet)
     _participants(facts, packet, projection, start=2 if kind == "winds_aloft_day" else 1)
-    _profiles(facts, sources, profiles, entry, kind)
+    if kind not in SUBJECTLESS_KINDS:
+        _profiles(facts, sources, profiles, entry, kind)
     result = {
         "version": FACTS_VERSION,
         "kind": kind,
@@ -1948,6 +1956,9 @@ def context(facts, *, place=None):
     """
     values = fact_map(facts)
     topic, section = topic_for(facts.get("kind"))
+    if facts.get("kind") in SUBJECTLESS_KINDS:
+        # The aircraft a subjectless story names are examples, not its subject.
+        values = {key: item for key, item in values.items() if not key.startswith(("id.", "op.", "reg."))}
     kind_type = values.get("id.type")
     type_value = None
     if kind_type and kind_type.get("slug") and not kind_type.get("group"):

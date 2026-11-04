@@ -1727,6 +1727,108 @@ class NewKindEvidenceTests(unittest.TestCase):
             event.pop("headline_measurements")
         self.assertEqual(public.validate_snapshot(redigest(older)), older)
 
+    def test_a_subjectless_event_names_no_aircraft(self):
+        event = projection(winds_packet())
+        self.assertEqual(event["aircraft"], {})
+        self.assertIs(event["subjectless"], True)
+        self.assertNotIn("subjectless", projection(packet()))
+        add(self.ledger, evidence=winds_packet(), metadata=editorial(path=EVENT_PATH))
+        add(self.ledger, key="episode-b", evidence=packet())
+        good = published(self.ledger)
+        by_kind = {item["kind"]: item for item in good["events"]}
+        self.assertEqual(by_kind["winds_aloft_day"]["aircraft"], {})
+        self.assertIs(by_kind["winds_aloft_day"]["subjectless"], True)
+        self.assertNotIn("subjectless", by_kind["circling"])
+        winds = good["events"].index(by_kind["winds_aloft_day"])
+        circling = good["events"].index(by_kind["circling"])
+
+        def redigest(value):
+            for item in value["events"]:
+                item["evidence_version"] = public.evidence_version(item)
+            value["snapshot_id"] = public._digest({k: v for k, v in value.items() if k != "snapshot_id"})
+            return value
+
+        for index, change in (
+            (winds, lambda item: item.update(aircraft={"registration": "N12345"})),
+            (winds, lambda item: item.pop("subjectless")),
+            (winds, lambda item: item.update(subjectless=1)),
+            (circling, lambda item: item.update(subjectless=True)),
+            (circling, lambda item: item.update(subjectless=False)),
+        ):
+            bad = deepcopy(good)
+            change(bad["events"][index])
+            with self.subTest(event=bad["events"][index]["kind"]), self.assertRaises(ValueError):
+                public.validate_snapshot(redigest(bad))
+
+    def test_related_stories_reach_the_snapshot_outside_the_evidence(self):
+        related = [
+            {
+                "path": story_path("earlier"),
+                "title": "An earlier story",
+                "observed_start": "2026-10-01T10:00:00Z",
+            },
+            {
+                "path": story_path("older"),
+                "title": "An older story",
+                "observed_start": "2026-09-30T10:00:00Z",
+            },
+        ]
+        for name, item in zip(("episode-earlier", "episode-older"), related, strict=True):
+            start = item["observed_start"]
+            end = start.replace("T10:00", "T10:10")
+            add(self.ledger, key=name, evidence=packet(start, end), metadata=editorial(path=item["path"]))
+        # A story not yet published is in the ledger but not in the export.
+        unreleased = story_path("unreleased")
+        add(self.ledger, key="episode-unreleased", metadata=editorial(path=unreleased), approved=False)
+        add(self.ledger, metadata=editorial(related=[{**related[0], "path": unreleased}, *related]))
+        good = published(self.ledger)
+        event = next(item for item in good["events"] if item["article_path"] == STORY_PATH)
+        self.assertEqual(event["related"], related)
+        # A review export lists every story, so it keeps the unreleased one too.
+        review = public.export_snapshot(self.ledger, mode="review", as_of=NOW)["events"]
+        self.assertEqual(
+            next(item for item in review if item["article_path"] == STORY_PATH)["related"][0]["path"],
+            unreleased,
+        )
+        # With none of its related stories exported, an event lists none.
+        for record in self.ledger["records"][:2]:
+            public.set_review_state(self.ledger, record["id"], "withdrawn", at=NOW)
+        alone = published(self.ledger)
+        self.assertNotIn(
+            "related", next(item for item in alone["events"] if item["article_path"] == STORY_PATH)
+        )
+        plain = public._projection(packet(), editorial())
+        self.assertNotIn("related", plain)
+        self.assertEqual(event["evidence_version"], plain["evidence_version"])
+        self.assertEqual(public.content_version(event), public.content_version(plain))
+        too_many = [{**related[0], "path": story_path(f"story-{index}")} for index in range(6)]
+        refused = (
+            [{**related[0], "path": "/about/"}],
+            [{**related[0], "path": STORY_PATH}],
+            [{**related[0], "kind": "vintage"}],
+            [{**related[0], "observed_start": "yesterday"}],
+            [related[0], related[0]],
+            list(reversed(related)),
+            too_many,
+            [],
+            related[0],
+        )
+        for bad in refused:
+            with self.subTest(related=bad), self.assertRaises(ValueError):
+                public.put_event(
+                    public.new_ledger("2026-09-20"), "episode-x", packet(), editorial(related=bad)
+                )
+        index = good["events"].index(event)
+        absent = [{**related[0], "path": story_path("absent")}]
+        for bad in (*refused, [{**related[0], "title": "  Spaced  "}], absent):
+            tampered = deepcopy(good)
+            tampered["events"][index]["related"] = bad
+            tampered["snapshot_id"] = public._digest(
+                {k: v for k, v in tampered.items() if k != "snapshot_id"}
+            )
+            with self.subTest(snapshot=bad), self.assertRaises(ValueError):
+                public.validate_snapshot(tampered)
+
     def test_headline_keys_are_public_measurement_keys(self):
         known = (
             set(public.READINGS)

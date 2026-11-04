@@ -1289,6 +1289,28 @@ class NewKindFacts(unittest.TestCase):
         self.assertEqual(ids["p.1.type"]["value"], ids["id.type"]["value"])
         self.assertEqual(ids["p.2.m.median_gs_kn"]["unit"], "kn")
 
+    def test_a_subjectless_story_routes_to_no_aircraft_and_takes_no_type_profile(self):
+        packet = packet_for("winds_aloft_day", winds_aloft=WINDS)
+        profiles = fixtures.profile("A21N", "Airbus built the A321neo with new engines.")
+        built = story_facts.build(packet, profiles=profiles)
+        self.assertFalse([item for item in built["facts"] if item["id"].startswith("tp.")])
+        self.assertEqual(
+            {key: built["context"][key] for key in ("type", "registration_slug", "operator", "country")},
+            {"type": None, "registration_slug": None, "operator": None, "country": None},
+        )
+        self.assertEqual(built["context"]["topic"], "winds-aloft")
+        # The example aircraft are still named in the facts the story is written from, though
+        # the public event names none.
+        projected = story_facts.build(packet, fixtures.projection(packet))
+        self.assertEqual(fixtures.projection(packet)["aircraft"], {})
+        self.assertEqual(values(projected)["id.registration"], values(built)["id.registration"])
+        self.assertEqual(values(projected)["p.1.registration"]["value"], packet["aircraft"]["registration"])
+        # A story with a subject still reads its profile.
+        vintage = fixtures.packet(fixtures.kind_event("vintage"))
+        code = vintage["aircraft"]["type_code"]
+        listed = story_facts.build(vintage, profiles=fixtures.profile(code, "A sourced sentence about it."))
+        self.assertTrue(listed["context"]["type"])
+
     def test_a_modelled_wind_is_a_cited_reference(self):
         wind = {"speed_kn": 140.0, "direction_deg": 260.0, "source": "open-meteo", "hour": "2026-11-05T23:00"}
         built = story_facts.build(packet_for("winds_aloft_day", winds_aloft={**WINDS, "wind_250_hpa": wind}))
@@ -1467,16 +1489,19 @@ class NewKindFacts(unittest.TestCase):
                 "title": "Too old",
             },
         ]
-        ids = values(story_facts.build(packet, related=related))
+        built = story_facts.build(packet, related=related)
+        ids = values(built)
         self.assertTrue(start > "2026-09-01")
-        self.assertEqual(ids["repeat.previous"]["value"], "A descent on 1 September 2026")
+        # The kind's display title names the earlier story, never its headline, so the fact
+        # carries no figure the checker would have to source.
+        self.assertEqual(ids["repeat.previous"]["value"], "Rapid descent on 1 September 2026")
         self.assertEqual(ids["repeat.previous"]["basis"], "derived")
         self.assertEqual(ids["repeat.previous"]["dates"], ["2026-09-01"])
         self.assertEqual(ids["repeat.path"]["value"], "/stories/n8704-descent-1-sep-2026/")
-        # Without a story title, the kind's display title names it.
-        untitled = [{key: value for key, value in related[1].items() if key != "title"}]
-        built = story_facts.build(packet, related=untitled)
-        self.assertEqual(values(built)["repeat.previous"]["value"], "Rapid descent on 1 September 2026")
+        numbered = [{**related[1], "title": "N8704 drops 9,000 feet a minute"}]
+        self.assertEqual(
+            values(story_facts.build(packet, related=numbered))["repeat.previous"], ids["repeat.previous"]
+        )
         check = public_prose.prose_checker(built)
         self.assertEqual(check("Its previous story was on 1 September 2026."), [])
         for bad in (
@@ -1484,6 +1509,8 @@ class NewKindFacts(unittest.TestCase):
             related[2:],
             [{**related[1], "path": "https://example.com/x"}],
             [{**related[1], "date": "soon"}],
+            # A story of the same day is a sibling, not a repeat.
+            [{**related[1], "date": start}],
         ):
             with self.subTest(related=bad):
                 self.assertNotIn("repeat.previous", values(story_facts.build(packet, related=bad)))

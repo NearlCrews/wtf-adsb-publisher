@@ -516,8 +516,9 @@ class StoryInputs(NamedTuple):
 NO_INPUTS = StoryInputs()
 
 
-def _story_facts(packet, points, inputs=NO_INPUTS):
-    """The story facts for a packet, with the place and nearest public airport of `points`."""
+def _story_facts(packet, points, inputs=NO_INPUTS, related=()):
+    """The story facts for a packet, with the place and nearest public airport of `points`
+    and the earlier stories of its registration (related_stories)."""
     return story_facts.build(
         packet,
         public._projection(packet, public.PLACEHOLDER_EDITORIAL),
@@ -525,7 +526,77 @@ def _story_facts(packet, points, inputs=NO_INPUTS):
         airport=_airport(points, packet.get("kind")),
         profiles=inputs.profiles,
         entities=inputs.entities,
+        related=related,
     )
+
+
+def related_stories(ledger, packet, key):
+    """The live stories of the packet's registration observed by its start and at most
+    story_facts.REPEAT_DAYS before it, newest first, as
+    [{"date", "kind", "path", "title", "observed_start"}].
+
+    The story's own record (episode `key`) is never among them. A subjectless story's
+    aircraft are examples, so it has none and is none. story_facts.build reads the list for
+    repeat.previous; editorial() keeps the newest public.MAX_RELATED for the page.
+    """
+    registration = (packet.get("aircraft") or {}).get("registration")
+    start = _quiet(lambda: public.instant(packet["observation"]["start_utc"]))
+    if packet.get("kind") in public.SUBJECTLESS_KINDS or not registration or start is None:
+        return []
+    found = []
+    for record in ledger.get("records", []):
+        evidence = record.get("evidence") or {}
+        editorial_ = record.get("editorial") or {}
+        if (
+            record.get("episode_key") == key
+            or _quiet(_removed, record, default=True)
+            or (record.get("automation") or {}).get("suspended")
+            or evidence.get("kind") in public.SUBJECTLESS_KINDS
+            or (evidence.get("aircraft") or {}).get("registration") != registration
+        ):
+            continue
+        began = observation_start(record)
+        path = _quiet(public._article_path, editorial_.get("article_path"))
+        title = _quiet(public._text, editorial_.get("title"), 160)
+        observed = _quiet(public.utc, (evidence.get("observation") or {}).get("start_utc"))
+        if (
+            began is None
+            or path is None
+            or title is None
+            or observed is None
+            or began > start
+            or (start.date() - began.date()).days > story_facts.REPEAT_DAYS
+        ):
+            continue
+        found.append(
+            {
+                "date": began.date().isoformat(),
+                "kind": evidence.get("kind"),
+                "path": path,
+                "title": title,
+                "observed_start": observed,
+                "at": began.timestamp(),
+            }
+        )
+    found.sort(key=lambda item: (item["at"], item["path"]), reverse=True)
+    return [{key_: value for key_, value in item.items() if key_ != "at"} for item in found]
+
+
+def _page_related(related):
+    """The newest related stories as the public event lists them, or None for none."""
+    listed = [
+        {key: item[key] for key in ("path", "title", "observed_start")}
+        for item in (related or ())[: public.MAX_RELATED]
+    ]
+    return listed or None
+
+
+def _with_related(metadata, related):
+    """`metadata` with its related list set from related_stories() output, or dropped."""
+    metadata = {key: value for key, value in metadata.items() if key != "related"}
+    if listed := _page_related(related):
+        metadata["related"] = listed
+    return metadata
 
 
 def editorial_inputs(ledger, packet, key, *, points=None, inputs=NO_INPUTS, recent_until=None, facts=None):
@@ -540,21 +611,28 @@ def editorial_inputs(ledger, packet, key, *, points=None, inputs=NO_INPUTS, rece
     datetime) when a caller, such as the AI writer, compares against later stories too.
     """
     others = [record for record in ledger.get("records", []) if record.get("episode_key") != key]
+    related = related_stories(ledger, packet, key)
     if facts is None:
-        facts = _story_facts(packet, points, inputs)
+        facts = _story_facts(packet, points, inputs, related)
     # Withdrawn records keep their Ghost drafts, so their slugs stay taken.
     taken = frozenset(slug for record in others if (slug := _quiet(_slug, record)))
     until = recent_until or public.instant(packet["observation"]["start_utc"])
-    return {"recent": recent_stories(others, until, inputs.used), "facts": facts, "taken": taken}
+    return {
+        "recent": recent_stories(others, until, inputs.used),
+        "facts": facts,
+        "taken": taken,
+        "related": related,
+    }
 
 
-def editorial(packet, key, *, recent=None, facts=None, taken=None, exceptional=None):
+def editorial(packet, key, *, recent=None, facts=None, taken=None, exceptional=None, related=None):
     """Deterministic story text, routing and a stable story URL; publication never waits for AI.
 
     Callers pass editorial_inputs(); without them the story has no place
     or type background. The URL comes from the facts and never from the prose.
     `exceptional` False marks exception-grade evidence the publisher treats as
-    ordinary, so the public record does not present it as an exception.
+    ordinary, so the public record does not present it as an exception. `related`
+    (related_stories) gives the page its newest other stories of the registration.
 
     Raises editorial.StoryUnavailable, a ValueError, when not even the engine's
     plain record passes the story checks; the record is then not written, and
@@ -577,7 +655,7 @@ def editorial(packet, key, *, recent=None, facts=None, taken=None, exceptional=N
     }
     if _ordinary(packet, exceptional):
         metadata["priority"] = "ordinary"
-    return metadata
+    return _with_related(metadata, related)
 
 
 def written(ledger, packet, key, *, points=None, inputs=NO_INPUTS, exceptional=None, facts=None):
@@ -1072,7 +1150,7 @@ def refresh_prose(ledger, at, *, inputs=NO_INPUTS):
         try:
             packet, key = record["evidence"], record["episode_key"]
             points = record_points(record)
-            facts = _story_facts(packet, points, inputs)
+            facts = _story_facts(packet, points, inputs, related_stories(ledger, packet, key))
             if story.get("version", 0) >= engine.PROSE_POLICY:
                 # New facts can require a qualification even when cited values stay the same.
                 if facts["digest"] == story.get("facts_digest") or _holds(story, facts):
@@ -1082,11 +1160,12 @@ def refresh_prose(ledger, at, *, inputs=NO_INPUTS):
             fresh, facts = written(ledger, packet, key, points=points, inputs=inputs, facts=facts)
             replacement = _carried(record["editorial"], fresh, facts)["story"]
             metadata = {
-                **record["editorial"],
+                **{name: value for name, value in record["editorial"].items() if name != "related"},
                 "title": replacement["headline"],
                 "summary": replacement["dek"],
                 "story": replacement,
                 "context": fresh["context"],
+                **({"related": fresh["related"]} if "related" in fresh else {}),
             }
             public.put_event(ledger, key, packet, metadata, at=at)
             revised += 1
@@ -1227,6 +1306,7 @@ def _reprojection(ledger, record, source, inputs=NO_INPUTS):
             metadata.update(title=story["headline"], summary=story["dek"], story=story)
             result["rewritten"] = True
         metadata["context"] = engine.context(editorial_kwargs["facts"])
+        metadata = _with_related(metadata, editorial_kwargs["related"])
     # A wording change keeps the saved packet; only the projection of it moved.
     result.update(packet=packet if changed else record["evidence"], editorial=metadata)
     public._projection(result["packet"], metadata)

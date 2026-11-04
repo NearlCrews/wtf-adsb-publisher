@@ -1267,6 +1267,14 @@ class WriterTests(unittest.TestCase):
         self.assertFalse([item for item in calls[0]["data"]["facts"] if item["id"].startswith("tp.")])
         self.assertEqual(weekly_research.load_profiles(self.state), {})
 
+    def test_a_subjectless_story_researches_no_type(self):
+        aircraft = {"type_code": "C172", "type_description": "Cessna 172R Skyhawk"}
+        self.assertEqual(
+            writer._family({"evidence": {"kind": "vintage", "aircraft": aircraft}})["slug"], "cessna-172"
+        )
+        # A winds day's aircraft are examples, so the story waits for no type research.
+        self.assertIsNone(writer._family({"evidence": {"kind": "winds_aloft_day", "aircraft": aircraft}}))
+
     def test_request_carries_public_facts_the_kind_note_and_closed_choices(self):
         item = candidate(1, "rapid_descent", -8000)
         packet = autopilot.evidence(item["source"], item["interval"])

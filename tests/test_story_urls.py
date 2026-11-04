@@ -145,6 +145,28 @@ class SlugSchemeTests(unittest.TestCase):
             self.assertRegex(slug, urls.NEW_SLUG)
             self.assertFalse(urls.is_old_slug(slug))
 
+    def test_subjectless_slug_is_kind_and_date(self):
+        facts = {
+            "kind": "winds_aloft_day",
+            "facts": [{"id": "wind.day", "value": "2026-11-05", "basis": "telemetry"}],
+            "digest": "abc",
+        }
+        self.assertEqual(urls.slug(facts, "2026-11-05T14:00:00Z"), "winds-aloft-5-nov-2026")
+        self.assertEqual(
+            urls.slug(facts, "2026-11-05T14:00:00Z", taken={"winds-aloft-5-nov-2026"}),
+            "winds-aloft-2-5-nov-2026",
+        )
+        self.assertEqual(
+            urls.slug(
+                facts, "2026-11-05T14:00:00Z", taken={"winds-aloft-5-nov-2026", "winds-aloft-2-5-nov-2026"}
+            ),
+            "winds-aloft-3-5-nov-2026",
+        )
+        # The example aircraft a winds story names never reach its slug.
+        built = fixtures.facts(fixtures.kind_event("winds_aloft_day"))
+        self.assertTrue(urls.slug(built, START).startswith("winds-aloft-"))
+        self.assertEqual(urls.slug(built, START), "winds-aloft-27-sep-2026")
+
     def test_same_type_pairs_name_the_type_once_and_unknown_kinds_stay_generic(self):
         pair = facts(
             kind="formation_flight",

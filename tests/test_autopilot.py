@@ -1243,6 +1243,86 @@ class StoryPublicationTests(unittest.TestCase):
         self.assertEqual(recent[0]["facts"], sorted(story["facts"]))
         self.assertTrue(recent[0]["facts"])
 
+    def test_related_stories_name_the_same_registration_inside_sixty_days(self):
+        def watched(identifier, age):
+            item = candidate(identifier, "watch_type", 1, day=-age)
+            item["source"]["evidence"]["aircraft"].update(t="B52", r="N3774")
+            return item
+
+        later = candidate(9, "vintage")
+        later["source"]["evidence"]["aircraft"]["r"] = "N3774"
+        packet = autopilot.evidence(later["source"], later["interval"])
+        for age, count in ((20, 1), (70, 0)):
+            with self.subTest(age=age):
+                ledger = public.new_ledger("2026-07-01")
+                autopilot.stage(ledger, [watched(1, age)], at=NOW)
+                (earlier,) = ledger["records"]
+                inputs = autopilot.editorial_inputs(ledger, packet, later["key"])
+                self.assertEqual(len(inputs["related"]), count)
+                values = story_facts.fact_map(inputs["facts"])
+                if not count:
+                    self.assertEqual(inputs["related"], [])
+                    self.assertNotIn("repeat.previous", values)
+                    self.assertNotIn("related", autopilot.editorial(packet, later["key"], **inputs))
+                    continue
+                start = earlier["evidence"]["observation"]["start_utc"]
+                self.assertEqual(
+                    inputs["related"],
+                    [
+                        {
+                            "date": start[:10],
+                            "kind": "watch_type",
+                            "path": earlier["editorial"]["article_path"],
+                            "title": earlier["editorial"]["title"],
+                            "observed_start": public.utc(start),
+                        }
+                    ],
+                )
+                # The fact names the earlier story by its kind, never by its headline.
+                self.assertEqual(values["repeat.previous"]["value"], "Watched type on 11 September 2026")
+                self.assertEqual(values["repeat.path"]["value"], earlier["editorial"]["article_path"])
+                metadata = autopilot.editorial(packet, later["key"], **inputs)
+                self.assertEqual(
+                    metadata["related"],
+                    [
+                        {
+                            "path": earlier["editorial"]["article_path"],
+                            "title": earlier["editorial"]["title"],
+                            "observed_start": public.utc(start),
+                        }
+                    ],
+                )
+                self.assertEqual(public._projection(packet, metadata)["related"], metadata["related"])
+                # A story is never related to itself, and a withdrawn story to none.
+                own = autopilot.editorial_inputs(ledger, earlier["evidence"], earlier["episode_key"])
+                self.assertEqual(own["related"], [])
+                earlier["state"] = "withdrawn"
+                self.assertEqual(autopilot.editorial_inputs(ledger, packet, later["key"])["related"], [])
+
+    def test_related_stories_keep_the_newest_five_and_skip_subjectless_stories(self):
+        ledger = public.new_ledger("2026-07-01")
+        items = []
+        for identifier in range(1, 8):
+            item = candidate(identifier, "watch_type", 1, day=-identifier)
+            item["source"]["evidence"]["aircraft"].update(t="B52", r="N3774")
+            items.append(item)
+        autopilot.stage(ledger, items, at=NOW)
+        later = candidate(9, "vintage")
+        later["source"]["evidence"]["aircraft"]["r"] = "N3774"
+        packet = autopilot.evidence(later["source"], later["interval"])
+        inputs = autopilot.editorial_inputs(ledger, packet, later["key"])
+        starts = [item["observed_start"] for item in inputs["related"]]
+        self.assertEqual(len(starts), 7)
+        self.assertEqual(starts, sorted(starts, reverse=True))
+        metadata = autopilot.editorial(packet, later["key"], **inputs)
+        self.assertEqual([item["observed_start"] for item in metadata["related"]], starts[:5])
+        # A winds story's example aircraft is not its subject: it neither has nor gives related stories.
+        winds = deepcopy(packet)
+        winds["kind"] = "winds_aloft_day"
+        self.assertEqual(autopilot.related_stories(ledger, winds, "winds"), [])
+        ledger["records"][0]["evidence"]["kind"] = "winds_aloft_day"
+        self.assertEqual(len(autopilot.related_stories(ledger, packet, later["key"])), 6)
+
     def test_a_pass_works_out_each_storys_fact_ids_once(self):
         autopilot.stage(self.ledger, [candidate(index) for index in (1, 2, 3)], at=NOW)
         records = self.ledger["records"]
@@ -1573,9 +1653,9 @@ class StoryPublicationTests(unittest.TestCase):
         seen = []
         story_facts, reprojection = autopilot._story_facts, autopilot._reprojection
 
-        def facts(packet, points, given=autopilot.NO_INPUTS):
+        def facts(packet, points, given=autopilot.NO_INPUTS, related=()):
             seen.append(("refresh", given))
-            return story_facts(packet, points, given)
+            return story_facts(packet, points, given, related)
 
         def reprojected(ledger, record, source, given=autopilot.NO_INPUTS):
             seen.append(("reproject", given))

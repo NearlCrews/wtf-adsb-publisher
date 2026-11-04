@@ -28,15 +28,23 @@ class Uncorrected(unittest.TestCase):
     def test_a_changed_field_is_still_a_correction(self):
         for field, before, after in (
             ("headline_measurements", ["gs"], ["gs", "alt_baro"]),
-            ("related", [], [{"path": "/stories/x/"}]),
             ("title", "A story", "Another story"),
         ):
             with self.subTest(field=field):
                 previous = {"a": event(**{field: before})}
                 self.assertFalse(receive.uncorrected(previous, {"a": event(**{field: after})}))
         # Dropping a field an earlier release had is a correction too.
-        self.assertFalse(receive.uncorrected({"a": event(related=[])}, {"a": event()}))
+        self.assertFalse(receive.uncorrected({"a": event(headline_measurements=["gs"])}, {"a": event()}))
         self.assertFalse(receive.uncorrected({"a": event()}, {}))
+
+    def test_a_related_story_list_never_corrects_an_event(self):
+        one = [{"path": "/stories/x/", "title": "X", "observed_start": "2026-11-01T00:00:00Z"}]
+        two = [*one, {"path": "/stories/y/", "title": "Y", "observed_start": "2026-10-30T00:00:00Z"}]
+        for before, after in ((one, two), (two, one), (one, None), (None, one)):
+            with self.subTest(before=before, after=after):
+                previous = event() if before is None else event(related=before)
+                current = event() if after is None else event(related=after)
+                self.assertTrue(receive.uncorrected({"a": previous}, {"a": current}))
 
 
 if __name__ == "__main__":

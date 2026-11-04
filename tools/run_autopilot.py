@@ -176,6 +176,9 @@ def generate_media(snapshot, ledger, destination, previous=None, *, seed=False, 
         finding = automatic.get("source", {})
         raw = finding.get("evidence", {})
         image = module.speed_image(event, finding) if event["kind"] == "outlier_gs" and finding else None
+        if event.get("subjectless"):
+            # A subjectless story's aircraft are examples: no track map, only its day summary.
+            image = module.summary_image(event)
         if image is None:
             points = raw.get("maneuver_samples") or raw.get("pattern_samples") or raw.get("track") or []
             parts = (

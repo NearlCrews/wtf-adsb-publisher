@@ -1025,7 +1025,10 @@ def _aircraft(record):
 
 
 def _family(record):
-    """The curated type a record's type research and profile cover, or None."""
+    """The curated type a record's type research and profile cover, or None. A subjectless
+    story's aircraft are examples, so it has none (story_facts adds no profile to it)."""
+    if (record.get("evidence") or {}).get("kind") in story_facts.SUBJECTLESS_KINDS:
+        return None
     aircraft = _aircraft(record)
     code, description = aircraft.get("type_code"), aircraft.get("type_description")
     if not isinstance(code, str) or not weekly_research.TYPE_CODE.fullmatch(code):
