@@ -24,6 +24,14 @@ CONTRACT_METRICS = {
     "median_ground_speed_kt": ("Median ground speed", "kt"),
     "max_altitude_ft": ("Highest altitude", "ft"),
     "response_rate_change_fpm": ("Vertical-rate change after the advisory", "ft/min"),
+    "span_nm": ("Largest distance across the practice area", "NM"),
+    "max_turn_rate_dps": ("Highest turn rate held for 20 seconds", "deg/s"),
+    "legs": ("Long reciprocal legs", "legs"),
+    "axis_heading_deg": ("Racetrack axis heading", "degrees"),
+    "lateral_spacing_nm": ("Spacing between the two lines", "NM"),
+    "line_repeat_nm": ("Largest offset of a leg from its line", "NM"),
+    "duration_s": ("Racetrack duration", "s"),
+    "runway_within_nm": ("Distance from the pattern center to the nearest mapped runway", "NM"),
 }
 # Public wording keeps every label distinct, writes nautical miles as NM and knots as kn.
 PUBLIC_LABELS = {
@@ -36,6 +44,9 @@ METRICS = {
     key: PUBLIC_LABELS.get(key, (label, UNIT_NAMES.get(unit, unit)))
     for key, (label, unit) in {**CONTRACT_METRICS, **maneuvers.METRICS}.items()
 }
+# Another aircraft's own measurements that no episode metric names: a day's median
+# ground speed for each participant in a winds-aloft day.
+PARTICIPANT_METRICS = {"median_gs_kn": ("Median ground speed for the UTC day", "kn")}
 # Episode metrics shown with their own timestamp or as a rule, not over the window.
 PEAK_METRICS = {"peak_rate_fpm": "peak_at_utc"}
 RULE_METRICS = {"threshold_fpm"}
@@ -140,6 +151,12 @@ CONTEXT_NOTES = {
     "archive_field_freshness_unknown": "These measurements come from saved archive tracks, which do not record how fresh each reported field was.",
     "refuelling_like": "One aircraft is a tanker type. The data cannot show whether fuel was transferred.",
     "aerotow_like": "A glider and another aircraft climbed together within 0.2 NM, as in an aerotow; the data cannot confirm a tow.",
+    "registry_gap": "The aircraft database lists no registration for this transmitting address. Registries lag new registrations, and some States publish none.",
+    "tanker_type": "The aircraft's listed type is a tanker. The data cannot show whether fuel was transferred.",
+    "military_flag": "The aircraft database flags this aircraft as military; the flag does not identify a mission or an operator.",
+    "airport_context": "The pattern was centered within 10 NM of a mapped runway, where holds and practice approaches are routine; the purpose is unconfirmed.",
+    # The engine records this as a tag from its go-around detector; older evidence keeps the flag.
+    "airport_maneuver_hypothesis": LIMITATIONS["airport_maneuver_hypothesis"],
 }
 # Kinds whose headline speed or position MLAT would estimate rather than receive.
 MLAT_ESTIMATE_KINDS = set(kinds.where(mlat_estimate=True))
@@ -223,6 +240,8 @@ def summary(raw):
         "rate_field": {"baro_rate", "geom_rate", "derived_baro_rate", "derived_geom_rate"},
         "state": set(STATE_MEANINGS),
         "anomaly_type": {"position_jump", "position_quality_drop"},
+        # What qualified an aerobatic-style episode: a listed aerobatic type, or a hard turn.
+        "basis": {"type", "turn_rate"},
     }.items():
         if isinstance(raw.get(key), str) and raw[key] in allowed:
             result[key] = raw[key]

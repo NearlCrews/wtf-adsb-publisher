@@ -1581,5 +1581,163 @@ class StoryContractTests(unittest.TestCase):
             public._projection(evidence, editorial(priority="exceptional"))
 
 
+WINDS = {
+    "day": "2026-10-03",
+    "east_addresses": 35,
+    "west_addresses": 33,
+    "east_median_kn": 560.0,
+    "west_median_kn": 380.0,
+    "east_quartiles_kn": [540.0, 575.0],
+    "west_quartiles_kn": [360.0, 395.0],
+    "asymmetry_kn": 180,
+    "altitude_floor_ft": 28000,
+}
+
+
+def winds_packet(**changes):
+    evidence = episode_packet(
+        "winds_aloft_day",
+        peak_rate_fpm=None,
+        median_rate_fpm=None,
+        threshold_fpm=None,
+        qualifying_duration_seconds=None,
+        qualifying_sample_count=None,
+        footprint_nm=None,
+    )
+    evidence["maneuver"] = {key: value for key, value in evidence["maneuver"].items() if value is not None}
+    evidence["winds_aloft"] = {**WINDS, **changes}
+    evidence["participants"] = [
+        {
+            "role": "member",
+            "icao_address": "a00001",
+            "source": "adsb_icao",
+            "measurements": {"median_gs_kn": 545.0},
+        }
+    ]
+    return evidence
+
+
+class NewKindEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.ledger = public.new_ledger("2026-09-20")
+
+    def test_the_new_kinds_carry_their_limitations(self):
+        stories = public.stories
+        expected = {
+            "winds_aloft_day": (
+                "Ground-speed differences by direction are consistent with winds aloft; the wind itself was not measured.",
+                "Open-Meteo values, when shown, are a model forecast for one grid cell, not an observation.",
+            ),
+            "foreign_military": (
+                stories.DATABASE_FLAG_CAVEAT,
+                "An address block names the State of registry; a re-registered aircraft can keep an old address.",
+            ),
+            "first_operator_here": (
+                "First in this collection's retained records; an operator designator in a callsign is a label "
+                "the crew enters, not a confirmed operator.",
+            ),
+            "aerobatic_practice": (stories.PATTERN_LIMITATION,),
+            "unregistered_address": (
+                "No registration was found in the registries the site consults on the dates shown; the aircraft "
+                "may be registered elsewhere.",
+            ),
+            "racetrack_orbit": (stories.PATTERN_LIMITATION,),
+        }
+        for kind, lines in expected.items():
+            with self.subTest(kind=kind):
+                self.assertEqual(public.KIND_LIMITATIONS[kind], lines)
+                limitations = projection(packet(kind=kind))["limitations"]
+                for line in lines:
+                    self.assertIn(line, limitations)
+
+    def test_a_winds_day_projects_its_medians_over_the_episode_window(self):
+        event = projection(winds_packet())
+        rows = keyed(event)
+        for key, value in (
+            ("asymmetry_kn", 180),
+            ("east_median_kn", 560.0),
+            ("west_median_kn", 380.0),
+            ("east_addresses", 35),
+            ("west_addresses", 33),
+        ):
+            with self.subTest(key=key):
+                row = rows[(key, "analysis-window")]
+                self.assertEqual(row["value"], value)
+                self.assertEqual(
+                    (row["start_utc"], row["end_utc"]), ("2026-10-03T23:56:00Z", "2026-10-03T23:58:00Z")
+                )
+        self.assertNotIn(public.WIND_ATTRIBUTION, event["limitations"])
+        (member,) = event["participants"]
+        self.assertEqual(
+            member["measurements"],
+            [
+                {
+                    "key": "median_gs_kn",
+                    "label": "Median ground speed for the UTC day",
+                    "value": 545.0,
+                    "unit": "kn",
+                }
+            ],
+        )
+        # Another kind never shows the block, and a modelled wind brings its attribution.
+        other = winds_packet()
+        other["kind"] = "formation_flight"
+        self.assertFalse({key for key, _scope in keyed(projection(other))} & set(public.WINDS_MEASUREMENTS))
+        windy = winds_packet(
+            wind_250_hpa={
+                "speed_kn": 140.0,
+                "direction_deg": 260.0,
+                "source": "open-meteo",
+                "hour": "2026-10-03T23:00",
+            }
+        )
+        self.assertIn(public.WIND_ATTRIBUTION, projection(windy)["limitations"])
+
+    def test_snapshot_events_carry_their_headline_measurements(self):
+        add(self.ledger, evidence=winds_packet(), metadata=editorial(path=EVENT_PATH))
+        add(self.ledger, key="episode-b", evidence=packet())
+        good = published(self.ledger)
+        by_kind = {event["kind"]: event for event in good["events"]}
+        self.assertEqual(
+            by_kind["winds_aloft_day"]["headline_measurements"],
+            ["asymmetry_kn", "east_median_kn", "west_median_kn", "east_addresses", "west_addresses"],
+        )
+        self.assertEqual(by_kind["circling"]["headline_measurements"], ["gs", "alt_baro"])
+        review = public.export_snapshot(self.ledger, mode="review", as_of=NOW)
+        self.assertTrue(all(event["headline_measurements"] for event in review["events"]))
+
+        def redigest(value):
+            value["snapshot_id"] = public._digest({k: v for k, v in value.items() if k != "snapshot_id"})
+            return value
+
+        for change in (
+            lambda event: event.update(headline_measurements=["gs"]),
+            lambda event: event.update(headline_measurements=["receiver_lat", "alt_baro"]),
+            lambda event: event.update(headline_measurements="gs"),
+            lambda event: event.update(headline_key_facts=["gs"]),
+        ):
+            bad = deepcopy(good)
+            change(bad["events"][0])
+            with self.subTest(event=bad["events"][0].get("headline_measurements")):
+                with self.assertRaises(ValueError):
+                    public.validate_snapshot(redigest(bad))
+        # Older snapshots without the list still validate.
+        older = deepcopy(good)
+        for event in older["events"]:
+            event.pop("headline_measurements")
+        self.assertEqual(public.validate_snapshot(redigest(older)), older)
+
+    def test_headline_keys_are_public_measurement_keys(self):
+        known = (
+            set(public.READINGS)
+            | set(public.EPISODE_MEASUREMENTS)
+            | set(public.PATTERN_MEASUREMENTS)
+            | set(public.WINDS_MEASUREMENTS)
+        )
+        for kind, keys in public.stories.HEADLINE_MEASUREMENTS.items():
+            with self.subTest(kind=kind):
+                self.assertLessEqual(set(keys), known)
+
+
 if __name__ == "__main__":
     unittest.main()

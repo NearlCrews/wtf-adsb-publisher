@@ -118,6 +118,14 @@ PATTERN_MEASUREMENTS = {
     "largest_gap_seconds": ("Largest sample gap", "s"),
 }
 EPISODE_MEASUREMENTS = episode_evidence.METRICS
+# A winds-aloft day's counts and medians (stories.winds_aloft), over the episode window.
+WINDS_MEASUREMENTS = {
+    "asymmetry_kn": ("Eastbound minus westbound median ground speed", "kn"),
+    "east_median_kn": ("Median eastbound ground speed", "kn"),
+    "west_median_kn": ("Median westbound ground speed", "kn"),
+    "east_addresses": ("Eastbound aircraft counted", "aircraft"),
+    "west_addresses": ("Westbound aircraft counted", "aircraft"),
+}
 # A peak is one report with its own time; a detection threshold is a rule, not a reading.
 PEAK_MEASUREMENTS = episode_evidence.PEAK_METRICS
 RULE_MEASUREMENTS = episode_evidence.RULE_METRICS
@@ -277,6 +285,7 @@ PARTICIPANT_MEASUREMENTS = {
         for key, value in EPISODE_MEASUREMENTS.items()
         if key not in PEAK_MEASUREMENTS and key not in RULE_MEASUREMENTS
     },
+    **episode_evidence.PARTICIPANT_METRICS,
 }
 # The wording stories.watchlist_summary() writes; every public watchlist block pins it.
 WATCHLIST_SOURCE = stories.WATCHLIST_SOURCE
@@ -400,6 +409,24 @@ KIND_LIMITATIONS = {
     "space_category": (EMITTER,),
     "special_use_code": (CODE_ALONE, SPECIAL_CODE),
     "special_squawk_7400": (SPECIAL_CODE,),
+    "winds_aloft_day": (
+        "Ground-speed differences by direction are consistent with winds aloft; the wind itself was not measured.",
+        "Open-Meteo values, when shown, are a model forecast for one grid cell, not an observation.",
+    ),
+    "foreign_military": (
+        stories.DATABASE_FLAG_CAVEAT,
+        "An address block names the State of registry; a re-registered aircraft can keep an old address.",
+    ),
+    "first_operator_here": (
+        "First in this collection's retained records; an operator designator in a callsign is a label the "
+        "crew enters, not a confirmed operator.",
+    ),
+    "aerobatic_practice": (stories.PATTERN_LIMITATION,),
+    "unregistered_address": (
+        "No registration was found in the registries the site consults on the dates shown; the aircraft may "
+        "be registered elsewhere.",
+    ),
+    "racetrack_orbit": (stories.PATTERN_LIMITATION,),
 }
 WATCHLIST_SCOPE = "A Plane Alert DB association is not evidence of the aircraft's operator on this flight or of anyone aboard."
 # What each kind's claim rests on; every basis carries its own caveat.
@@ -1046,6 +1073,18 @@ def _measurements(packet, *, strict=True):
         item["scope"] = "analysis-window"
         start, end = episode.get(prefix + "start_utc"), episode.get(prefix + "end_utc")
         measurements.append(_window(item, start, end, "Episode ends before it starts"))
+    winds = packet.get("winds_aloft") if packet.get("kind") == "winds_aloft_day" else None
+    if winds is not None:
+        if not isinstance(winds, dict):
+            raise ValueError("Invalid winds-aloft measurements")
+        for field, (label, unit) in WINDS_MEASUREMENTS.items():
+            item = {"key": field, "label": label, "value": _number(winds.get(field)), "unit": unit}
+            item["scope"] = "analysis-window"
+            measurements.append(
+                _window(
+                    item, episode.get("start_utc"), episode.get("end_utc"), "Episode ends before it starts"
+                )
+            )
     for field, label in EPISODE_TEXT.items():
         if field not in episode:
             continue
@@ -1367,6 +1406,10 @@ def _context(packet):
     sustained = rated.get("sustained") if isinstance(rated, dict) else None
     if isinstance(sustained, dict) and isinstance(sustained.get("wind"), dict):
         # The evidence card shows the modelled wind, so it carries the licence's attribution.
+        limitations.append(WIND_ATTRIBUTION)
+    winds = packet.get("winds_aloft") if kind == "winds_aloft_day" else None
+    if isinstance(winds, dict) and isinstance(winds.get("wind_250_hpa"), dict):
+        # The story may state the modelled 250 hPa wind, so it carries the attribution too.
         limitations.append(WIND_ATTRIBUTION)
     tags = _tags(packet)
     limitations.extend(episode_evidence.CONTEXT_NOTES[tag] for tag in tags)
@@ -1929,6 +1972,7 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
                 "revision": record["revision"],
                 **publication,
                 "publication_status": "published" if mode == "published" else "unpublished",
+                "headline_measurements": list(stories.HEADLINE_MEASUREMENTS[event["kind"]]),
             }
         )
     # Stable UUID tie-breaks do not change when prose or publication times change.
@@ -2343,6 +2387,11 @@ def _snapshot_measurement(item, as_of, kind=None):
         expected = (EPISODE_TEXT[key], "")
         if "at_utc" in item or ("start_utc" in item) != ("end_utc" in item):
             raise ValueError("Incomplete analysis window")
+    elif scope == "analysis-window" and key in WINDS_MEASUREMENTS and kind == "winds_aloft_day":
+        expected = WINDS_MEASUREMENTS[key]
+        _number(item["value"])
+        if "at_utc" in item or ("start_utc" in item) != ("end_utc" in item):
+            raise ValueError("Incomplete analysis window")
     elif scope == "analysis-window" and (key in PATTERN_MEASUREMENTS or _window_metric(key)):
         expected = PATTERN_MEASUREMENTS.get(key)
         if expected != (item["label"], item["unit"]) and _window_metric(key):
@@ -2478,6 +2527,9 @@ EVENT_OPTIONAL = (
     "context",
     "released_at",
     "content_revised_at",
+    # The measurement keys a card leads with (stories.HEADLINE_MEASUREMENTS); an export
+    # always writes them, and an older snapshot without them still validates.
+    "headline_measurements",
 )
 
 
@@ -2622,6 +2674,10 @@ def _snapshot_event(event, mode, status, as_of):
         _snapshot_priority(event)
     if event["kind"] in RATED_KINDS:
         _snapshot_rated(event)
+    if "headline_measurements" in event and event["headline_measurements"] != list(
+        stories.HEADLINE_MEASUREMENTS[event["kind"]]
+    ):
+        raise ValueError("Headline measurements must be the kind's list")
     if event["evidence_version"] != evidence_version(event):
         raise ValueError("Evidence version does not match its facts")
 

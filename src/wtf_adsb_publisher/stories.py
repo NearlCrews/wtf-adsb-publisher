@@ -53,6 +53,16 @@ PATTERN_FIELDS = {
     "orbit_center_drift_nm",
     "corridor_center_spread_nm",
     "shape_verified",
+    # Aerobatic-style practice and racetrack orbits (the engine's maneuver metrics).
+    "span_nm",
+    "max_turn_rate_dps",
+    "legs",
+    "leg_length_nm",
+    "axis_heading_deg",
+    "lateral_spacing_nm",
+    "line_repeat_nm",
+    "duration_s",
+    "runway_within_nm",
 }
 SOURCES = {
     "adsb_icao",
@@ -113,6 +123,30 @@ KIND_READINGS = {
         ),
     ).items()
 }
+# The measurements an evidence card leads with, at most five per kind in display order;
+# the theme shows the rest in a collapsed list. A kind with a reading group leads with
+# its first five readings, and any other kind with its ground speed and pressure altitude.
+HEADLINE_PICKS = {
+    "rapid_descent": ("peak_rate_fpm", "altitude_change_ft", "duration_seconds", "gs", "alt_baro"),
+    "formation_flight": (
+        "min_separation_nm",
+        "vertical_separation_ft",
+        "participant_count",
+        "duration_seconds",
+        "alt_baro",
+    ),
+    "winds_aloft_day": (
+        "asymmetry_kn",
+        "east_median_kn",
+        "west_median_kn",
+        "east_addresses",
+        "west_addresses",
+    ),
+}
+HEADLINE_MEASUREMENTS = {
+    name: HEADLINE_PICKS.get(name) or tuple(KIND_READINGS.get(name, {}))[:5] or ("gs", "alt_baro")
+    for name in kinds.table("section")
+}
 KINDS = set(kinds.where(origin="story"))
 # The transponder-status families: live codes and statuses, archived codes.
 SPECIAL_KINDS = set(kinds.where(origin="special"))
@@ -156,7 +190,19 @@ LABEL_CAVEAT = (
     "readings at the position time."
 )
 FIRST_SIGHTING_KINDS = set(kinds.where(first_sighting=True))
-FIRST_SIGHTING_SCOPES = {"type", "allocation_country"}
+FIRST_SIGHTING_SCOPES = {"type", "allocation_country", "operator"}
+# An ICAO operator designator, the three letters that start an airline-style callsign.
+OPERATOR_DESIGNATOR = re.compile(r"[A-Z]{3}")
+# What marks an aircraft as military in a foreign-military finding: its database flag,
+# or an address in a State's military allocation.
+FOREIGN_MILITARY_BASES = ("dbFlags", "military_allocation")
+COUNTRY_CODE = re.compile(r"[A-Z]{2}")
+COUNTRY_NAME = re.compile(r"[A-Za-z][A-Za-z .,'()&-]{1,59}")
+# A winds-aloft day's per-direction counts and medians, all required, and the hour of
+# its optional modelled 250 hPa wind.
+WINDS_COUNTS = ("east_addresses", "west_addresses")
+WINDS_SPEEDS = ("east_median_kn", "west_median_kn")
+WINDS_HOUR = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:00")
 # A rated finding's comparison (rules._rated_altitude, rules._rated_speed, and wind.py):
 # the field each kind compares and the certified limits a block may name.
 RATED_FIELDS = kinds.table("rated_field")
@@ -577,13 +623,123 @@ def _day_count(value):
 
 
 def first_sighting(raw):
-    """What a first sighting was compared with: its scope, earlier covered days and their start."""
+    """What a first sighting was compared with: its scope, earlier covered days and their start.
+
+    An operator first names its designator, and the operator the pinned table gives it.
+    """
     if not isinstance(raw, dict) or raw.get("scope") not in FIRST_SIGHTING_SCOPES:
         return None
     days = _day_count(raw.get("coverage_days"))
     if days is None:
         return None
-    return {"scope": raw["scope"], "coverage_days": days, "since": _iso_day(raw.get("since"))}
+    block = {"scope": raw["scope"], "coverage_days": days, "since": _iso_day(raw.get("since"))}
+    if raw["scope"] == "operator":
+        designator = raw.get("designator")
+        if not isinstance(designator, str) or not OPERATOR_DESIGNATOR.fullmatch(designator):
+            return None
+        block["designator"] = designator
+        if operator := text_value(raw.get("operator"), 120):
+            block["operator"] = operator
+    return block
+
+
+def foreign_military(raw):
+    """A foreign-military finding's allocation State, its name, and what marked it military.
+
+    The basis lists only the known markers, each once; any other value rejects the block.
+    """
+    if not isinstance(raw, dict):
+        return None
+    country, name, basis = raw.get("country"), raw.get("country_name"), raw.get("basis")
+    registered = raw.get("registration_country")
+    if (
+        not isinstance(country, str)
+        or not COUNTRY_CODE.fullmatch(country)
+        or not isinstance(name, str)
+        or not COUNTRY_NAME.fullmatch(name)
+        or not isinstance(basis, list)
+        or not basis
+        or len(set(basis)) != len(basis)
+        or not all(isinstance(item, str) and item in FOREIGN_MILITARY_BASES for item in basis)
+        or not (registered is None or (isinstance(registered, str) and COUNTRY_CODE.fullmatch(registered)))
+    ):
+        return None
+    return {
+        "country": country,
+        "country_name": name,
+        "basis": list(basis),
+        "registration_country": registered,
+    }
+
+
+def unregistered(raw):
+    """An unlisted address's transmitted callsign and emitter category, and its source."""
+    if not isinstance(raw, dict) or raw.get("source") not in SOURCES:
+        return None
+    return {
+        "callsign": identifier(raw.get("callsign"), IDENTIFIERS["callsign"]),
+        "category": identifier(raw.get("category"), r"[A-C][0-7]"),
+        "source": raw["source"],
+    }
+
+
+def _quartiles(value):
+    """A lower and an upper quartile in order, or None."""
+    if not isinstance(value, list) or len(value) != 2:
+        return None
+    low, high = (_positive(item) for item in value)
+    return [low, high] if low is not None and high is not None and low <= high else None
+
+
+def _winds_wind(raw):
+    """The modelled 250 hPa wind beside a winds-aloft day: speed, direction, source, and hour."""
+    if not isinstance(raw, dict) or raw.get("source") not in WIND_SOURCES:
+        return None
+    speed, direction, hour = number(raw.get("speed_kn")), number(raw.get("direction_deg")), raw.get("hour")
+    if (
+        speed is None
+        or speed < 0
+        or direction is None
+        or not 0 <= direction <= 360
+        or not isinstance(hour, str)
+        or not WINDS_HOUR.fullmatch(hour)
+    ):
+        return None
+    return {"speed_kn": speed, "direction_deg": direction, "source": raw["source"], "hour": hour}
+
+
+def winds_aloft(raw):
+    """A winds-aloft day: its date, per-direction counts, medians and quartiles, and the floor.
+
+    The asymmetry must be the difference of the two medians, rounded as the detector
+    rounds it. A modelled wind is kept only when it is a valid Open-Meteo reading.
+    """
+    if not isinstance(raw, dict) or not (day := _iso_day(raw.get("day"))):
+        return None
+    block = {"day": day}
+    for key in WINDS_COUNTS:
+        if not (count := _day_count(raw.get(key))):
+            return None
+        block[key] = count
+    for key in WINDS_SPEEDS:
+        if (speed := _positive(raw.get(key))) is None:
+            return None
+        block[key] = speed
+    for key in ("east_quartiles_kn", "west_quartiles_kn"):
+        if (quartiles := _quartiles(raw.get(key))) is None:
+            return None
+        block[key] = quartiles
+    asymmetry, floor = number(raw.get("asymmetry_kn")), _positive(raw.get("altitude_floor_ft"))
+    if (
+        asymmetry is None
+        or abs(asymmetry - (block["east_median_kn"] - block["west_median_kn"])) > 1
+        or floor is None
+    ):
+        return None
+    block.update(asymmetry_kn=asymmetry, altitude_floor_ft=floor)
+    if wind := _winds_wind(raw.get("wind_250_hpa")):
+        block["wind_250_hpa"] = wind
+    return block
 
 
 def season_record(raw):
@@ -746,7 +902,11 @@ def participants(evidence, primary=None):
         if isinstance(measurements, dict):
             for key, value in measurements.items():
                 value = number(value)
-                if value is not None and (key in READINGS or key in episode_evidence.METRICS):
+                if value is not None and (
+                    key in READINGS
+                    or key in episode_evidence.METRICS
+                    or key in episode_evidence.PARTICIPANT_METRICS
+                ):
                     values[key] = value
         source = item.get("source")
         result.append(
@@ -853,6 +1013,16 @@ def evidence_packet(event, include_track=True, *, observation_interval=None):
         packet["first_sighting"] = block
     if kind == "seasonal_speed_record" and (block := season_record(evidence.get("season_record"))):
         packet["season_record"] = block
+    # The winds-aloft, foreign-military, and unlisted-address blocks feed the story facts. A
+    # winds-aloft day's counts and medians also project to public measurements
+    # (public_events), so they join the evidence version.
+    for name, block_kind, validate in (
+        ("winds_aloft", "winds_aloft_day", winds_aloft),
+        ("foreign_military", "foreign_military", foreign_military),
+        ("unregistered", "unregistered_address", unregistered),
+    ):
+        if kind == block_kind and (block := validate(evidence.get(name))):
+            packet[name] = block
     # A rated finding's comparison and its second-source type check. Unlike the blocks
     # above they project to public measurements, so they join the evidence version. A
     # mismatch story's check feeds the story facts only and stays outside the version.

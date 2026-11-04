@@ -1945,7 +1945,13 @@
    "unusual_emitter",
    "space_category",
    "special_use_code",
-   "special_squawk_7400"
+   "special_squawk_7400",
+   "winds_aloft_day",
+   "foreign_military",
+   "first_operator_here",
+   "aerobatic_practice",
+   "unregistered_address",
+   "racetrack_orbit"
   ]
  },
  "public_events.KIND_TYPES": {
