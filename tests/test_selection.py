@@ -120,6 +120,63 @@ class ReopenedKinds(unittest.TestCase):
         result = assess(event("circling", pattern={"quality_review_required": False}))
         self.assertIn("Saved pattern predates the closure/corridor checks", result["reasons"])
 
+    def test_only_the_episode_shapes_fall_back_to_the_episode_block(self):
+        # A circling finding with an episode but no saved pattern still needs its shape check.
+        for kind in ("circling", "repeated_passes", "loitering"):
+            with self.subTest(kind=kind):
+                result = assess(event(kind, maneuver=episode(shape_verified=True)))
+                self.assertIn("Saved pattern predates the closure/corridor checks", result["reasons"])
+                self.assertFalse(result["story_eligible"])
+        for kind in selection.EPISODE_SHAPE_KINDS:
+            with self.subTest(kind=kind):
+                result = assess(event(kind, maneuver=episode()))
+                self.assertNotIn("Saved pattern predates the closure/corridor checks", result["reasons"])
+
+    def test_a_racetrack_near_a_runway_is_capped_at_50(self):
+        for evidence in (
+            {"maneuver": episode(context_tags=["airport_context"])},
+            {"maneuver": episode(), "airport_context": {"runway": "09"}},
+        ):
+            with self.subTest(evidence=evidence):
+                item = event("racetrack_orbit", **evidence)
+                result = assess(item)
+                self.assertEqual(result["score"], 50)
+                self.assertFalse(result["story_eligible"])
+                self.assertFalse(selection.publishable(item))
+                self.assertEqual(curation.rate({**item, "selection": result})["interest"], 8)
+        self.assertTrue(
+            curation.near_runway("racetrack_orbit", {"maneuver": {"context_tags": ["airport_context"]}})
+        )
+        # A circuit shape keeps its own tags.
+        self.assertFalse(
+            curation.near_runway("circling", {"maneuver": {"context_tags": ["airport_context"]}})
+        )
+        self.assertFalse(curation.near_runway("aerobatic_practice", {"airport_context": {"runway": "09"}}))
+
+
+class EpisodeScores(unittest.TestCase):
+    def test_a_holding_stack_scores_78(self):
+        result = assess(event("holding_stack", maneuver=episode()))
+        self.assertEqual(result["score"], 78)
+        self.assertTrue(result["story_eligible"])
+
+    def test_a_review_still_caps_an_episode_score(self):
+        review = episode(quality_review_required=True)
+        for kind in ("holding_stack", "aerobatic_practice", "racetrack_orbit", "possible_go_around"):
+            with self.subTest(kind=kind):
+                result = assess(event(kind, maneuver=review))
+                self.assertEqual(result["score"], 60)
+                self.assertFalse(result["story_eligible"])
+
+    def test_the_shape_episodes_score_their_pattern_score(self):
+        for kind in selection.EPISODE_SHAPE_KINDS:
+            with self.subTest(kind=kind):
+                self.assertEqual(selection.EPISODE_SCORES[kind]({}), selection.PATTERN_SCORES[kind])
+                self.assertEqual(assess(event(kind, maneuver=episode()))["score"], 80)
+
+    def test_an_episode_kind_without_its_episode_is_not_a_story(self):
+        self.assertFalse(assess(event("possible_go_around"))["story_eligible"])
+
 
 class EmitterAndFixedScores(unittest.TestCase):
     def test_a_glider_category_on_a_glider_type_is_a_story(self):

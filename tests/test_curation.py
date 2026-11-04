@@ -751,6 +751,50 @@ class NewCooldowns(unittest.TestCase):
         result = curation.choose([group(winds(1, 0)), group(winds(2, 2))])
         self.assertEqual([row["finding_id"] for row in result["selected"]], [1])
 
+    def test_operator_firsts_are_keyed_by_designator(self):
+        def first(designator):
+            return {
+                "aircraft": {"t": "A320"},
+                "first_sighting": {"scope": "operator", "designator": designator},
+            }
+
+        self.assertEqual(
+            curation.facts(_story_event("first_operator_here", "a00001", first("ABC")))["subtopic"],
+            "operator:ABC",
+        )
+        log = curation.StoryLog()
+        log.add(prior_story(kind="first_operator_here", address="a00001", start=0, evidence=first("ABC")))
+        # Another operator's first on the same type is its own story, at any distance.
+        other = candidate_row(
+            kind="first_operator_here", address="a00002", start=86400, evidence=first("XYZ")
+        )
+        self.assertIsNone(log.repeat(other))
+        # A second first for the same designator would be false.
+        again = candidate_row(
+            kind="first_operator_here", address="a00003", start=400 * 86400, evidence=first("ABC")
+        )
+        self.assertEqual(log.repeat(again), "first_repeat")
+
+    def test_a_routine_type_does_not_hold_an_operator_first(self):
+        def first(designator):
+            return {
+                "aircraft": {"t": "C172"},
+                "first_sighting": {"scope": "operator", "designator": designator},
+            }
+
+        log = curation.StoryLog()
+        log.add(prior_story(kind="watch_type", address="a00001", start=0))
+        log.add(prior_story(kind="first_operator_here", address="a00002", start=0, evidence=first("ABC")))
+        row = candidate_row(kind="first_operator_here", address="a00003", start=86400, evidence=first("XYZ"))
+        self.assertIsNone(log.repeat(row, frozenset({"C172"})))
+        # Another identity story on the routine type is still held, but not by the operator first.
+        log = curation.StoryLog()
+        log.add(prior_story(kind="first_operator_here", address="a00002", start=0, evidence=first("ABC")))
+        row = candidate_row(kind="military", address="a00004", start=86400)
+        self.assertIsNone(log.repeat(row, frozenset({"C172"})))
+        log.add(prior_story(kind="watch_type", address="a00001", start=0))
+        self.assertEqual(log.repeat(row, frozenset({"C172"})), "routine_type")
+
     def test_the_curation_version_is_12(self):
         self.assertEqual(curation.VERSION, 12)
 

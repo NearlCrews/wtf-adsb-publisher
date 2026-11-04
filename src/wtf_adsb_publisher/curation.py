@@ -112,10 +112,16 @@ SUSTAINED_FIELDS = (
     "sustained_expected_altitude_change_ft",
 )
 IDENTITY_KINDS = set(kinds.where(identity=True))
+# Identity kinds keyed by the listed type, which the locally routine type rule holds. An
+# operator first is keyed by the operator: a new airline on a common type is its point.
+ROUTINE_KINDS = frozenset(IDENTITY_KINDS - {"first_operator_here"})
 DATA_QUALITY_KINDS = kinds.where(data_quality=True)
 # Orbit shapes whose interest falls to context near a runway.
 CIRCUIT_KINDS = kinds.where(circuit_shape=True)
 AIRPORT_TAGS = frozenset({"runway_circuit_context", "airport_descent_context"})
+# The engine tags a racetrack centered within 10 NM of a mapped runway "airport_context":
+# holding and practice approaches are routine there, so it is context like a circuit.
+RACETRACK_AIRPORT_TAGS = AIRPORT_TAGS | {"airport_context"}
 # A balloon episode explains these same-encounter readings.
 BALLOON_FOLDS = kinds.where(balloon_fold=True)
 # Live status kinds by code or emergency field; priority declarations (kinds.PRIORITY_STATUSES)
@@ -140,7 +146,7 @@ ADDRESS = re.compile(r"~?[0-9a-f]{6}")
 # Editorial weights, not probabilities or aircraft operating limits (each kind's weight and
 # its reason are in kinds).
 INTEREST = kinds.table("interest")
-# One story ever per first-sighting kind and subtopic (type or allocation State).
+# One story ever per first-sighting kind and subtopic (type, allocation State, or operator).
 FIRST_KINDS = kinds.where(first_sighting=True)
 
 
@@ -200,6 +206,17 @@ def context_tags(evidence):
     for block in (evidence, evidence.get("maneuver"), evidence.get("pattern")):
         tags |= _strings(_mapping(block).get("context_tags"))
     return tags
+
+
+def near_runway(kind, evidence, tags=None):
+    """An orbit shape whose interest falls to context near a runway (circuits and racetracks)."""
+    evidence = _mapping(evidence)
+    tags = context_tags(evidence) if tags is None else tags
+    if kind in CIRCUIT_KINDS:
+        return bool(evidence.get("airport_context") or tags & AIRPORT_TAGS)
+    if kind == "racetrack_orbit":
+        return bool(evidence.get("airport_context") or tags & RACETRACK_AIRPORT_TAGS)
+    return False
 
 
 def _code(evidence):
@@ -671,10 +688,14 @@ def facts(event):
         )
         country = raw if isinstance(raw, str) and raw else None
     address = str(event.get("hex", "")).lower()
+    designator = _mapping(evidence.get("first_sighting")).get("designator")
     subtopic = None
     if kind == "vintage":
         # Old airframes of different types still read as one kind of story.
         subtopic = "vintage"
+    elif kind == "first_operator_here" and isinstance(designator, str) and designator:
+        # One first per operator designator, whatever type carried the callsign.
+        subtopic = "operator:" + designator
     elif kind in IDENTITY_KINDS:
         subtopic = (
             "variant:" + variant
@@ -753,7 +774,7 @@ def _vintage_pair(row, other, routine):
 def _routine_pair(row, other, routine):
     # A type routine on either story's own date holds both, so earlier and later
     # stories agree whichever is checked first.
-    return other["kind"] in IDENTITY_KINDS and (row["type"] in routine or other.get("routine_type"))
+    return other["kind"] in ROUTINE_KINDS and (row["type"] in routine or other.get("routine_type"))
 
 
 def _same_kind(row, other, routine):
@@ -785,7 +806,7 @@ REPEAT_RULES = (
     ),
     ("kind_repeat", "address", None, _kind_pair, STORY_COOLDOWN),
     ("vintage_repeat", "address", IDENTITY_KINDS, _vintage_pair, VINTAGE_COOLDOWN),
-    ("routine_type", "type", IDENTITY_KINDS, _routine_pair, ROUTINE_COOLDOWN),
+    ("routine_type", "type", ROUTINE_KINDS, _routine_pair, ROUTINE_COOLDOWN),
     (
         "type_repeat",
         "type",
@@ -800,7 +821,7 @@ REPEAT_RULES = (
         _same_kind,
         VARIANT_COOLDOWN,
     ),
-    # A second "first" of one type or allocation State would be false.
+    # A second "first" of one type, allocation State, or operator would be false.
     ("first_repeat", "subtopic", FIRST_KINDS, _same_kind, None),
     ("identity_series", "series", frozenset({"identity_conflict"}), _any, IDENTITY_SERIES_COOLDOWN),
     ("winds_series", "series", frozenset({"winds_aloft_day"}), _any, WINDS_COOLDOWN),
@@ -829,7 +850,7 @@ REPEAT_REASONS = {
     "unregistered_repeat": f"This address had an unlisted-address story within {_days(UNREGISTERED_COOLDOWN)}",
     "variant_repeat": f"This aircraft variant, or this State's military type, had a story within {_days(VARIANT_COOLDOWN)}",
     "vintage_repeat": f"This vintage airframe had an identity story within {_days(VINTAGE_COOLDOWN)}",
-    "first_repeat": "A first sighting of this type or allocation State already had its story",
+    "first_repeat": "A first sighting of this type, allocation State, or operator already had its story",
     "identity_series": f"An identity-conflict story ran within {_days(IDENTITY_SERIES_COOLDOWN)}",
     "winds_series": f"A winds-aloft story ran within {_days(WINDS_COOLDOWN)}",
     "go_around_series": f"A go-around story ran within {_days(GO_AROUND_COOLDOWN)}",
@@ -1116,7 +1137,7 @@ def rate(event, *, descents=None, rarity=None):
         interest = vintage_interest(number(event.get("value")), rarity)
     elif topic(kind) in {"circling", "passes"}:
         interest += min(12, max(0, int(max(loops, passes) - 3) * 2))
-    if kind in CIRCUIT_KINDS and (evidence.get("airport_context") or tags & AIRPORT_TAGS):
+    if near_runway(kind, evidence, tags):
         interest = min(interest, 8)
     if event.get("verdict") == "keep":
         interest = max(40, interest)
@@ -1280,7 +1301,7 @@ def _rate_group(key, day, first, group, *, counts, routine, descents, removed, p
             # A published exception keeps its standing while its own evidence holds.
             row["exceptional"] = True
         row["story_key"] = story_key(event, key)
-        row["routine_type"] = bool(row["type"] in routine and row["kind"] in IDENTITY_KINDS)
+        row["routine_type"] = bool(row["type"] in routine and row["kind"] in ROUTINE_KINDS)
         row["rarity"] = type_rarity
         if folded and row["kind"] in BALLOON_FOLDS:
             row["context_only"] = True
@@ -1421,7 +1442,7 @@ def choose(groups, *, audit=True, history=(), novelty=None, descents=None):
         if (entry.get("removed") or entry.get("withdrawn")) and entry.get("source")
     }
     for entry in history:
-        if "routine_type" not in entry and entry.get("kind") in IDENTITY_KINDS and entry.get("type"):
+        if "routine_type" not in entry and entry.get("kind") in ROUTINE_KINDS and entry.get("type"):
             # A prior story without its saved flag gets the routine status of its own date.
             entry = {**entry, "routine_type": entry["type"] in routine_types(_novelty(novelty, entry["day"]))}
         # Every prior story constrains repeats on earlier and later days alike.

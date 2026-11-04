@@ -111,6 +111,9 @@ PATTERN_SCORES = {
     "aerobatic_practice": 80,
     "racetrack_orbit": 80,
 }
+# The shape kinds the engine saves as episodes: without a saved "pattern" block, their
+# confirmed episode window stands for the closure and corridor checks.
+EPISODE_SHAPE_KINDS = frozenset({"aerobatic_practice", "racetrack_orbit"})
 # A rare type seen here on at most this many earlier days, by this airframe and by the type,
 # is a story.
 RARE_STORY_DAYS = 1
@@ -121,6 +124,27 @@ EMITTER_CLASSES = {"B1": frozenset({"glider"}), "B2": frozenset({"balloon", "air
 # A novelty claim (first sighting, notable variant) needs two reports at least 8 s apart.
 NOVELTY_MIN_HITS = 2
 NOVELTY_MIN_SECONDS = 8
+
+
+def _go_around_score(evidence):
+    # The approach alignment is a detection rule; its hypothesis is a context tag.
+    flags = _mapping(evidence.get("maneuver")).get("quality_flags")
+    return 60 if isinstance(flags, list) and "low_position_quality" in flags else 75
+
+
+def _holding_score(evidence):
+    duration = number(_mapping(evidence.get("maneuver")).get("duration_seconds")) or 0
+    return 76 if duration >= HOLDING_STORY_SECONDS else 40
+
+
+# Episode kinds scored by their own rule from the saved evidence. Every other confirmed
+# episode scores 80 (95 for a live status code); a review still caps either at 60.
+EPISODE_SCORES = {
+    "possible_go_around": _go_around_score,
+    "prolonged_holding": _holding_score,
+    "holding_stack": lambda evidence: FIXED_SCORES["holding_stack"][0],
+    **{kind: (lambda evidence, kind=kind: PATTERN_SCORES[kind]) for kind in EPISODE_SHAPE_KINDS},
+}
 
 
 def _brief(event):
@@ -144,8 +168,6 @@ def assess(event, profiles=None, *, independent=False, now=None):
     kind, value = event["kind"], number(event.get("value"))
     reasons, review, private = [], False, False
     score = 40
-    # An episode kind scored by its own rule keeps that score below.
-    own_score = False
     speed, altitude = performance_thresholds(aircraft, profiles)
     if kind in {"fast", "high"}:
         threshold = speed if kind == "fast" else altitude
@@ -220,7 +242,7 @@ def assess(event, profiles=None, *, independent=False, now=None):
         )
     elif kind in PATTERN_SCORES:
         saved = _mapping(evidence.get("pattern"))
-        pattern = saved or _mapping(evidence.get("maneuver"))
+        pattern = saved or (_mapping(evidence.get("maneuver")) if kind in EPISODE_SHAPE_KINDS else {})
         review = pattern.get("quality_review_required") is not False
         score = PATTERN_SCORES[kind]
         if review:
@@ -229,14 +251,6 @@ def assess(event, profiles=None, *, independent=False, now=None):
         if not pattern or (saved and saved.get("shape_verified") is not True):
             score, review = min(score, 60), True
             reasons.append("Saved pattern predates the closure/corridor checks")
-    elif kind == "possible_go_around":
-        # The approach alignment is a detection rule; its hypothesis is a context tag.
-        flags = _mapping(evidence.get("maneuver")).get("quality_flags")
-        low = isinstance(flags, list) and "low_position_quality" in flags
-        score, own_score = (60 if low else 75), True
-    elif kind == "prolonged_holding":
-        duration = number(_mapping(evidence.get("maneuver")).get("duration_seconds")) or 0
-        score, own_score = (76 if duration >= HOLDING_STORY_SECONDS else 40), True
     elif (
         kind in RECORD_KINDS
         or kind in RATED_KINDS
@@ -293,7 +307,9 @@ def assess(event, profiles=None, *, independent=False, now=None):
         ):
             review = True
             reasons.append("Consecutive above-threshold reports have not been established")
-        if not own_score:
+        if kind in EPISODE_SCORES:
+            score = EPISODE_SCORES[kind](evidence)
+        else:
             score = 95 if kind.startswith(LIVE_SQUAWK_PREFIX) else 80
         private = private and review
         if review:
@@ -304,7 +320,7 @@ def assess(event, profiles=None, *, independent=False, now=None):
     if kind.startswith(ARCHIVE_SQUAWK_PREFIX):
         score, review, private = min(score, 60), True, True
     tags = curation.context_tags(evidence)
-    if kind in curation.CIRCUIT_KINDS and (evidence.get("airport_context") or tags & curation.AIRPORT_TAGS):
+    if curation.near_runway(kind, evidence, tags):
         score = min(score, 50)
         reasons.append("Observed near a runway's circuit or approach; retained as routine-context evidence")
     if evidence.get("quality_flags"):
@@ -355,11 +371,14 @@ def publishable(source):
     quality flag refuses it. Archived labels never confirm a status, and a live
     status needs its confirmed episode (8 s and two reports). A second source
     that disagrees about the type (unless a mismatch story names it), or none
-    for a performance kind, refuses it through the review gates; a check still
-    pending is a selection hold
-    (curation.type_hold), not a refusal, so a released story is never
-    unpublished for a check that has not run. The rest is assess() without the
-    vote: story eligible, no review, and not context only.
+    for a performance kind, refuses it through the review gates. A check still
+    pending is a selection hold (curation.type_hold), not a refusal, until it
+    goes stale (curation.stale_check, more than 30 days after the first
+    sighting). A stale check counts as unavailable, so a performance-kind story
+    whose check is pending again by then is refused as type_uncorroborated, and
+    a released one is suspended: a reading published as an achievement comes
+    down when no registry corroborates the type. The rest is assess() without
+    the vote: story eligible, no review, and not context only.
     """
     if curation.absorbed(source) or source.get("verdict") in {"routine", "bad_data"}:
         return False
