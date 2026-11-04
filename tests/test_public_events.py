@@ -1931,26 +1931,42 @@ class NewKindEvidenceTests(unittest.TestCase):
 
 
 class LiveStoryTests(unittest.TestCase):
-    def test_a_live_story_is_released_with_a_page_and_not_taken_down(self):
-        record = {
-            "state": "pending",
-            "editorial": {"article_path": STORY_PATH},
-            "automation": {"released_at": NOW},
-        }
-        # A released story under revision is still live.
+    def test_a_live_story_has_an_approved_revision_a_page_and_no_takedown(self):
+        ledger = public.new_ledger("2026-09-01")
+        record = public.find_record(ledger, add(ledger, evidence=packet(), metadata=editorial()))
         self.assertTrue(public.live_story(record))
         for change in (
-            {"state": "withdrawn"},
-            {"automation": {"released_at": NOW, "suspended": True}},
-            {"automation": {"released_at": NOW, "removed": True}},
-            {"automation": {"released_at": NOW, "blocked": True}},
-            {"automation": {}},
-            {"editorial": {"article_path": STORY_PATH, "synthetic": True}},
-            {"editorial": {}},
+            {"automation": {"suspended": True}},
+            {"automation": {"removed": True}},
+            {"automation": {"blocked": True}},
         ):
             with self.subTest(change=change):
                 self.assertFalse(public.live_story({**record, **change}))
+        # A revision under review keeps the approved one live.
+        public.put_event(ledger, "episode-a", packet(), editorial(title="A revised headline"), at=NOW)
+        self.assertEqual(record["state"], "pending")
+        self.assertTrue(public.live_story(record))
+        public.set_review_state(ledger, record["id"], "withdrawn", at=NOW)
+        self.assertFalse(public.live_story(record))
+        # Never approved, synthetic, or without a page: not a story.
+        pending = public.find_record(
+            ledger, add(ledger, key="episode-b", approved=False, metadata=editorial(path=EVENT_PATH))
+        )
+        self.assertFalse(public.live_story(pending))
+        synthetic = public.find_record(
+            ledger,
+            add(ledger, key="episode-c", metadata=editorial(path=story_path("synthetic"), synthetic=True)),
+        )
+        self.assertFalse(public.live_story(synthetic))
+        self.assertFalse(public.live_story({**synthetic, "editorial": {}}))
         self.assertFalse(public.live_story(None))
+
+    def test_a_migrated_frozen_record_without_a_release_time_is_live(self):
+        ledger = public.new_ledger("2026-09-01")
+        record = public.find_record(ledger, add(ledger, evidence=packet(), metadata=editorial()))
+        record["automation"] = {"source_kind": "frozen"}
+        self.assertNotIn("released_at", record["automation"])
+        self.assertTrue(public.live_story(record))
 
 
 if __name__ == "__main__":

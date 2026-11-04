@@ -3508,24 +3508,29 @@ def name_issues(text, facts, extra=frozenset(), *, strict_opening=False):
     return issues
 
 
-def unlisted_names(sentence, vocabulary, towns=frozenset(), *, numbered=False):
+def unlisted_names(sentence, vocabulary, towns=frozenset(), *, strict=False):
     """The capitalized words of one sentence outside `vocabulary` (lowercase words), facts aside.
 
     A sentence's first word passes when the next word is lowercase, a stopword, or known, unless
-    it opens with one of `towns` (name_issues' strict opening). A word with a digit is a reading
-    or a code and passes, unless `numbered`, as for researched prose, where it can name a type
-    or a registration and is checked too (never exempt as a first word).
+    it opens with one of `towns` (name_issues' strict opening); so does one after a colon, a
+    quote, or a parenthesis. A word with a digit is a reading or a code and passes, and only the
+    capitalized parts of a hyphenated word are checked.
+
+    `strict`, for researched prose, which may name no type, registration, operator, person, or
+    place: only a literal first word followed by a lowercase word passes, a word with a digit is
+    checked too, and every part of a hyphenated or apostrophized word must be known.
     """
+    if strict:
+        return _strict_unlisted_names(sentence, vocabulary)
     found = []
     # Headlines are sentence case too, so title case cannot hide a name.
     words = list(re.finditer(r"[A-Za-z][A-Za-z0-9&'-]*", sentence))
     for index, word in enumerate(words):
         token = word.group()
-        digits = bool(re.search(r"\d", token))
-        if not token[0].isupper() or (digits and not numbered):
+        if not token[0].isupper() or re.search(r"\d", token):
             continue
         initial = index == 0 or re.search(r"[:\"(]\s*$", sentence[max(0, word.start() - 8) : word.start()])
-        if initial and not digits and not (towns and _opens_with_town(sentence, words, index, towns)):
+        if initial and not (towns and _opens_with_town(sentence, words, index, towns)):
             following = words[index + 1].group() if index + 1 < len(words) else ""
             known_following = all(
                 part.lower() in vocabulary for part in re.split(r"[-']", following) if part[:1].isupper()
@@ -3542,6 +3547,23 @@ def unlisted_names(sentence, vocabulary, towns=frozenset(), *, numbered=False):
             part.lower() in vocabulary or (part.endswith("s") and part[:-1].lower() in vocabulary)
             for part in parts
         ):
+            found.append(token)
+    return found
+
+
+def _strict_unlisted_names(sentence, vocabulary):
+    """unlisted_names' strict mode (researched prose)."""
+    words = list(re.finditer(r"[A-Za-z][A-Za-z0-9'-]*", sentence))
+    found = []
+    for index, word in enumerate(words):
+        token = word.group()
+        if not token[0].isupper():
+            continue
+        following = words[index + 1].group() if index + 1 < len(words) else ""
+        if index == 0 and not following[:1].isupper() and not re.search(r"\d", token):
+            continue
+        parts = [part.lower() for part in re.split(r"[-']", token) if part]
+        if any(part not in vocabulary and part.removesuffix("s") not in vocabulary for part in parts):
             found.append(token)
     return found
 

@@ -1794,7 +1794,21 @@ class NewProseRules(unittest.TestCase):
             public_prose.unlisted_names("Boeing built it near Wichita.", {"boeing"}), ["Wichita"]
         )
         self.assertEqual(public_prose.unlisted_names("It was a B738.", set()), [])
-        self.assertEqual(public_prose.unlisted_names("It was a B738.", set(), numbered=True), ["B738"])
+        self.assertEqual(public_prose.unlisted_names("It was a B738.", set(), strict=True), ["B738"])
+        # Researched prose may name nobody: the strict mode drops the story rule's exemptions.
+        vocabulary = {"the", "records", "show", "first", "operator", "was", "in", "service", "he", "said"}
+        vocabulary |= {"boeing", "jets", "flew", "it", "ordered", "list", "air", "as", "often"}
+        for sentence, name in (
+            ("The records show: Smith flew it often.", "Smith"),
+            ("The first operator was (Lufthansa) in service.", "Lufthansa"),
+            ("Lufthansa Boeing jets flew it.", "Lufthansa"),
+            ('He said "Delta" ordered it.', "Delta"),
+            ("Records list Air-france as operator.", "Air-france"),
+        ):
+            with self.subTest(sentence=sentence):
+                self.assertIn(name, public_prose.unlisted_names(sentence, vocabulary, strict=True))
+                self.assertNotIn(name, public_prose.unlisted_names(sentence, vocabulary))
+        self.assertEqual(public_prose.unlisted_names("Records show it.", vocabulary, strict=True), [])
         # The weekly modules reach no private helper of the story checks.
         for name in ("weekly_spotlight.py", "weekly_research.py"):
             source = (Path(__file__).resolve().parents[1] / "src" / "wtf_adsb_publisher" / name).read_text()

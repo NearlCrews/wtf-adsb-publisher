@@ -210,10 +210,10 @@ def _text_numbers(sentence):
 
 def _name_issues(sentence, vocabulary):
     """Capitalized words outside `vocabulary`: a type, registration, operator, person, or place.
-    The story checks' rule (public_prose.unlisted_names), with words that carry a digit checked too."""
+    The story checks' rule (public_prose.unlisted_names) in its strict mode."""
     from . import public_prose as prose
 
-    return [f"Unlisted name ({token})" for token in prose.unlisted_names(sentence, vocabulary, numbered=True)]
+    return [f"Unlisted name ({token})" for token in prose.unlisted_names(sentence, vocabulary, strict=True)]
 
 
 def nominate(report, as_of):
