@@ -1,13 +1,14 @@
 """Choose a small daily reading list without approving evidence or publishing it."""
 
 import re
+import time
 from bisect import bisect_left
 from collections import Counter, defaultdict
 from datetime import date, datetime, timezone
 from typing import NamedTuple
 
 from . import kinds, limits, reference
-from .enrichment_rules import REGISTRY_TYPE_KINDS, TYPE_DEPENDENT_KINDS, type_check_state
+from .enrichment_rules import REGISTRY_TYPE_KINDS, SETTLED, TYPE_DEPENDENT_KINDS, type_check_state
 from .maneuvers import HIGH_RATE_FPM, altitude_agrees
 from .rules import (
     MIN_REPORT_SECONDS,
@@ -17,25 +18,43 @@ from .rules import (
     SQUAWK_PREFIXES,
     number,
     speed_plausible,
+    type_envelope,
 )
+from .telemetry import direct_value
 
 VERSION = 11
 MAX_PER_DAY = 9
 MIN_SCORE = 65
 IDENTITY_COOLDOWN = 30 * 86400
-# One airframe takes one story of a kind (kind_family) per 30 days.
-STORY_COOLDOWN = 30 * 86400
+# One airframe takes one story of a kind (kind_family) per 60 days.
+STORY_COOLDOWN = 60 * 86400
 TOPIC_COOLDOWN = 7 * 86400
-# Local type novelty. A watch type repeats at most every 14 days on any airframe.
+# Local type novelty. A watch type repeats at most every 30 days on any airframe.
 # A type seen on 40% of the last 60 coverage days gets one identity story per 30 days.
-TYPE_COOLDOWN = 14 * 86400
+TYPE_COOLDOWN = 30 * 86400
 ROUTINE_COOLDOWN = 30 * 86400
 ROUTINE_WINDOW = 60
 ROUTINE_DAYS = 24
-VARIANT_COOLDOWN = 7 * 86400
-# A data-conflict story, a tailwind speed record and a rated-limit exceedance
-# read alike on any aircraft, so each series takes one story per seven days.
+# A notable variant, or a foreign military type of one State (facts), takes one story per 14 days.
+VARIANT_COOLDOWN = 14 * 86400
+# One airframe takes one watchlist story, and one unlisted-address story, per 90 days.
+WATCHLIST_COOLDOWN = 90 * 86400
+UNREGISTERED_COOLDOWN = 90 * 86400
+# A tailwind speed record and a rated-limit exceedance read alike on any aircraft, so
+# each series takes one story per seven days; a data-conflict story one per 21 days,
+# and a winds-aloft day one per three days, so a week-long jet stream gives three at most.
 SERIES_COOLDOWN = 7 * 86400
+IDENTITY_SERIES_COOLDOWN = 21 * 86400
+WINDS_COOLDOWN = 3 * 86400
+# Registries lag new registrations: an unlisted address waits this long after its first
+# sighting, then for a check the registries answered after that week (type_hold).
+REGISTRY_LAG_SECONDS = 7 * 86400
+# A second-source check still unsettled this long after the finding's first sighting
+# no longer holds it: the check counts as unavailable (stale_check).
+STALE_CHECK_SECONDS = 30 * 86400
+# The kinds whose premise is that no registry lists the address. A registry that never
+# answered says nothing about that, so their checks never go stale.
+RECHECK_KINDS = frozenset({"unregistered_address"})
 # Readings above a listed type's envelope: a wrong type or bad data, not performance. They are
 # the kinds that name a disagreeing registry's type (enrichment_rules.REGISTRY_TYPE_KINDS).
 ENVELOPE_KINDS = REGISTRY_TYPE_KINDS
@@ -48,6 +67,13 @@ SERIES_KINDS = kinds.where(series=True)
 # publish when no registry lists the address, since the database is then the
 # only record, but never against a disagreeing one.
 PERFORMANCE_TYPE_KINDS = ENVELOPE_KINDS | RECORD_KINDS | RATED_KINDS
+# Identity stories that name the listed type: the saved reading must be one the type can
+# produce (gates' reading_implausible), or the story is about bad data or a wrong type.
+PLAUSIBILITY_KINDS = frozenset(
+    {"first_type_here", "watch_type", "vintage", "notable_variant", "foreign_military"}
+)
+# Pressure altitude allowed above the type envelope's ceiling before the reading is implausible.
+CEILING_MARGIN_FT = 2000
 # Selection and curation share one vintage story age.
 VINTAGE_YEARS = 80
 # Vintage airframes share one sub-topic per day, and an airframe with a vintage
@@ -172,6 +198,11 @@ def _code(evidence):
     return code if isinstance(code, str) else None
 
 
+# Aerobatic-style practice near an airport or over a runway circuit is context only:
+# training circuits and approaches also reverse altitude often.
+AEROBATIC_CONTEXT_TAGS = frozenset({"terminal_area_context", "runway_circuit_context"})
+
+
 def context_only(kind, evidence=None):
     # Legacy scalar values are absolute. Only a saved negative barometric rate
     # establishes a descent; missing direction cannot bypass the climb policy.
@@ -181,6 +212,7 @@ def context_only(kind, evidence=None):
         kind in CONTEXT_KINDS
         or (kind == "vertical" and (rate is None or rate >= 0))
         or (kind == "special_use_code" and _code(evidence) in CONTEXT_CODES)
+        or (kind == "aerobatic_practice" and bool(context_tags(evidence) & AEROBATIC_CONTEXT_TAGS))
     )
 
 
@@ -197,20 +229,64 @@ def report_count(event):
     return reports, max(0, span)
 
 
-def type_hold(event):
+def stale_check(event, now=None):
+    """Whether a finding's unsettled second-source check has gone stale.
+
+    A pending or failed check (enrichment_rules.type_check_state) on a finding
+    first seen more than STALE_CHECK_SECONDS before `now` (default: the current
+    time) is stale: it no longer holds selection and counts as unavailable. A
+    RECHECK_KINDS finding never goes stale, since a registry that never
+    answered says nothing about whether it lists the address.
+    """
+    if event.get("kind") in RECHECK_KINDS:
+        return False
+    first = number(event.get("first_seen"))
+    if first is None or type_check_state(event.get("evidence")) not in {"pending", "failed"}:
+        return False
+    return (time.time() if now is None else now) - first > STALE_CHECK_SECONDS
+
+
+def _registry_hold(event, now):
+    """registry_lag and type_check_stale for an unlisted-address finding (type_hold)."""
+    first = number(event.get("first_seen"))
+    if first is None:
+        return None
+    if now - first < REGISTRY_LAG_SECONDS:
+        return (
+            "registry_lag",
+            f"The address was first seen less than {REGISTRY_LAG_SECONDS // 86400} days ago; "
+            "registries lag new entries",
+        )
+    checked = number(_mapping(_mapping(event.get("evidence")).get("type_check")).get("checked_at"))
+    if checked is None or checked < first + REGISTRY_LAG_SECONDS:
+        return (
+            "type_check_stale",
+            "The registry check predates the week after the first sighting; selection waits for a fresh one",
+        )
+    return None
+
+
+def type_hold(event, *, now=None):
     """Why a type-dependent finding is not yet a story candidate, as (rule, reason), or None.
 
     A pending or failed second-source check holds selection until the worker's
-    next answer. The hold is not a review flag and never unpublishes a released
-    story: the publisher's next pass selects the finding once the check arrives.
-    A disagreeing check, or no registry record for a performance kind, is a
-    blocking gate instead (gates()).
+    next answer, for at most STALE_CHECK_SECONDS after the finding's first
+    sighting (stale_check). An unlisted address (RECHECK_KINDS) also waits
+    REGISTRY_LAG_SECONDS after its first sighting (registry_lag), then for a
+    check the registries answered (its checked_at) after that week
+    (type_check_stale). The hold is not a review flag and never unpublishes a
+    released story: the publisher's next pass selects the finding once the
+    check arrives. A disagreeing check, or no registry record for a
+    performance kind, is a blocking gate instead (gates()).
     """
     kind = event["kind"]
     if kind not in TYPE_DEPENDENT_KINDS:
         return None
+    now = time.time() if now is None else now
+    if kind in RECHECK_KINDS and (hold := _registry_hold(event, now)):
+        return hold
     state = type_check_state(event.get("evidence"))
-    if state in {"pending", "failed"}:
+    if state in {"pending", "failed"} and not stale_check(event, now):
         return (
             "type_check_pending",
             "The second-source type check has not completed; selection waits for it"
@@ -221,7 +297,45 @@ def type_hold(event):
     return None
 
 
-def gates(event):
+def _direct_speed(aircraft):
+    """Whether a saved aircraft's own direct ADS-B source supplied its ground speed.
+
+    A snapshot names its source in "type"; an MLAT or TIS-B solution listed for
+    "gs" is a position-derived speed, never evidence against the listed type.
+    """
+    return direct_value(aircraft, "gs") is not None
+
+
+def _registry_gates(event, evidence):
+    """registry_lists_address and registry_unchecked for an unlisted-address finding (gates)."""
+    check = _mapping(evidence.get("type_check"))
+    if check.get("source") is not None or check.get("registration") is not None:
+        return [
+            (
+                "registry_lists_address",
+                f"A second source ({check.get('source')}) lists this address"
+                + (f" as {check['registration']}" if check.get("registration") else "")
+                + ", so the finding's premise does not hold",
+            )
+        ]
+    checked, first = number(check.get("checked_at")), number(event.get("first_seen"))
+    if (
+        type_check_state(evidence) not in SETTLED
+        or checked is None
+        or first is None
+        or checked - first < REGISTRY_LAG_SECONDS
+    ):
+        return [
+            (
+                "registry_unchecked",
+                f"The registries have not answered at least {REGISTRY_LAG_SECONDS // 86400} days "
+                "after the first sighting; registries lag new registrations",
+            )
+        ]
+    return []
+
+
+def gates(event, *, now=None):
     """Blocking evidence rules for one finding, as (rule, reason) pairs.
 
     type_disagrees: a second-source registry lists another type, so a
@@ -237,14 +351,28 @@ def gates(event):
     no story could state it. speed_implausible: a season record whose sustained
     ground speed the current plausibility gate (rules.speed_plausible) refuses for
     the listed type at its altitude; records saved under older rules, with a flat
-    wind allowance and no rated-limit check, are judged again here. A check still
-    pending is a selection hold that resolves on its own: see type_hold().
+    wind allowance and no rated-limit check, are judged again here.
+    reading_implausible: an identity story about the listed type
+    (PLAUSIBILITY_KINDS) whose saved aircraft reports a ground speed
+    rules.speed_plausible refuses, when its own direct ADS-B source supplied
+    that speed (_direct_speed), or a pressure altitude more than
+    CEILING_MARGIN_FT above the type envelope's ceiling. Without a known
+    envelope the envelope's cap and ceiling are skipped, while the absolute
+    speed bound and a rated limit from reference.limits still apply; a missing
+    reading is no evidence and no gate. registry_lists_address: an unlisted-address
+    finding (RECHECK_KINDS) whose second source named a registration or a type
+    for the address. registry_unchecked: such a finding without a settled check
+    made at least REGISTRY_LAG_SECONDS after its first sighting, since
+    registries lag new registrations. A check still pending is a selection hold
+    that resolves on its own: see type_hold(). One left unsettled for
+    STALE_CHECK_SECONDS counts as unavailable at `now` (stale_check).
     """
     kind = event["kind"]
     evidence = _mapping(event.get("evidence"))
     found = []
     if kind in TYPE_DEPENDENT_KINDS:
-        state = type_check_state(evidence)
+        stale = stale_check(event, now)
+        state = "unavailable" if stale else type_check_state(evidence)
         check = _mapping(evidence.get("type_check"))
         if state == "disagrees" and kind not in REGISTRY_TYPE_KINDS:
             found.append(
@@ -257,9 +385,14 @@ def gates(event):
             found.append(
                 (
                     "type_uncorroborated",
-                    "No registry lists this address's type; a performance claim needs corroboration",
+                    f"The second-source type check did not complete within {STALE_CHECK_SECONDS // 86400} "
+                    "days; a performance claim needs corroboration"
+                    if stale
+                    else "No registry lists this address's type; a performance claim needs corroboration",
                 )
             )
+    if kind in RECHECK_KINDS:
+        found.extend(_registry_gates(event, evidence))
     if kind.startswith("outlier_") or kind in ENVELOPE_KINDS or kind in RATED_KINDS:
         reports, span = report_count(event)
         if reports < MIN_REPORTS or span < MIN_REPORT_SECONDS:
@@ -295,6 +428,26 @@ def gates(event):
                 "plus the wind allowance at its altitude: bad data or a wrong type, not a record",
             )
         )
+    if kind in PLAUSIBILITY_KINDS:
+        aircraft = _mapping(evidence.get("aircraft"))
+        gs, alt = number(aircraft.get("gs")), number(aircraft.get("alt_baro"))
+        ceiling = number((type_envelope(aircraft) or {}).get("ceiling_ft"))
+        if gs is not None and _direct_speed(aircraft) and not speed_plausible(aircraft, gs):
+            found.append(
+                (
+                    "reading_implausible",
+                    f"A ground speed of {gs:,.0f} kn is beyond the listed type's envelope: "
+                    "bad data or a wrong type, not a sighting of that type",
+                )
+            )
+        elif alt is not None and ceiling is not None and alt > ceiling + CEILING_MARGIN_FT:
+            found.append(
+                (
+                    "reading_implausible",
+                    f"A pressure altitude of {alt:,.0f} ft is above the listed type's ceiling of "
+                    f"{ceiling:,.0f} ft: bad data or a wrong type, not a sighting of that type",
+                )
+            )
     return found
 
 
@@ -493,6 +646,10 @@ def facts(event):
         raw = (_mapping(raw).get("label") or _mapping(raw).get("name")) if isinstance(raw, dict) else raw
         variant = raw if isinstance(raw, str) and raw else aircraft.get("desc")
         variant = variant if isinstance(variant, str) and variant else None
+    elif kind == "foreign_military":
+        # One deployment of several airframes of a type from one State is one story.
+        state = _mapping(evidence.get("foreign_military")).get("country")
+        variant = f"{state}/{typecode}" if isinstance(state, str) and state and typecode else None
     country = None
     if kind == "first_country_here":
         raw = (
@@ -582,15 +739,32 @@ def _routine_pair(row, other, routine):
     return other["kind"] in IDENTITY_KINDS and (row["type"] in routine or other.get("routine_type"))
 
 
+def _same_kind(row, other, routine):
+    return other["kind"] == row["kind"]
+
+
+def _any(row, other, routine):
+    return True
+
+
 # The repeat policy, checked in order: (reason, index, row kinds it applies to (None
 # for all), whether another story matches, and the window in seconds (None: any time)).
-# The airframe rules come before the series rule, so a same-airframe repeat of a series kind
-# (SERIES_KINDS) within 30 days is held as identity_repeat (identity_conflict) or as
-# kind_repeat (seasonal_speed_record and the certified-limit kinds, RATED_KINDS), not as
-# series_repeat.
+# The airframe rules come before the series rules, so a same-airframe repeat of a series kind
+# (SERIES_KINDS) is held as identity_repeat (identity_conflict, within 30 days) or as
+# kind_repeat (seasonal_speed_record and the certified-limit kinds, RATED_KINDS, within
+# 60 days), not as a series repeat. A watchlist or unlisted-address story is an identity
+# story, so identity_repeat holds a repeat within 30 days and its own rule one after that.
 REPEAT_RULES = (
     ("same_aircraft_day", "address", None, lambda row, other, routine: other["day"] == row["day"], None),
     ("identity_repeat", "address", None, _identity_pair, IDENTITY_COOLDOWN),
+    ("watchlist_repeat", "address", frozenset({"watchlist_match"}), _same_kind, WATCHLIST_COOLDOWN),
+    (
+        "unregistered_repeat",
+        "address",
+        frozenset({"unregistered_address"}),
+        _same_kind,
+        UNREGISTERED_COOLDOWN,
+    ),
     ("kind_repeat", "address", None, _kind_pair, STORY_COOLDOWN),
     ("vintage_repeat", "address", IDENTITY_KINDS, _vintage_pair, VINTAGE_COOLDOWN),
     ("routine_type", "type", IDENTITY_KINDS, _routine_pair, ROUTINE_COOLDOWN),
@@ -604,13 +778,21 @@ REPEAT_RULES = (
     (
         "variant_repeat",
         "variant",
-        {"notable_variant"},
-        lambda row, other, routine: other["kind"] == "notable_variant",
+        frozenset({"notable_variant", "foreign_military"}),
+        _same_kind,
         VARIANT_COOLDOWN,
     ),
     # A second "first" of one type or allocation State would be false.
-    ("first_repeat", "subtopic", FIRST_KINDS, lambda row, other, routine: other["kind"] == row["kind"], None),
-    ("series_repeat", "series", None, lambda row, other, routine: True, SERIES_COOLDOWN),
+    ("first_repeat", "subtopic", FIRST_KINDS, _same_kind, None),
+    ("identity_series", "series", frozenset({"identity_conflict"}), _any, IDENTITY_SERIES_COOLDOWN),
+    ("winds_series", "series", frozenset({"winds_aloft_day"}), _any, WINDS_COOLDOWN),
+    (
+        "series_repeat",
+        "series",
+        SERIES_KINDS - {"identity_conflict", "winds_aloft_day"},
+        _any,
+        SERIES_COOLDOWN,
+    ),
 )
 
 
@@ -624,9 +806,13 @@ REPEAT_REASONS = {
     "kind_repeat": f"This aircraft had a story of this kind within {_days(STORY_COOLDOWN)}",
     "type_repeat": f"This aircraft type had a type-match story within {_days(TYPE_COOLDOWN)}",
     "routine_type": f"This locally routine type had an identity story within {_days(ROUTINE_COOLDOWN)}",
-    "variant_repeat": f"This aircraft variant had a story within {_days(VARIANT_COOLDOWN)}",
+    "watchlist_repeat": f"This aircraft had a watchlist story within {_days(WATCHLIST_COOLDOWN)}",
+    "unregistered_repeat": f"This address had an unlisted-address story within {_days(UNREGISTERED_COOLDOWN)}",
+    "variant_repeat": f"This aircraft variant, or this State's military type, had a story within {_days(VARIANT_COOLDOWN)}",
     "vintage_repeat": f"This vintage airframe had an identity story within {_days(VINTAGE_COOLDOWN)}",
     "first_repeat": "A first sighting of this type or allocation State already had its story",
+    "identity_series": f"An identity-conflict story ran within {_days(IDENTITY_SERIES_COOLDOWN)}",
+    "winds_series": f"A winds-aloft story ran within {_days(WINDS_COOLDOWN)}",
     "series_repeat": f"A story that reads the same way on any aircraft ran within {_days(SERIES_COOLDOWN)}",
 }
 

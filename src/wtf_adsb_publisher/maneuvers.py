@@ -72,6 +72,8 @@ METRICS = {
     "threshold_fpm": ("Detection threshold magnitude", "ft/min"),
     "qualifying_duration_seconds": ("Consecutive reports above the detection threshold", "s"),
     "qualifying_sample_count": ("Consecutive reports above the detection threshold", "samples"),
+    "qualifying_seconds_required": ("Required duration of consecutive reports above the threshold", "s"),
+    "qualifying_reports_required": ("Required consecutive reports above the threshold", "samples"),
     "sustained_rate_fpm": ("Slowest signed rate in the high-rate interval", "ft/min"),
     "sustained_duration_seconds": ("High-rate interval duration", "s"),
     "sustained_sample_count": ("High-rate interval reports", "samples"),

@@ -300,11 +300,11 @@ class CurationTests(unittest.TestCase):
             [row["finding_id"] for row in curation.choose([group(weak), group(strong)])["selected"]], [11]
         )
 
-    def test_a_kind_repeats_for_one_airframe_only_after_thirty_days(self):
+    def test_a_kind_repeats_for_one_airframe_only_after_sixty_days(self):
         def spiral(identifier, day, address="abcdef"):
             return finding(identifier, "descending_spiral", value=6, address=address, day=day)
 
-        groups = [group(spiral(i + 1, day)) for i, day in enumerate((0, 1, 29, 30))]
+        groups = [group(spiral(i + 1, day)) for i, day in enumerate((0, 1, 59, 60))]
         result = curation.choose(groups)
         self.assertEqual([row["finding_id"] for row in result["selected"]], [1, 4])
         self.assertEqual(
@@ -334,10 +334,11 @@ class CurationTests(unittest.TestCase):
         # The airframe rules run before the series rule (docs/daily-curation-2026-10-05.md).
         # A watchlist match is an identity kind, never a series.
         self.assertNotIn("watchlist_match", curation.SERIES_KINDS)
-        for kind, reason in (
-            ("identity_conflict", "identity_repeat"),
-            ("seasonal_speed_record", "kind_repeat"),
-            ("above_rated_altitude", "kind_repeat"),
+        for kind, reason, series in (
+            ("identity_conflict", "identity_repeat", "identity_series"),
+            ("seasonal_speed_record", "kind_repeat", "series_repeat"),
+            ("above_rated_altitude", "kind_repeat", "series_repeat"),
+            ("winds_aloft_day", "kind_repeat", "winds_series"),
         ):
             earlier = {
                 "addresses": ["abcdef"],
@@ -350,7 +351,7 @@ class CurationTests(unittest.TestCase):
             with self.subTest(kind=kind):
                 self.assertEqual(curation.StoryLog([earlier]).repeat(later), reason)
                 other = {**later, "addresses": ["fedcba"]}
-                self.assertEqual(curation.StoryLog([earlier]).repeat(other), "series_repeat")
+                self.assertEqual(curation.StoryLog([earlier]).repeat(other), series)
 
     def test_released_history_holds_a_kind_repeat_both_ways_unless_withdrawn(self):
         prior = curation.choose([group(finding(1, "descending_spiral", value=6, address="abcdef"))])
@@ -449,7 +450,10 @@ class CurationTests(unittest.TestCase):
         for kind in sorted(typecheck.REGISTRY_TYPE_KINDS):
             with self.subTest(kind=kind):
                 self.assertEqual([rule for rule, _ in curation.gates(with_check(kind, "disagrees"))], [])
-                self.assertEqual(curation.type_hold(with_check(kind, "pending"))[0], "type_check_pending")
+                # A pending check holds selection until STALE_CHECK_SECONDS after the first sighting.
+                self.assertEqual(
+                    curation.type_hold(with_check(kind, "pending"), now=START)[0], "type_check_pending"
+                )
                 # No registry listing the address still leaves the type uncorroborated.
                 self.assertIn(
                     "type_uncorroborated",
@@ -511,6 +515,356 @@ class RecordPlausibilityGateTests(unittest.TestCase):
         # Other kinds never take the record gate.
         mismatch = {**self.record("BE58", 432, alt_baro=5000), "kind": "fast"}
         self.assertEqual(curation.gates(mismatch), [])
+
+
+def _story_event(kind, address, evidence=None):
+    """A minimal saved finding for the repeat-policy facts."""
+    return {
+        "hex": address,
+        "kind": kind,
+        "evidence": {"aircraft": {"t": "C172"}, **(evidence or {})},
+    }
+
+
+def prior_story(*, kind, address, start, live=True, evidence=None):
+    """A StoryLog entry, as story_entry() or the publication ledger writes one."""
+    stamp = START + start
+    return {
+        "id": None,
+        "episode_key": f"{address}:{stamp:.6f}",
+        "kind": kind,
+        "start": stamp,
+        "day": curation.utc_day(stamp),
+        "live": live,
+        **curation.facts(_story_event(kind, address, evidence)),
+    }
+
+
+def candidate_row(*, kind, address, start, evidence=None):
+    """The repeat-policy part of a rated row (_rate_group)."""
+    stamp = START + start
+    return {
+        "id": None,
+        "kind": kind,
+        "start": stamp,
+        "day": curation.utc_day(stamp),
+        **curation.facts(_story_event(kind, address, evidence)),
+    }
+
+
+def unregistered_event(*, first_seen, checked_at, state, source=None, registration=None):
+    return {
+        "id": 1,
+        "hex": "a1b2c3",
+        "kind": "unregistered_address",
+        "first_seen": first_seen,
+        "last_seen": first_seen + 600,
+        "value": None,
+        "hits": 40,
+        "evidence": {
+            "aircraft": {"hex": "a1b2c3", "t": "C172", "type": "adsb_icao"},
+            "type_check": {
+                "state": state,
+                "source": source,
+                "type_code": None,
+                "registration": registration,
+                "listed_type": "C172",
+                "checked_at": checked_at,
+            },
+        },
+    }
+
+
+def pending_event(*, first_seen, kind="first_type_here"):
+    return {
+        "id": 1,
+        "hex": "a1b2c3",
+        "kind": kind,
+        "first_seen": first_seen,
+        "last_seen": first_seen + 600,
+        "value": None,
+        "hits": 40,
+        "evidence": {
+            "aircraft": {"hex": "a1b2c3", "t": "C172", "type": "adsb_icao"},
+            "type_check": {"state": "pending"},
+        },
+    }
+
+
+class NewCooldowns(unittest.TestCase):
+    def test_constants(self):
+        self.assertEqual(curation.STORY_COOLDOWN, 60 * 86400)
+        self.assertEqual(curation.TYPE_COOLDOWN, 30 * 86400)
+        self.assertEqual(curation.VARIANT_COOLDOWN, 14 * 86400)
+        self.assertEqual(curation.WATCHLIST_COOLDOWN, 90 * 86400)
+        self.assertEqual(curation.IDENTITY_SERIES_COOLDOWN, 21 * 86400)
+        self.assertEqual(curation.WINDS_COOLDOWN, 3 * 86400)
+        self.assertEqual(curation.UNREGISTERED_COOLDOWN, 90 * 86400)
+        self.assertEqual(curation.REGISTRY_LAG_SECONDS, 7 * 86400)
+        self.assertEqual(curation.STALE_CHECK_SECONDS, 30 * 86400)
+
+    def test_watchlist_repeat_inside_90_days_is_held(self):
+        log = curation.StoryLog()
+        log.add(prior_story(kind="watchlist_match", address="a1b2c3", start=0, live=True))
+        row = candidate_row(kind="watchlist_match", address="a1b2c3", start=80 * 86400)
+        self.assertEqual(log.repeat(row), "watchlist_repeat")
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="watchlist_match", address="a1b2c3", start=91 * 86400))
+        )
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="watchlist_match", address="d4e5f6", start=80 * 86400))
+        )
+
+    def test_unregistered_repeat_inside_90_days_is_held(self):
+        log = curation.StoryLog()
+        log.add(prior_story(kind="unregistered_address", address="a1b2c3", start=0))
+        row = candidate_row(kind="unregistered_address", address="a1b2c3", start=45 * 86400)
+        self.assertEqual(log.repeat(row), "unregistered_repeat")
+        self.assertIn("90 days", curation.REPEAT_REASONS["unregistered_repeat"])
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="unregistered_address", address="a1b2c3", start=91 * 86400))
+        )
+
+    def test_identity_conflict_series_is_21_days(self):
+        log = curation.StoryLog()
+        log.add(prior_story(kind="identity_conflict", address="aaaaaa", start=0, live=True))
+        self.assertEqual(
+            log.repeat(candidate_row(kind="identity_conflict", address="bbbbbb", start=10 * 86400)),
+            "identity_series",
+        )
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="identity_conflict", address="bbbbbb", start=22 * 86400))
+        )
+
+    def test_winds_aloft_series_is_3_days(self):
+        log = curation.StoryLog()
+        log.add(prior_story(kind="winds_aloft_day", address="aaaaaa", start=0))
+        self.assertEqual(
+            log.repeat(candidate_row(kind="winds_aloft_day", address="bbbbbb", start=2 * 86400)),
+            "winds_series",
+        )
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="winds_aloft_day", address="bbbbbb", start=4 * 86400))
+        )
+
+    def test_other_series_kinds_keep_seven_days(self):
+        log = curation.StoryLog()
+        log.add(prior_story(kind="seasonal_speed_record", address="aaaaaa", start=0))
+        self.assertEqual(
+            log.repeat(candidate_row(kind="seasonal_speed_record", address="bbbbbb", start=6 * 86400)),
+            "series_repeat",
+        )
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="seasonal_speed_record", address="bbbbbb", start=8 * 86400))
+        )
+
+    def test_a_kind_repeats_on_one_airframe_after_sixty_days(self):
+        log = curation.StoryLog()
+        log.add(prior_story(kind="descending_spiral", address="aaaaaa", start=0))
+        self.assertEqual(
+            log.repeat(candidate_row(kind="descending_spiral", address="aaaaaa", start=59 * 86400)),
+            "kind_repeat",
+        )
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="descending_spiral", address="aaaaaa", start=61 * 86400))
+        )
+
+    def test_foreign_military_deployment_is_one_story_a_fortnight(self):
+        def evidence(country, typecode="A400"):
+            return {"aircraft": {"t": typecode}, "foreign_military": {"country": country}}
+
+        self.assertEqual(
+            curation.facts(_story_event("foreign_military", "3b0001", evidence("FR")))["variant"], "FR/A400"
+        )
+        log = curation.StoryLog()
+        log.add(prior_story(kind="foreign_military", address="3b0001", start=0, evidence=evidence("FR")))
+        same = candidate_row(
+            kind="foreign_military", address="3b0002", start=10 * 86400, evidence=evidence("FR")
+        )
+        self.assertEqual(log.repeat(same), "variant_repeat")
+        later = candidate_row(
+            kind="foreign_military", address="3b0002", start=15 * 86400, evidence=evidence("FR")
+        )
+        self.assertIsNone(log.repeat(later))
+        for other in (evidence("DE"), evidence("FR", "C130")):
+            with self.subTest(other=other):
+                row = candidate_row(
+                    kind="foreign_military", address="3b0002", start=10 * 86400, evidence=other
+                )
+                self.assertIsNone(log.repeat(row))
+
+
+class RegistryLagHold(unittest.TestCase):
+    def test_unregistered_waits_a_week_then_a_fresh_check(self):
+        now = 1_700_000_000.0
+        event = unregistered_event(
+            first_seen=now - 3 * 86400, checked_at=now - 3 * 86400, state="unavailable"
+        )
+        self.assertEqual(curation.type_hold(event, now=now)[0], "registry_lag")
+        event = unregistered_event(
+            first_seen=now - 8 * 86400, checked_at=now - 8 * 86400, state="unavailable"
+        )
+        self.assertEqual(curation.type_hold(event, now=now)[0], "type_check_stale")
+        event = unregistered_event(first_seen=now - 8 * 86400, checked_at=now - 60, state="unavailable")
+        self.assertIsNone(curation.type_hold(event, now=now))
+
+    def test_pending_check_older_than_30_days_is_not_a_hold(self):
+        now = 1_700_000_000.0
+        event = pending_event(first_seen=now - 31 * 86400)
+        self.assertIsNone(curation.type_hold(event, now=now))
+        self.assertEqual(
+            curation.type_hold(pending_event(first_seen=now - 29 * 86400), now=now)[0], "type_check_pending"
+        )
+
+    def test_a_stale_check_leaves_a_performance_claim_uncorroborated(self):
+        now = 1_700_000_000.0
+        stale = pending_event(first_seen=now - 31 * 86400, kind="type_speed_mismatch")
+        self.assertTrue(curation.stale_check(stale, now))
+        self.assertIn("type_uncorroborated", [rule for rule, _ in curation.gates(stale, now=now)])
+        fresh = pending_event(first_seen=now - 3 * 86400, kind="type_speed_mismatch")
+        self.assertNotIn("type_uncorroborated", [rule for rule, _ in curation.gates(fresh, now=now)])
+        # An identity story stays publishable on the database alone.
+        identity = pending_event(first_seen=now - 31 * 86400)
+        self.assertNotIn("type_uncorroborated", [rule for rule, _ in curation.gates(identity, now=now)])
+
+    def test_an_unlisted_address_check_never_goes_stale(self):
+        now = 1_700_000_000.0
+        event = unregistered_event(first_seen=now - 40 * 86400, checked_at=None, state="pending")
+        self.assertFalse(curation.stale_check(event, now))
+        self.assertIsNotNone(curation.type_hold(event, now=now))
+
+    def test_unlisted_address_gates(self):
+        now = 1_700_000_000.0
+        settled = unregistered_event(first_seen=now - 8 * 86400, checked_at=now - 60, state="unavailable")
+        self.assertEqual(curation.gates(settled, now=now), [])
+        early = unregistered_event(
+            first_seen=now - 8 * 86400, checked_at=now - 8 * 86400, state="unavailable"
+        )
+        self.assertEqual([rule for rule, _ in curation.gates(early, now=now)], ["registry_unchecked"])
+        listed = unregistered_event(
+            first_seen=now - 8 * 86400,
+            checked_at=now - 60,
+            state="unavailable",
+            source="hexdb",
+            registration="N123AB",
+        )
+        rules = curation.gates(listed, now=now)
+        self.assertEqual([rule for rule, _ in rules], ["registry_lists_address"])
+        self.assertIn("hexdb", rules[0][1])
+        self.assertIn("N123AB", rules[0][1])
+
+
+class ReadingPlausibilityGate(unittest.TestCase):
+    @staticmethod
+    def sighting(kind="first_type_here", **aircraft_fields):
+        return {
+            "id": 1,
+            "hex": "a1b2c3",
+            "kind": kind,
+            "first_seen": START,
+            "last_seen": START + 600,
+            "hits": 40,
+            "evidence": {
+                "aircraft": {"hex": "a1b2c3", "t": "C172", "type": "adsb_icao", **aircraft_fields},
+                "type_check": {
+                    "state": "agrees",
+                    "source": "adsbdb",
+                    "type_code": "C172",
+                    "listed_type": "C172",
+                },
+            },
+        }
+
+    def rules(self, event):
+        return [rule for rule, _ in curation.gates(event, now=START)]
+
+    def test_a_direct_speed_beyond_the_envelope_is_implausible(self):
+        for kind in sorted(curation.PLAUSIBILITY_KINDS):
+            with self.subTest(kind=kind):
+                self.assertIn("reading_implausible", self.rules(self.sighting(kind, gs=400, alt_baro=5000)))
+        self.assertNotIn("reading_implausible", self.rules(self.sighting(gs=110, alt_baro=5000)))
+        # Other kinds never take the gate.
+        self.assertNotIn("reading_implausible", self.rules(self.sighting("military", gs=400, alt_baro=5000)))
+
+    def test_a_position_derived_speed_is_no_evidence(self):
+        self.assertNotIn("reading_implausible", self.rules(self.sighting(gs=400, alt_baro=5000, type="mlat")))
+        self.assertNotIn("reading_implausible", self.rules(self.sighting(gs=400, alt_baro=5000, mlat=["gs"])))
+
+    def test_an_altitude_above_the_ceiling_margin_is_implausible(self):
+        # The C172 envelope's ceiling is 15,000 ft; 2,000 ft above it is allowed.
+        self.assertNotIn("reading_implausible", self.rules(self.sighting(alt_baro=16900)))
+        self.assertIn("reading_implausible", self.rules(self.sighting(alt_baro=17100)))
+        # Altitude applies whatever the speed's source.
+        self.assertIn("reading_implausible", self.rules(self.sighting(alt_baro=17100, type="mlat")))
+        decision = selection.assess(self.sighting(alt_baro=17100), {}, now=START)
+        self.assertTrue(decision["review_required"])
+        self.assertIn("reading_implausible", decision["blocking_rules"])
+
+
+class ContextRules(unittest.TestCase):
+    def test_aerobatic_practice_near_an_airport_is_context(self):
+        for tag in ("terminal_area_context", "runway_circuit_context"):
+            with self.subTest(tag=tag):
+                self.assertTrue(
+                    curation.context_only("aerobatic_practice", {"maneuver": {"context_tags": [tag]}})
+                )
+        self.assertFalse(curation.context_only("aerobatic_practice", {"maneuver": {"context_tags": []}}))
+        self.assertFalse(curation.context_only("aerobatic_practice", {}))
+
+
+class RuleMetricsAndRecords(unittest.TestCase):
+    def test_descent_rule_metrics_are_accepted(self):
+        from wtf_adsb_publisher import episode_evidence, maneuvers
+
+        for key in ("threshold_fpm", "qualifying_seconds_required", "qualifying_reports_required"):
+            with self.subTest(key=key):
+                self.assertIn(key, maneuvers.METRICS)
+                self.assertIn(key, episode_evidence.METRICS)
+                self.assertIn(key, episode_evidence.RULE_METRICS)
+        rule = {"qualifying_seconds_required": 30, "qualifying_reports_required": 4}
+        summary = episode_evidence.summary(rule)
+        self.assertEqual({key: summary.get(key) for key in rule}, rule)
+
+    def test_the_season_record_keeps_its_margin(self):
+        from wtf_adsb_publisher import stories
+
+        block = stories.season_record({"previous_max_gs": 230, "margin_kn": 12.5, "baseline_days": 31})
+        self.assertEqual(block["margin_kn"], 12.5)
+        for bad in (-1, True, "12", float("nan")):
+            with self.subTest(bad=bad):
+                self.assertNotIn(
+                    "margin_kn", stories.season_record({"previous_max_gs": 230, "margin_kn": bad})
+                )
+
+    def test_a_record_needs_thirty_baseline_days_and_a_clear_margin(self):
+        from wtf_adsb_publisher import rules
+
+        self.assertEqual(rules.SEASON_MIN_BASELINE_DAYS, 30)
+        self.assertEqual(rules.RECORD_MARGIN, (10, 0.03))
+        aircraft = {"hex": "a0b1c2", "t": "BE58", "type": "adsb_icao", "alt_baro": 5000}
+        sustained = {"gs": 245, "duration_seconds": 75, "samples": 6, "source": "adsb_icao"}
+
+        def record(gs=245, **season):
+            base = {
+                "type": "BE58",
+                "season_start": "2026-09-01",
+                "max_gs": 230,
+                "addresses": 25,
+                "baseline_days": 30,
+            }
+            return rules.seasonal_speed_record(
+                aircraft, {**base, **season}, sustained={**sustained, "gs": gs}
+            )
+
+        found = record()
+        self.assertIsNotNone(found)
+        self.assertEqual(found.evidence["season_record"]["margin_kn"], 15.0)
+        self.assertIsNone(record(baseline_days=29))
+        # Below about 333 kn the fixed 10 kn is the larger margin; above it, 3 percent.
+        self.assertIsNone(record(max_gs=236))
+        self.assertIsNotNone(record(max_gs=235))
+        self.assertIsNone(record(gs=411, max_gs=400))
+        self.assertIsNotNone(record(gs=412, max_gs=400))
 
 
 if __name__ == "__main__":

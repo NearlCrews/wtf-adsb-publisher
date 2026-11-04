@@ -103,9 +103,10 @@ class PublicationPolicyTests(unittest.TestCase):
                 "series": "identity_conflict",
             }
 
+        # An identity conflict reads the same on any aircraft for 21 days.
         log = curation.StoryLog([story("a", "aaaaaa", 0)])
-        self.assertEqual(autopilot.repeat_reason(log, story("b", "bbbbbb", 6 * DAY)), "series_repeat")
-        self.assertIsNone(autopilot.repeat_reason(log, story("b", "bbbbbb", 8 * DAY)))
+        self.assertEqual(autopilot.repeat_reason(log, story("b", "bbbbbb", 20 * DAY)), "identity_series")
+        self.assertIsNone(autopilot.repeat_reason(log, story("b", "bbbbbb", 22 * DAY)))
 
     def test_a_watchlist_record_without_a_saved_source_joins_no_series(self):
         event = {

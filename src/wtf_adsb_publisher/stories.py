@@ -749,7 +749,8 @@ def winds_aloft(raw):
 
 def season_record(raw):
     """The previous seasonal maximum and the baseline it covers: the season's start, the first
-    day of compared reports, and how many days they span when the detector counted them."""
+    day of compared reports, how many days they span when the detector counted them, and the
+    record's margin over the previous maximum when the detector kept it."""
     if not isinstance(raw, dict):
         return None
     previous = raw.get("previous_max_gs")
@@ -766,6 +767,14 @@ def season_record(raw):
             block[key] = day
     if (days := _day_count(raw.get("baseline_days"))) is not None:
         block["baseline_days"] = days
+    margin = raw.get("margin_kn")
+    if (
+        not isinstance(margin, bool)
+        and isinstance(margin, (int, float))
+        and math.isfinite(margin)
+        and margin >= 0
+    ):
+        block["margin_kn"] = margin
     return block
 
 

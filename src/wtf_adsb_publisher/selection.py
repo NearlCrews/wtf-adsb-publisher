@@ -114,11 +114,13 @@ def _brief(event):
     )
 
 
-def assess(event, profiles=None, *, independent=False):
+def assess(event, profiles=None, *, independent=False, now=None):
     """Score one saved finding for private views and story eligibility.
 
     Context-only kinds stay below promotion unless `independent` says their
-    encounter also holds an independently promoted finding.
+    encounter also holds an independently promoted finding. `now` (default: the
+    current time) dates a stale type check (curation.stale_check) and an
+    unlisted address's registry wait (curation.type_hold).
     """
     evidence = _mapping(event.get("evidence"))
     aircraft = _mapping(evidence.get("aircraft"))
@@ -273,13 +275,13 @@ def assess(event, profiles=None, *, independent=False):
     if kind in IDENTITY_KINDS and _mapping(evidence.get("identity_checks")).get("conflict") is True:
         score, review = min(score, 60), True
         reasons.append("Identity checks disagree; the database identity cannot support this story")
-    blocking = curation.gates(event)
+    blocking = curation.gates(event, now=now)
     if blocking:
         # A second source's disagreement, too few reports, or an unsettled rated
         # verdict hold the finding for review whatever its score.
         review = True
         reasons.extend(reason for _, reason in blocking)
-    hold = curation.type_hold(event)
+    hold = curation.type_hold(event, now=now)
     if hold:
         # Not a review hold: selection waits for the type check and resumes unattended.
         reasons.append(hold[1])
