@@ -86,6 +86,17 @@ these files and an initialized ledger and spending database.
 
 ## Lifecycle and recovery
 
+Jobs pin the image by its `sha256:` ID, and a build tags only `:local`, so a
+later build drops the previous untagged ID and every job then fails to create
+its container ("Container job held"). Give the pinned image a stable tag, for
+example `docker tag <id> wtf-adsb-publisher:prod`, before writing its ID into
+`PUBLISHER_IMAGE`, and do not rebuild on the job host while jobs may launch
+without the hold. A launch that fails after its intent is written leaves
+`jobs/active/<role>.json` in the `prepared` phase with no container; `status`
+lists the role as pending and `drain` refuses. Confirm with `docker ps -a` that
+no container of that name exists and that no receipt carries its run ID, move
+the intent file aside, then drain again.
+
 The publish, writer, and weekly timers run at :00 and :30, at :10 and :40, and
 daily at 06:10 UTC. The
 runner writes and fsyncs a launch intent before creating a detached, named job.
