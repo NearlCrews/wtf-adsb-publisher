@@ -1391,17 +1391,19 @@ class NewKindFacts(unittest.TestCase):
         self.assertFalse([key for key in racetrack if key.startswith("aer.")])
 
     def test_separation_in_feet_for_formation_and_tcas(self):
-        # 0.034 NM is 206.6 ft, given to the nearest 10 ft; the NM measurement row stays.
-        for kind in ("formation_flight", "tcas_ra"):
+        # A formation's 0.034 NM is 206.6 ft, given to the nearest 10 ft. A TCAS separation comes
+        # rounded to 0.01 NM (60.8 ft), so its 0.03 NM (182.3 ft) is given to the nearest 50 ft.
+        # The NM measurement row stays.
+        for kind, nautical_miles, feet in (("formation_flight", 0.034, 210), ("tcas_ra", 0.03, 200)):
             with self.subTest(kind=kind):
                 raw = fixtures.kind_event(kind)
-                raw["evidence"]["maneuver"]["min_separation_nm"] = 0.034
+                raw["evidence"]["maneuver"]["min_separation_nm"] = nautical_miles
                 built = fixtures.facts(raw)
                 ids = values(built)
                 fact = ids["sep.horizontal_ft"]
-                self.assertEqual((fact["value"], fact["unit"], fact["basis"]), (210, "ft", "derived"))
-                self.assertEqual(ids["m.min_separation_nm"]["value"], 0.034)
-                self.assertEqual(public_prose.prose_checker(built)("They flew 210 feet apart."), [])
+                self.assertEqual((fact["value"], fact["unit"], fact["basis"]), (feet, "ft", "derived"))
+                self.assertEqual(ids["m.min_separation_nm"]["value"], nautical_miles)
+                self.assertEqual(public_prose.prose_checker(built)(f"They flew {feet} feet apart."), [])
         del raw["evidence"]["maneuver"]["min_separation_nm"]
         self.assertNotIn("sep.horizontal_ft", values(fixtures.facts(raw)))
         self.assertNotIn("sep.horizontal_ft", values(fixtures.facts(fixtures.kind_event("circling"))))

@@ -895,14 +895,16 @@ def type_check(evidence, kind=None):
     return found
 
 
-def participants(evidence, primary=None):
-    """Other aircraft in a multi-aircraft episode, using the primary identity allowlist."""
+def participant_entries(evidence, primary=None):
+    """The evidence's participant entries a story lists, as (entry, address) pairs: a known
+    role, the first entry of each address, never the primary, in role then address order,
+    at most 12. participants() and the track images both choose by this rule."""
     raw = evidence.get("participants")
     if not isinstance(raw, list) and isinstance(evidence.get("maneuver"), dict):
         raw = evidence["maneuver"].get("participants")
     if not isinstance(raw, list):
         return []
-    result, seen = [], {primary} if primary else set()
+    chosen, seen = [], {primary} if primary else set()
     for item in raw[:64]:
         if not isinstance(item, dict) or item.get("role") not in PARTICIPANT_ROLES:
             continue
@@ -911,6 +913,15 @@ def participants(evidence, primary=None):
             continue
         if address:
             seen.add(address)
+        chosen.append((item, address))
+    chosen.sort(key=lambda pair: (PARTICIPANT_ROLES.index(pair[0]["role"]), pair[1] or "~"))
+    return chosen[:12]
+
+
+def participants(evidence, primary=None):
+    """Other aircraft in a multi-aircraft episode, using the primary identity allowlist."""
+    result = []
+    for item, address in participant_entries(evidence, primary):
         measurements = item.get("measurements", {})
         values = {}
         if isinstance(measurements, dict):
@@ -935,8 +946,7 @@ def participants(evidence, primary=None):
                 "measurements": values,
             }
         )
-    result.sort(key=lambda item: (PARTICIPANT_ROLES.index(item["role"]), item["icao_address"] or "~"))
-    return result[:12]
+    return result
 
 
 def evidence_packet(event, include_track=True, *, observation_interval=None):

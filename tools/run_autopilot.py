@@ -195,10 +195,14 @@ def generate_media(snapshot, ledger, destination, previous=None, *, seed=False, 
                 else None
             )
             start, end = module.instant(event["observed_start"]), module.instant(event["observed_end"])
-            if parts is None:
+            # Supplied segments with no drawable line, such as an advisory's, which the engine
+            # cuts from its message points, give way to the evidence's own positions.
+            if not isinstance(parts, list) or not any(
+                isinstance(part, list) and len(part) >= 2 for part in parts
+            ):
                 parts = module.segments(points, start, end)
             if event["kind"] in module.SECOND_TRACK_KINDS:
-                others = module.participant_tracks(raw, start, end)
+                others = module.participant_tracks(raw, start, end, event["aircraft"].get("icao_address"))
             image = module.track_image(event, parts, analysis_window=False, basemaps=basemaps, others=others)
         entry = module.store_image(image or module.summary_image(event), assets, event)
         if profile := module.profile_image(event, parts, others):

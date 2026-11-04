@@ -604,12 +604,14 @@ class RareKindMediaTests(unittest.TestCase):
             for index, point in enumerate(points)
         ]
 
-    def render(self, raw):
+    def render(self, raw, **automation):
         import story_fixtures as fixtures
 
         evidence = fixtures.packet(raw)
         event = {**public_events._projection(evidence, public_events.PLACEHOLDER_EDITORIAL), "id": "rare"}
-        ledger = {"records": [{"id": "rare", "automation": {"source": raw}}]}
+        if "media_parts" in automation:
+            automation["media_evidence_version"] = event["evidence_version"]
+        ledger = {"records": [{"id": "rare", "automation": {"source": raw, **automation}}]}
         with tempfile.TemporaryDirectory() as directory:
             manifest = self.runner.generate_media(
                 {"snapshot_id": "s", "events": [event]}, ledger, Path(directory)
@@ -662,6 +664,39 @@ class RareKindMediaTests(unittest.TestCase):
             self.assertIn(label, svg)
         self.assertEqual(svg.count('fill="none" stroke-linejoin="round"'), 2)
         self.assertTrue(figure["alt"].strip() and figure["caption"].strip())
+        # The feed's segments for an advisory are empty (its own samples are the messages), so
+        # the map and the profile come from the evidence's positions.
+        fed, fed_image, fed_figures = self.render(raw, media_parts=[])
+        self.assertEqual((fed["kind"], fed_image), ("track", image))
+        self.assertEqual([figure for figure, _ in fed_figures], [figure])
+        # A second other aircraft adds a line but no second legend entry.
+        second = {**raw["evidence"]["participants"][0], "hex": "a0c0d1"}
+        second["track"] = self.barometric(own, climb=60, offset=0.02)
+        raw["evidence"]["participants"].append(second)
+        _, _, [(_, svg)] = self.render(raw)
+        self.assertEqual(svg.count('fill="none" stroke-linejoin="round"'), 3)
+        self.assertEqual(svg.count("Other aircraft"), 1)
+
+    def test_participant_tracks_follow_the_participant_list_rules(self):
+        import story_fixtures as fixtures
+
+        raw = fixtures.kind_event("formation_flight")
+        own = raw["evidence"]["pattern_samples"]
+        raw["evidence"]["pattern_samples"] = self.barometric(own)
+        wingman = raw["evidence"]["participants"][0]
+        wingman["track"] = self.barometric(own, offset=0.004)
+        raw["evidence"]["participants"] += [
+            # Repeats of an address, an unknown role, and the primary itself are not drawn.
+            {**wingman, "track": self.barometric(own, offset=0.008)},
+            {**wingman, "hex": "ae9999", "role": "spectator", "track": self.barometric(own, offset=0.012)},
+            {**wingman, "hex": raw["hex"], "track": self.barometric(own, offset=0.016)},
+        ]
+        _, image, _ = self.render(raw)
+        self.assertEqual(image.count(f'fill="none" stroke="{self.colors["other"]}" stroke-width="7"'), 1)
+
+    def test_flat_profile_ticks_are_whole_hundreds(self):
+        module = self.runner.media_module()
+        self.assertEqual([module._nice_step(span) for span in (0, 2, 350, 4000)], [100, 100, 100, 1000])
 
     def test_profile_kinds(self):
         import story_fixtures as fixtures

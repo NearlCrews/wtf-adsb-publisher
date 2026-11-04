@@ -26,7 +26,7 @@ from wtf_adsb_publisher.editorial import MILES_PER_NM
 from wtf_adsb_publisher.places import nearest_place, projection
 from wtf_adsb_publisher.public_events import _projection, epoch_utc
 from wtf_adsb_publisher.rules import distance_nm, number
-from wtf_adsb_publisher.stories import evidence_packet
+from wtf_adsb_publisher.stories import evidence_packet, participant_entries
 
 WIDTH, HEIGHT = 1200, 800
 MAX_POINTS = 256
@@ -45,7 +45,6 @@ SECOND_TRACK_KINDS = frozenset({"formation_flight", "tcas_ra"})
 # Kinds that add an altitude profile below the map; TCAS plots the other aircraft too.
 PROFILE_KINDS = frozenset({"tcas_ra", "stratospheric_balloon", "thermal_soaring", "aerobatic_practice"})
 PROFILE_HEIGHT = 400
-MAX_PARTICIPANTS = 12
 
 
 def instant(value):
@@ -176,16 +175,17 @@ def segments(raw_points, start, end):
     return airport_context.parts(window, describe=telemetry)
 
 
-def participant_tracks(evidence, start, end):
+def participant_tracks(evidence, start, end, primary=None):
     """Each participant's drawn lines, from the saved ``track`` its evidence entry carries.
 
-    The positions pass the same checks as the primary's (segments): a participant
-    without a saved track, or with too many positions, is not drawn.
+    The participants are the ones a story lists (stories.participant_entries: a known
+    role, one entry per address, never the ``primary`` address). The positions pass
+    the same checks as the primary's (segments): a participant without a saved track,
+    or with too many positions, is not drawn.
     """
-    raw = evidence.get("participants") if isinstance(evidence, dict) else None
     tracks = []
-    for item in raw[:MAX_PARTICIPANTS] if isinstance(raw, list) else ():
-        points = item.get("track") if isinstance(item, dict) else None
+    for item, _ in participant_entries(evidence, primary) if isinstance(evidence, dict) else ():
+        points = item.get("track")
         if not isinstance(points, list) or not points or len(points) > MAX_POINTS:
             continue
         parts = segments([point for point in points if isinstance(point, dict)], start, end)
@@ -397,8 +397,9 @@ def _barometric(parts):
 
 
 def _nice_step(span, ticks=4):
-    """A 1, 2, or 5 times a power of ten step that splits ``span`` into about ``ticks`` parts."""
-    raw = max(span, 1) / ticks
+    """A 1, 2, or 5 times a power of ten step that splits ``span`` into about ``ticks`` parts,
+    at least 100 ft, so a level profile is labeled in whole hundreds."""
+    raw = max(span / ticks, 100)
     magnitude = 10 ** math.floor(math.log10(raw))
     return next(step * magnitude for step in (1, 2, 5, 10) if step * magnitude >= raw)
 
@@ -450,7 +451,8 @@ def profile_image(event, parts, others=()):
         "archive timestamps do not establish exact message freshness."
     )
     body = text(70, 52, "Altitude profile", 34, weight=600)
-    body += legend(640, 52, [(label, color) for label, color, _ in series], size=22)
+    # One legend entry per label: every other aircraft shares the second color.
+    body += legend(640, 52, list(dict.fromkeys((label, color) for label, color, _ in series)), size=22)
     body += text(70, 84, "Pressure altitude (ft)", 22, color=COLORS["muted"])
     body += (
         f'<rect x="{left}" y="{top}" width="{right - left}" height="{bottom - top}" rx="10" fill="#fafbf5"/>'
