@@ -10,6 +10,7 @@ from copy import deepcopy
 from datetime import date, datetime, timezone
 
 from . import enrichment_rules, episode_evidence, kinds, limits, maneuvers, watchlists
+from .numeric import finite
 from .public_prose import prose_checker
 from .rules import IDENTIFIERS, IDENTITY_CHECK_KEYS, RATED_KINDS, distance_nm, identifier, number
 
@@ -772,12 +773,7 @@ def season_record(raw):
     if not isinstance(raw, dict):
         return None
     previous = raw.get("previous_max_gs")
-    if (
-        isinstance(previous, bool)
-        or not isinstance(previous, (int, float))
-        or not math.isfinite(previous)
-        or previous <= 0
-    ):
+    if not finite(previous) or previous <= 0:
         return None
     block = {"previous_max_gs": previous}
     for key in ("season_start", "baseline_start"):
@@ -786,12 +782,7 @@ def season_record(raw):
     if (days := _day_count(raw.get("baseline_days"))) is not None:
         block["baseline_days"] = days
     margin = raw.get("margin_kn")
-    if (
-        not isinstance(margin, bool)
-        and isinstance(margin, (int, float))
-        and math.isfinite(margin)
-        and margin >= 0
-    ):
+    if finite(margin) and margin >= 0:
         block["margin_kn"] = margin
     return block
 

@@ -1753,6 +1753,27 @@ class NewProseRules(unittest.TestCase):
         self.assertTrue(public_prose.shares_run("the wind itself was gone", "The wind itself was not.", 4))
         self.assertFalse(public_prose.shares_run("The wind was not measured.", runs, 4))
 
+    def test_one_long_date_form_and_one_home_for_the_hypothesis_wording(self):
+        from datetime import date, datetime, timezone
+
+        from wtf_adsb_publisher import public_writer
+
+        self.assertEqual(public_prose.long_date("2026-11-05"), "5 November 2026")
+        self.assertEqual(public_prose.long_date("2026-11-05T23:00:00Z"), "5 November 2026")
+        self.assertEqual(public_prose.long_date(date(2026, 1, 2)), "2 January 2026")
+        self.assertEqual(public_prose.long_date(datetime(2026, 1, 2, tzinfo=timezone.utc)), "2 January 2026")
+        self.assertIsNone(public_prose.long_date(None))
+        self.assertIs(editorial.long_date, public_prose.long_date)
+        self.assertEqual(
+            public_writer.OPERATOR_LABEL_SENTENCE.format(designator="QFA"),
+            editorial.BUILDERS["fs_label"][0].format(fs_designator="QFA"),
+        )
+        for builder, kind in (("aer_hyp", "aerobatic_practice"), ("unr_hyp", "unregistered_address")):
+            listed = public_prose.series(story_facts.HYPOTHESES[kind], "or")
+            for text in editorial.BUILDERS[builder]:
+                with self.subTest(builder=builder):
+                    self.assertIn(listed.lower(), text.lower())
+
     def test_the_shared_checks_serve_the_research_prose(self):
         # Researched prose offers a hypothesis by its whole phrase.
         self.assertEqual(

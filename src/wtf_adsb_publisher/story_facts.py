@@ -1474,8 +1474,7 @@ def _repeat(facts, related, observed):
             latest = (day, path, kind, title)
     if latest:
         day, path, kind, title = latest
-        when = date.fromisoformat(day)
-        value_ = f"{title} on {when.day} {story_urls.MONTH_NAMES[when.month - 1]} {when.year}"
+        value_ = f"{title} on {public_prose.long_date(day)}"
         _fact(facts, "repeat.previous", value_, "derived", kind=kind, dates=[day])
         _fact(facts, "repeat.path", path, "derived")
 

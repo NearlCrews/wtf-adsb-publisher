@@ -22,7 +22,7 @@ from dataclasses import KW_ONLY, dataclass, field, replace
 from datetime import date
 
 from . import kinds, limits, maneuvers, public_events, public_prose, rules, story_facts, story_urls
-from .public_prose import MONTH_NAMES, number, series
+from .public_prose import MONTH_NAMES, long_date, number, series
 
 # The writing policy: a bump lets the writer replace AI prose written under an older one.
 PROSE_POLICY = 6
@@ -235,11 +235,6 @@ def _month(value):
 def day_month(value):
     day = _day(value)
     return f"{day.day} {_month(value)}" if day else None
-
-
-def long_date(value):
-    day = _day(value)
-    return f"{day.day} {_month(value)} {day.year}" if day else None
 
 
 def short_date(value):
@@ -2877,11 +2872,14 @@ BUILDERS = {
         "All of it stayed inside an area {span} across.",
         "The climbs and dives stayed within {span}.",
     ),
+    # The hypothesis sentences take their wording from story_facts.HYPOTHESES.
     "aer_hyp": (
-        "{reversals|cap} reversals in a small area make an aerobatic-style pattern; the data do not show why the "
-        "aircraft flew it.",
-        "The {reversals} reversals read as aerobatic-style flying, and the record cannot say what the pilot "
-        "intended.",
+        "{reversals|cap} reversals in a small area make an aerobatic-style pattern, consistent with "
+        f"{public_prose.series(story_facts.HYPOTHESES['aerobatic_practice'], 'or')}; the data do not show why "
+        "the aircraft flew it.",
+        "The {reversals} reversals read as aerobatic-style flying, consistent with "
+        f"{public_prose.series(story_facts.HYPOTHESES['aerobatic_practice'], 'or')}, and the record cannot say "
+        "what the pilot intended.",
     ),
     "rt_legs": (
         "It flew {rt_legs} straight legs averaging {rt_leg_length} back and forth over the same pair of lines.",
@@ -2905,10 +2903,10 @@ BUILDERS = {
         "It broadcast emitter category {unr_category}.",
     ),
     "unr_hyp": (
-        "A missing entry for {hex_upper} may come from registry lag, a registry the site does not consult, or "
-        "an address programmed by hand.",
-        "Registry lag, a registry the site does not consult, or an address set by hand may each leave "
-        "{hex_upper} unlisted.",
+        "A missing entry for {hex_upper} may come from "
+        f"{public_prose.series(story_facts.HYPOTHESES['unregistered_address'], 'or')}.",
+        f"{public_prose.series(story_facts.HYPOTHESES['unregistered_address'], 'or').capitalize()} may each "
+        "leave {hex_upper} unlisted.",
     ),
 }
 # A group counts as said once a sentence has used one of these slots.

@@ -21,7 +21,7 @@ import re
 import unicodedata
 from collections.abc import Callable
 from contextlib import suppress
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import NamedTuple
 
 from . import curation, enrichment_rules, episode_evidence, kinds, places, rules, site_identity
@@ -1414,6 +1414,18 @@ def finite(value):
 def number(value):
     """The value when finite(), else None."""
     return value if finite(value) else None
+
+
+def long_date(value):
+    """A date as "5 November 2026" from an ISO date or time (moment), a date, or a datetime;
+    None otherwise. Story slots, fixed headlines, and the repeat fact share this one form."""
+    if isinstance(value, str):
+        value = moment(value)
+    if isinstance(value, datetime):
+        value = value.date()
+    if not isinstance(value, date):
+        return None
+    return f"{value.day} {MONTH_NAMES[value.month - 1]} {value.year}"
 
 
 def moment(value):
@@ -4469,7 +4481,6 @@ def fixed_headline(facts):
     values = _story_values(facts)
     kind_type, country = values.get("id.type") or {}, values.get("alloc.country") or {}
     klass = (values.get("id.type_class") or {}).get("value")
-    day = moment((values.get("wind.day") or {}).get("value"))
     address = (values.get("id.hex") or {}).get("value")
     names = {
         "type": (None if kind_type.get("group") else kind_type.get("value"), "id.type"),
@@ -4488,7 +4499,7 @@ def fixed_headline(facts):
             (None, None),
         ),
         "operator": ((values.get("fs.operator") or {}).get("value"), "fs.operator"),
-        "day_long": (f"{day.day} {MONTH_NAMES[day.month - 1]} {day.year}" if day else None, "wind.day"),
+        "day_long": (long_date((values.get("wind.day") or {}).get("value")), "wind.day"),
         "hex_upper": (address.upper() if isinstance(address, str) else None, "id.hex"),
     }
     for form in forms:

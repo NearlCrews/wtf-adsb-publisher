@@ -227,14 +227,14 @@ SPEED_HEDGES = {
 # The one form a listed hypothesis takes in the notes that offer one, which the hypothesis
 # hedge check accepts ("One possibility is" and "may come from" it refuses).
 HYPOTHESIS_SENTENCE = "It could be {hypothesis}."
+# The one hypothesis an aerobatic-style story may offer (story_facts.HYPOTHESES).
+(AEROBATIC_HYPOTHESIS,) = story_facts.HYPOTHESES["aerobatic_practice"]
 HYPOTHESIS_FORM = (
     "one listed hypothesis at most, labeled as a possibility in the form "
     f'"{HYPOTHESIS_SENTENCE.format(hypothesis="<hypothesis>")}"'
 )
 # The first operator story's label sentence, the template's own (editorial fs_label).
-OPERATOR_LABEL_SENTENCE = (
-    "A callsign is a label, so the {designator} prefix does not confirm who operates the aircraft."
-)
+OPERATOR_LABEL_SENTENCE = engine.BUILDERS["fs_label"][0].replace("{fs_designator}", "{designator}")
 GLITCH_READING = (
     "Give the reading, the readings around it, the type as the database lists it, and, when a fact gives it, "
     "what the type is certified to, a speed limit named as an airspeed in a sentence of its own."
@@ -381,7 +381,7 @@ KIND_NOTES = (
         ("aerobatic_practice",),
         "Call the pattern aerobatic-style. Give the reversals, the height range, and the area once (aer.reversals, "
         "aer.excursion, aer.span). Never state as fact that aerobatics were flown or practiced. Offer one "
-        'hypothesis at most, and only this one: the pattern "is consistent with aerobatic practice".',
+        f'hypothesis at most, and only this one: the pattern "is consistent with {AEROBATIC_HYPOTHESIS}".',
     ),
     (
         ("unregistered_address",),
