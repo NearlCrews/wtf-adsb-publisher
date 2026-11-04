@@ -1,5 +1,6 @@
 """Deterministic evidence checks for AI-written public prose; no paid calls."""
 
+import re
 import sys
 import time
 import unittest
@@ -1705,6 +1706,83 @@ class NewProseRules(unittest.TestCase):
         )
         offered = with_sentence(story, "One explanation may be a refueling-style track.")
         self.assertEqual(public_prose.story_issues(offered, facts), [])
+
+    def test_a_likeness_compound_covers_its_own_phrase_and_not_the_sentence(self):
+        facts, story = kind_story("survey_grid")
+        # The compound hedges its phrase; the same hypothesis stated again in the sentence is not.
+        both = with_sentence(story, "It flew survey-style legs that were mapping the fields.")
+        self.assertIn("claim:unhedged_hypothesis", public_prose.story_issues(both, facts))
+        alone = with_sentence(story, "It flew survey-style legs over the fields.")
+        self.assertNotIn("claim:unhedged_hypothesis", public_prose.story_issues(alone, facts))
+        self.assertEqual(
+            public_prose.unhedged_hypotheses(
+                ["Six aerobatic-style climbs, then aerobatic practice."], ["aerobatic practice"]
+            ),
+            [("Six aerobatic-style climbs, then aerobatic practice.", "aerobatic practice")],
+        )
+        self.assertEqual(
+            public_prose.unhedged_hypotheses(
+                ["Six reversals of aerobatic-style practice."], ["aerobatic practice"]
+            ),
+            [],
+        )
+
+    def test_a_dek_adds_a_figure_only_when_the_whole_figure_is_a_fact(self):
+        facts = {
+            "facts": [{"id": "m.alt", "value": 200, "unit": "ft"}, {"id": "m.len", "value": 5, "unit": "NM"}]
+        }
+        # A fragment of a larger figure, after its grouping comma or decimal point, is no fact.
+        self.assertFalse(public_prose.adds_to("N1 passes", "It reported 1,200 ft.", facts))
+        self.assertFalse(public_prose.adds_to("N1 passes", "Its legs ran 12.5 NM.", facts))
+        self.assertTrue(public_prose.adds_to("N1 passes", "It reported 200 ft.", facts))
+        self.assertTrue(public_prose.adds_to("N1 passes", "Its legs ran 5 NM.", facts))
+
+    def test_one_run_detector_serves_the_box_and_the_required_sentence(self):
+        fact = "The Bell 407 is a light single-engine utility helicopter with four main rotor blades."
+        self.assertTrue(
+            public_prose.quotes(
+                "It is a light single-engine utility helicopter with four main rotor blades.", fact
+            )
+        )
+        self.assertFalse(public_prose.quotes("It is a light helicopter.", fact))
+        self.assertFalse(
+            public_prose.quotes("A light single-engine utility helicopter.", "Five words only here now.")
+        )
+        runs = public_prose.word_runs("The wind itself was not measured.", 4)
+        self.assertTrue(public_prose.shares_run("Again, the wind itself was not measured here.", runs, 4))
+        self.assertTrue(public_prose.shares_run("the wind itself was gone", "The wind itself was not.", 4))
+        self.assertFalse(public_prose.shares_run("The wind was not measured.", runs, 4))
+
+    def test_the_shared_checks_serve_the_research_prose(self):
+        # Researched prose offers a hypothesis by its whole phrase.
+        self.assertEqual(
+            public_prose.unhedged_hypotheses(
+                ["The registry answered."], ["a stale registry entry"], whole=True
+            ),
+            [],
+        )
+        self.assertTrue(
+            public_prose.unhedged_hypotheses(
+                ["A stale registry entry pairs it."], ["a stale registry entry"], whole=True
+            )
+        )
+        self.assertTrue(public_prose.is_causeless("outlier_gs"))
+        self.assertFalse(public_prose.is_causeless("circling"))
+        self.assertFalse(public_prose.is_causeless(None))
+        self.assertEqual(
+            public_prose.unlisted_names("Boeing built it near Wichita.", {"boeing"}), ["Wichita"]
+        )
+        self.assertEqual(public_prose.unlisted_names("It was a B738.", set()), [])
+        self.assertEqual(public_prose.unlisted_names("It was a B738.", set(), numbered=True), ["B738"])
+        # The weekly modules reach no private helper of the story checks.
+        for name in ("weekly_spotlight.py", "weekly_research.py"):
+            source = (Path(__file__).resolve().parents[1] / "src" / "wtf_adsb_publisher" / name).read_text()
+            self.assertIsNone(re.search(r"\b(?:prose|public_prose)\._\w", source), name)
+        # The compiled hypothesis patterns are built once per hypothesis.
+        public_prose._hypothesis_patterns.cache_clear()
+        for _ in range(3):
+            public_prose.unhedged_hypotheses(["A plain sentence."], ["aerial survey or mapping"])
+        self.assertEqual(public_prose._hypothesis_patterns.cache_info().misses, 1)
 
     def test_house_headlines_share_their_skeleton_without_a_variety_issue(self):
         for kind in ("watchlist_match", "foreign_military"):

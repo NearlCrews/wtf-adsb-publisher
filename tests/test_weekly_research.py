@@ -737,6 +737,10 @@ def add_mismatches(ledger, addresses, *, state="approved", first=0):
         )
         if state != "pending":
             public.set_review_state(ledger, identifier, state, at=NOW)
+        if state == "approved":
+            # A published story: the publisher records its release beside the approval.
+            record = next(item for item in ledger["records"] if item["id"] == identifier)
+            record.setdefault("automation", {})["released_at"] = NOW
     return ledger
 
 

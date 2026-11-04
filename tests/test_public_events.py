@@ -1920,5 +1920,28 @@ class NewKindEvidenceTests(unittest.TestCase):
                 self.assertLessEqual(set(keys), known)
 
 
+class LiveStoryTests(unittest.TestCase):
+    def test_a_live_story_is_released_with_a_page_and_not_taken_down(self):
+        record = {
+            "state": "pending",
+            "editorial": {"article_path": STORY_PATH},
+            "automation": {"released_at": NOW},
+        }
+        # A released story under revision is still live.
+        self.assertTrue(public.live_story(record))
+        for change in (
+            {"state": "withdrawn"},
+            {"automation": {"released_at": NOW, "suspended": True}},
+            {"automation": {"released_at": NOW, "removed": True}},
+            {"automation": {"released_at": NOW, "blocked": True}},
+            {"automation": {}},
+            {"editorial": {"article_path": STORY_PATH, "synthetic": True}},
+            {"editorial": {}},
+        ):
+            with self.subTest(change=change):
+                self.assertFalse(public.live_story({**record, **change}))
+        self.assertFalse(public.live_story(None))
+
+
 if __name__ == "__main__":
     unittest.main()

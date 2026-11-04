@@ -1701,6 +1701,11 @@ def _rotation(items, seed):
     return [(index, items[index]) for index in [*range(start, len(items)), *range(start)]]
 
 
+# A sentence that repeats this many words in a row of the required one restates it:
+# "the wind itself was not measured".
+RESTATED_RUN = 4
+
+
 class _Builder:
     """Assembles candidate stories for one render: facts, slots, recent stories and checks."""
 
@@ -1720,6 +1725,11 @@ class _Builder:
                 if isinstance(value, str) and " " in value and self.required and value in self.required
             )
         )
+        # The required sentence's word runs, its slot values blanked (restates_required).
+        blanked = self.required or ""
+        for value in self.required_values:
+            blanked = blanked.replace(value, " ")
+        self.required_runs = public_prose.word_runs(blanked, RESTATED_RUN)
         # Sourced type facts as the checks read them: a restated one is never the story's caveat.
         self.profiles = public_prose.profile_texts(facts)
         self.profile_ids = frozenset(item["id"] for item in facts["facts"] if item["id"].startswith("tp."))
@@ -1744,10 +1754,10 @@ class _Builder:
 
     def restates_required(self, text):
         """Whether text repeats a run of the required sentence's own words, its slot values aside."""
-        own, required = text, self.required
+        own = text
         for value in self.required_values:
-            own, required = own.replace(value, " "), required.replace(value, " ")
-        return _restates(own, required)
+            own = own.replace(value, " ")
+        return public_prose.shares_run(own, self.required_runs, RESTATED_RUN)
 
     def clean(self, text):
         if text not in self.cache:
@@ -2110,13 +2120,6 @@ def _overlaps(first, second, names=()):
 
 def _longest_first_values(values):
     return sorted(set(values), key=lambda value: (-len(value), value))
-
-
-def _restates(text, other, run=4):
-    """Whether text repeats a run of words from other: "the wind itself was not measured"."""
-    words, theirs = re.findall(r"[a-z']+", text.lower()), re.findall(r"[a-z']+", other.lower())
-    runs = {tuple(theirs[index : index + run]) for index in range(len(theirs) - run + 1)}
-    return any(tuple(words[index : index + run]) in runs for index in range(len(words) - run + 1))
 
 
 def _echoes(text, other, names=(), share=0.5):

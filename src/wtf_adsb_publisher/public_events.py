@@ -2127,6 +2127,26 @@ def _was_released(record):
     )
 
 
+def live_story(record):
+    """Whether a ledger record is a story readers can open: released (_was_released), not
+    withdrawn or removed by its owner, not suspended or blocked, not synthetic, and with a
+    page. Rarity, the weekly picks, and the explainers count these only; a pending or
+    suspended record is not a published story."""
+    if not isinstance(record, dict) or record.get("state") == "withdrawn":
+        return False
+    automation = record.get("automation") if isinstance(record.get("automation"), dict) else {}
+    editorial = record.get("editorial") if isinstance(record.get("editorial"), dict) else {}
+    if any(automation.get(flag) for flag in ("removed", "suspended", "blocked")) or editorial.get(
+        "synthetic"
+    ):
+        return False
+    try:
+        _article_path(editorial.get("article_path"))
+    except ValueError:
+        return False
+    return _was_released(record)
+
+
 def _retired_entry(record, as_of):
     """A withdrawn story's public path, the slug of its type hub and the withdrawal time.
 

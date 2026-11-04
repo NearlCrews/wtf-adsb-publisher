@@ -299,7 +299,7 @@ def _with_search(encoded):
 
 def causeless(kind):
     """Whether a story of `kind` names no cause for its readings (public_prose.CAUSELESS_KINDS)."""
-    return kind in public_prose.CAUSELESS_KINDS or kind.startswith(public_prose.CAUSELESS_PREFIXES)
+    return public_prose.is_causeless(kind)
 
 
 def event_brief(event):
@@ -564,14 +564,9 @@ def explainer_brief(ledger, key):
         return None
     count = 0
     for record in ledger["records"]:
-        evidence, automation = record.get("evidence") or {}, record.get("automation") or {}
+        evidence = record.get("evidence") or {}
         # Only published stories count: a pending one may never be released.
-        if (
-            record.get("state") != "approved"
-            or automation.get("blocked")
-            or automation.get("suspended")
-            or (record.get("editorial") or {}).get("synthetic")
-        ):
+        if not public.live_story(record):
             continue
         count += weekly.explains(
             key, evidence.get("kind"), (evidence.get("aircraft") or {}).get("icao_address")

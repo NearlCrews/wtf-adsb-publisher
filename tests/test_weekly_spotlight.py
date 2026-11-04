@@ -583,15 +583,20 @@ def ranked(kind, interest, observed, identifier, rarity):
 
 
 def kind_ledger(*rows):
-    """Ledger records reduced to what the rarity count reads: state, kind, and start."""
+    """Ledger records reduced to what the rarity count reads: state, release, page, kind, and start.
+    An approved row is a released story."""
     return {
         "records": [
             {
                 "state": state,
                 "evidence": {"kind": kind, "observation": {"start_utc": start}},
-                "editorial": {"synthetic": synthetic},
+                "editorial": {
+                    "synthetic": synthetic,
+                    "article_path": f"/stories/{kind.replace('_', '-')}-{index}-1-oct-2026/",
+                },
+                "automation": {"released_at": NOW} if state == "approved" else {},
             }
-            for kind, start, state, synthetic in rows
+            for index, (kind, start, state, synthetic) in enumerate(rows)
         ]
     }
 
@@ -639,7 +644,11 @@ class RankTests(unittest.TestCase):
             {
                 "state": "approved",
                 "evidence": {"kind": "tcas_ra", "observation": {"start_utc": "2026-09-22T12:00:00Z"}},
-                "editorial": {"weekly_spotlight": {"week_start": "2026-09-21"}},
+                "editorial": {
+                    "weekly_spotlight": {"week_start": "2026-09-21"},
+                    "article_path": "/stories/tcas-1-22-sep-2026/",
+                },
+                "automation": {"released_at": NOW},
             }
         )
         second_week = [
@@ -677,7 +686,16 @@ class RankTests(unittest.TestCase):
             ("tcas_ra", "2026-09-30T00:00:00Z", "approved", True),
         )
         ledger["records"].append({"state": "approved", "evidence": {"kind": "tcas_ra"}, "editorial": {}})
+        # Only live stories count: the pending one is not a published story.
+        self.assertEqual(weekly.kind_counts(ledger, "2026-10-05"), {"tcas_ra": 1})
+        ledger["records"][2]["state"] = "approved"
+        ledger["records"][2]["automation"] = {"released_at": NOW}
         self.assertEqual(weekly.kind_counts(ledger, "2026-10-05"), {"tcas_ra": 2})
+        # A suspended or owner-removed story is not live either.
+        for flag in ("suspended", "removed"):
+            with self.subTest(flag=flag):
+                ledger["records"][2]["automation"] = {"released_at": NOW, flag: True}
+                self.assertEqual(weekly.kind_counts(ledger, "2026-10-05"), {"tcas_ra": 1})
 
 
 class ProseCheckTests(unittest.TestCase):

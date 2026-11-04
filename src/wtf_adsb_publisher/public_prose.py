@@ -1335,6 +1335,14 @@ CAUSE_MARKER_WORDS = frozenset(re.findall(r"[a-z]{2,}", CAUSE_LINKS + CAUSE_COPU
 # names a cause noun.
 CAUSELESS_KINDS = kinds.where(causeless=True)
 CAUSELESS_PREFIXES = ("outlier_",)
+
+
+def is_causeless(kind):
+    """Whether a story of `kind` names no cause for its readings: a glitch gives the reading,
+    the listed type and its cited limit, never a cause (CAUSELESS_KINDS, CAUSELESS_PREFIXES)."""
+    return isinstance(kind, str) and (kind in CAUSELESS_KINDS or kind.startswith(CAUSELESS_PREFIXES))
+
+
 CAUSE_NOUNS = re.compile(
     r"\b(?:decod\w*|corrupt\w*|errors?|erroneous|glitch\w*|fault\w*|multipath|interference|misread\w*"
     r"|bad (?:data|readings?|reports?|values?)|garbled)\b",
@@ -2111,9 +2119,7 @@ def packet_facts(packet):
     if isinstance(kind, str) and kind.startswith(rules.SQUAWK_PREFIXES):
         facts.codes.add(kind.rsplit("_", 1)[1])
     facts.kind = kind if isinstance(kind, str) else None
-    facts.causeless = isinstance(kind, str) and (
-        kind in CAUSELESS_KINDS or kind.startswith(CAUSELESS_PREFIXES)
-    )
+    facts.causeless = is_causeless(kind)
     received = packet.get("received") if isinstance(packet.get("received"), dict) else {}
     if isinstance(received.get("emergency_status"), str) and received["emergency_status"] in CODE_MEANINGS:
         facts.codes.add(received["emergency_status"])
@@ -2240,10 +2246,10 @@ def _count(written):
         return float(WORD_VALUES[word])
     if re.fullmatch(r"[\d,]+(?:\.\d+)?", word):
         return _number(word)
-    return float(_spelled_value(word))
+    return float(spelled_value(word))
 
 
-def _spelled_value(phrase):
+def spelled_value(phrase):
     words = [word for word in re.split(r"[\s-]+", phrase.lower()) if word and word not in {"and", "a", "an"}]
     total, current = 0, 0
     for word in words:
@@ -2873,7 +2879,7 @@ def _spelled(scan):
     facts, original = scan.facts, scan.original
     for match in SPELLED.finditer(scan.text):
         phrase = match["w"]
-        value = _spelled_value(phrase)
+        value = spelled_value(phrase)
         text = scan.text
         unit = UNIT_AFTER.match(text, match.end())
         following = NEXT_WORD.match(text, match.end())
@@ -3287,7 +3293,7 @@ def _limit_vs_ground_speed(sentence, facts):
     return bool(SPEED_COMPARISON.search(sentence)) or len(speeds) > len(figures)
 
 
-def _causeless_issue(sentence):
+def causeless_issue(sentence):
     """In a story with no cause to offer, a sentence that names one: a cause noun ("a decoding
     error", "multipath"), a verdict in a sentence that names a source ("the database is wrong"),
     or a causal verb about the reading ("Bad data caused the jump") that no provenance explains."""
@@ -3409,7 +3415,7 @@ def claim_issues(text, facts, *, profile=False):
                 named = _blank_phrase(named, phrase, bounded=True)
             if PERSON_ASSOCIATION.search(named):
                 issues.append("Watchlist story names a kind of person: " + text[start:end].strip()[:80])
-        if facts.public and facts.causeless and (cause := _causeless_issue(sentence)):
+        if facts.public and facts.causeless and (cause := causeless_issue(sentence)):
             issues.append(cause + text[start:end].strip()[:80])
         if facts.kind in SPEED_PROSE_KINDS and _limit_vs_ground_speed(sentence, facts):
             issues.append("claim:limit_vs_ground_speed: " + text[start:end].strip()[:80])
@@ -3484,35 +3490,48 @@ def name_issues(text, facts, extra=frozenset(), *, strict_opening=False):
     vocabulary = facts.words | facts.profile_words | facts.label_words | FIXED_VOCABULARY | extra
     towns = places.town_names() if strict_opening else frozenset()
     for start, end in _typed_spans(text, facts):
-        sentence = text[start:end]
-        # Headlines are sentence case too, so title case cannot hide a name.
-        words = list(re.finditer(r"[A-Za-z][A-Za-z0-9&'-]*", sentence))
-        for index, word in enumerate(words):
-            token = word.group()
-            if not token[0].isupper() or re.search(r"\d", token):
-                continue
-            initial = index == 0 or re.search(
-                r"[:\"(]\s*$", sentence[max(0, word.start() - 8) : word.start()]
-            )
-            if initial and not (towns and _opens_with_town(sentence, words, index, towns)):
-                following = words[index + 1].group() if index + 1 < len(words) else ""
-                known_following = all(
-                    part.lower() in vocabulary for part in re.split(r"[-']", following) if part[:1].isupper()
-                )
-                if (
-                    token.lower() in STOPWORDS
-                    or token.lower() in WORD_VALUES
-                    or not (following[:1].isupper() and not re.search(r"\d", following))
-                    or known_following
-                ):
-                    continue
-            parts = [part for part in re.split(r"[-']", token) if part[:1].isupper()]
-            if not all(
-                part.lower() in vocabulary or (part.endswith("s") and part[:-1].lower() in vocabulary)
-                for part in parts
-            ):
-                issues.append("Unsupported name: " + token[:60])
+        issues.extend(
+            "Unsupported name: " + token[:60] for token in unlisted_names(text[start:end], vocabulary, towns)
+        )
     return issues
+
+
+def unlisted_names(sentence, vocabulary, towns=frozenset(), *, numbered=False):
+    """The capitalized words of one sentence outside `vocabulary` (lowercase words), facts aside.
+
+    A sentence's first word passes when the next word is lowercase, a stopword, or known, unless
+    it opens with one of `towns` (name_issues' strict opening). A word with a digit is a reading
+    or a code and passes, unless `numbered`, as for researched prose, where it can name a type
+    or a registration and is checked too (never exempt as a first word).
+    """
+    found = []
+    # Headlines are sentence case too, so title case cannot hide a name.
+    words = list(re.finditer(r"[A-Za-z][A-Za-z0-9&'-]*", sentence))
+    for index, word in enumerate(words):
+        token = word.group()
+        digits = bool(re.search(r"\d", token))
+        if not token[0].isupper() or (digits and not numbered):
+            continue
+        initial = index == 0 or re.search(r"[:\"(]\s*$", sentence[max(0, word.start() - 8) : word.start()])
+        if initial and not digits and not (towns and _opens_with_town(sentence, words, index, towns)):
+            following = words[index + 1].group() if index + 1 < len(words) else ""
+            known_following = all(
+                part.lower() in vocabulary for part in re.split(r"[-']", following) if part[:1].isupper()
+            )
+            if (
+                token.lower() in STOPWORDS
+                or token.lower() in WORD_VALUES
+                or not (following[:1].isupper() and not re.search(r"\d", following))
+                or known_following
+            ):
+                continue
+        parts = [part for part in re.split(r"[-']", token) if part[:1].isupper()]
+        if not all(
+            part.lower() in vocabulary or (part.endswith("s") and part[:-1].lower() in vocabulary)
+            for part in parts
+        ):
+            found.append(token)
+    return found
 
 
 def phrase_issues(text, kind):
@@ -4625,41 +4644,69 @@ def _shape_issues(story, names=(), listed=(), *, fixed_headline=False, question_
 
 def _hypothesis_issues(sentences, facts):
     """claim:unhedged_hypothesis for each sentence that offers one of the story's hypotheses with no
-    hedge. A likeness compound hedges only the hypothesis whose own term it carries: "aerobatic-style
-    practice" hedges aerobatic practice, and "an airline-style pattern" hedges nothing."""
+    hedge (unhedged_hypotheses)."""
     type_fact = _story_values(facts).get("id.type", {})
     type_words = " ".join(
         str(part)
         for part in (type_fact.get("value"), type_fact.get("category"), *(type_fact.get("aliases") or ()))
         if part
     ).lower()
-    issues = []
-    for hypothesis in facts.get("hypotheses", []):
-        if not isinstance(hypothesis, str):
+    hypotheses = [item for item in facts.get("hypotheses", []) if isinstance(item, str)]
+    return ["claim:unhedged_hypothesis"] * len(unhedged_hypotheses(sentences, hypotheses, type_words))
+
+
+@functools.lru_cache(maxsize=512)
+def _hypothesis_patterns(hypothesis, type_words="", whole=False):
+    """(offer, likeness) patterns for one hypothesis, or None when it has no term of its own."""
+    if whole:
+        return re.compile(r"(?<![\w-])" + re.escape(hypothesis) + r"(?![\w-])", re.I), None
+    terms = [
+        term
+        for term in STORY_HEDGE_TERMS.findall(hypothesis.lower())
+        if term not in STOPWORDS and term not in HYPOTHESIS_GENERIC and term not in type_words
+    ]
+    if not terms:
+        return None
+    alternatives = "|".join(re.escape(term) for term in terms)
+    # The compound and the hypothesis's own terms right after it: "aerobatic-style practice".
+    return (
+        re.compile(r"\b(?:" + alternatives + r")\b", re.I),
+        re.compile(r"\b(?:" + alternatives + r")-(?:style|like)(?:\s+(?:" + alternatives + r"))*\b", re.I),
+    )
+
+
+def unhedged_hypotheses(sentences, hypotheses, type_words="", *, whole=False):
+    """(sentence, hypothesis) for each sentence that offers a hypothesis with no hedge.
+
+    A story's sentence offers one when it names any of its own terms (the type's words and
+    generic words aside) unless HEDGE or EPISTEMIC hedges it. A likeness compound hedges only
+    its own phrase: "aerobatic-style practice" offers no aerobatic practice, but the rest of the
+    sentence can still offer this hypothesis, or another, unhedged. With `whole`, as for researched
+    prose, a sentence offers a hypothesis only by its whole phrase, and only HEDGE hedges it.
+    """
+    found = []
+    for hypothesis in hypotheses:
+        if not isinstance(hypothesis, str) or not hypothesis:
             continue
-        terms = [
-            term
-            for term in STORY_HEDGE_TERMS.findall(hypothesis.lower())
-            if term not in STOPWORDS and term not in HYPOTHESIS_GENERIC and term not in type_words
-        ]
-        if not terms:
+        patterns = _hypothesis_patterns(hypothesis, type_words, whole)
+        if patterns is None:
             continue
-        alternatives = "|".join(re.escape(term) for term in terms)
-        pattern = re.compile(r"\b(?:" + alternatives + r")\b", re.I)
-        likeness = re.compile(r"\b(?:" + alternatives + r")-(?:style|like)\b", re.I)
+        offer, likeness = patterns
         for sentence in sentences:
-            if likeness.search(sentence) or HEDGE.search(sentence) or EPISTEMIC.search(sentence):
+            if HEDGE.search(sentence) or (not whole and EPISTEMIC.search(sentence)):
                 continue
-            if pattern.search(sentence):
-                issues.append("claim:unhedged_hypothesis")
-    return issues
+            rest = likeness.sub(" ", sentence) if likeness is not None else sentence
+            if offer.search(rest):
+                found.append((sentence, hypothesis))
+    return found
 
 
-def _story_claim_issues(story, facts, phrases=(), required=None):
+def _story_claim_issues(story, facts, phrases=(), required=None, fixed=None):
     """Checks that need the whole story: attribution, scope, hedges, lists, and repeated caveats.
 
     phrases are the entry's own words (_list_phrases), read as LIST_TOKEN; required is the
-    kind's required sentence (required_sentence), which counts as the story's one caveat.
+    kind's required sentence (required_sentence), which counts as the story's one caveat;
+    fixed is the kind's fixed headline (fixed_headline), which story_issues has already read.
     """
     issues = []
     values = _story_values(facts)
@@ -4763,7 +4810,6 @@ def _story_claim_issues(story, facts, phrases=(), required=None):
                 issues.append("claim:unscoped_first")
     # A fixed headline is the engine's ("Strong winds aloft on 5 November 2026"), not a hypothesis,
     # and so is a title tag that shortens it ("Strong winds aloft on 5 November").
-    fixed = fixed_headline(facts)
     claims = [
         sentence
         for name, sentence in labelled
@@ -5120,6 +5166,12 @@ def _plain_words(text):
     return re.findall(r"[a-z0-9]+", text.lower())
 
 
+def _figure_words(text):
+    """_plain_words with each figure kept whole, grouping commas dropped: "1,200 ft at 12.5 NM" is
+    1200, ft, at, 12.5, nm, so a figure never matches a fragment of another."""
+    return [word.replace(",", "") for word in re.findall(r"[a-z0-9]+(?:[.,][0-9]+)*", text.lower())]
+
+
 def _filler_issues(story):
     """filler:frame when the dek or a paragraph uses a refused frame (FILLER_FRAMES)."""
     paragraphs = story.get("paragraphs") if isinstance(story.get("paragraphs"), list) else []
@@ -5127,19 +5179,24 @@ def _filler_issues(story):
     return ["filler:frame"] if any(FILLER_FRAMES.search(text) for text in texts) else []
 
 
-def _box_runs(text):
-    """(run length, word runs) of a type box fact: BOX_RUN words, or all of a shorter fact's."""
-    words = _plain_words(text)
-    size = min(BOX_RUN, len(words))
-    return size, {tuple(words[index : index + size]) for index in range(len(words) - size + 1)}
+def word_runs(text, run):
+    """The runs of `run` consecutive words of text, as _plain_words reads it."""
+    words = _plain_words(text) if isinstance(text, str) else []
+    return frozenset(tuple(words[index : index + run]) for index in range(len(words) - run + 1))
+
+
+def shares_run(text, other, run):
+    """Whether text repeats a run of `run` consecutive words of other, a text or its word_runs."""
+    runs = other if isinstance(other, frozenset) else word_runs(other, run)
+    words = _plain_words(text) if isinstance(text, str) and run > 0 else []
+    return any(tuple(words[index : index + run]) in runs for index in range(len(words) - run + 1))
 
 
 def quotes(text, fact):
     """Whether text repeats a type box fact: a BOX_RUN-word run of it, or all of a shorter one of
     BOX_SHORTEST words or more."""
-    size, runs = _box_runs(fact)
-    words = _plain_words(text) if size >= BOX_SHORTEST and isinstance(text, str) else []
-    return any(tuple(words[index : index + size]) in runs for index in range(len(words) - size + 1))
+    size = min(BOX_RUN, len(_plain_words(fact)))
+    return size >= BOX_SHORTEST and shares_run(text, fact, size)
 
 
 def box_issues(story, facts):
@@ -5177,7 +5234,7 @@ def _value_tokens(value, unit=None):
         for scale in (1, *VALUE_FORMS.get(unit, ())):
             figure = abs(value) * scale
             forms = {f"{figure:,.0f}", f"{figure:.0f}", f"{figure:,.1f}", f"{figure:g}"}
-            tokens |= {token for form in forms for token in _plain_words(form)}
+            tokens |= {token for form in forms for token in _figure_words(form)}
             tokens |= {word for word, number in WORD_VALUES.items() if number == round(figure)}
         return tokens
     if not isinstance(value, str):
@@ -5225,25 +5282,30 @@ def _fact_tokens(facts):
 def _fact_phrases(facts):
     """Each string fact value of two words or more as plain words, sentence facts aside: a quoted
     category ("You came here in that thing?") is a fact value whatever its case."""
-    phrases = set()
+    values = []
     for item in facts["facts"]:
         if item["id"].startswith(SENTENCE_FACTS):
             continue
         value = item.get("value")
-        for text in value if isinstance(value, list) else [value]:
-            words = _plain_words(text) if isinstance(text, str) else []
-            if len(words) >= 2:
-                phrases.add(" ".join(words))
-    return phrases
+        values.extend(
+            text for text in (value if isinstance(value, list) else [value]) if isinstance(text, str)
+        )
+    return _cached_fact_phrases(tuple(values))
+
+
+@functools.lru_cache(maxsize=64)
+def _cached_fact_phrases(values):
+    phrases = (" ".join(_figure_words(text)) for text in values)
+    return frozenset(phrase for phrase in phrases if " " in phrase)
 
 
 def adds_to(headline, dek, facts):
     """Whether a dek gives a fact value, a figure, date, or name from the story facts, or a whole
     string value, that the headline lacks."""
-    fresh = set(_plain_words(dek)) - set(_plain_words(headline))
+    fresh = set(_figure_words(dek)) - set(_figure_words(headline))
     if fresh & _fact_tokens(facts):
         return True
-    said, given = f" {' '.join(_plain_words(dek))} ", f" {' '.join(_plain_words(headline))} "
+    said, given = f" {' '.join(_figure_words(dek))} ", f" {' '.join(_figure_words(headline))} "
     return any(f" {phrase} " in said and f" {phrase} " not in given for phrase in _fact_phrases(facts))
 
 
@@ -5311,6 +5373,25 @@ def _context_sentences(story, line):
     ]
 
 
+def _context_issues(story, facts, new, *, indexed, failure):
+    """(the story without its context sentences, context: issues) for story facts `facts`.
+
+    The kind's context line is a sourced fact: a sentence that restates it is backed by it, so
+    the checks read the story without it, as they do the required sentence. New text must carry
+    it (context:missing); a restated line still answers to CONTEXT_CLAIMS and the hypothesis
+    hedge. `indexed` and `failure` are _facts_for(facts), which the caller has read.
+    """
+    issues = []
+    line = context_line(facts)
+    restated = _context_sentences(story, line) if line else []
+    if new and line and not restated:
+        issues.append("context:missing")
+    for sentence in restated:
+        story = _without(story, sentence)
+    issues.extend(_context_claim_issues(restated, indexed, failure, facts))
+    return story, issues
+
+
 def story_issues(story, packet_or_facts, *, new=True):
     """Every reason a story fails; an empty list means it may be published.
 
@@ -5361,15 +5442,8 @@ def story_issues(story, packet_or_facts, *, new=True):
     if new:
         issues.extend(_filler_issues(story))
     if told:
-        # The kind's context line is a sourced fact: a sentence that restates it is backed by it, so
-        # the checks read the story without it, as they do the required sentence.
-        line = context_line(packet_or_facts)
-        restated = _context_sentences(story, line) if line else []
-        if new and line and not restated:
-            issues.append("context:missing")
-        for sentence in restated:
-            story = _without(story, sentence)
-        issues.extend(_context_claim_issues(restated, facts, failure, packet_or_facts))
+        story, context = _context_issues(story, packet_or_facts, new, indexed=facts, failure=failure)
+        issues.extend(context)
         if new:
             issues.extend(_dek_issues(story, packet_or_facts))
     check = _masked(_checker(facts, failure), listed)
@@ -5378,7 +5452,7 @@ def story_issues(story, packet_or_facts, *, new=True):
             issues.extend(f"{name}:{issue}" for issue in check(text))
     if told:
         try:
-            issues.extend(_story_claim_issues(story, packet_or_facts, listed, required))
+            issues.extend(_story_claim_issues(story, packet_or_facts, listed, required, fixed))
         except CHECK_ERRORS as error:
             issues.append(f"story:checks_failed:{type(error).__name__}")
     return list(dict.fromkeys(issues))

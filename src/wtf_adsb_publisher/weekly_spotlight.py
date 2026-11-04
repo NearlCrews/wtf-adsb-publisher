@@ -64,23 +64,17 @@ def previous_week(as_of):
 
 
 def kind_counts(ledger, end):
-    """Live stories of each kind observed in the RARITY_DAYS before `end`, a UTC date.
-
-    Withdrawn and synthetic records are not stories; a record without a readable start is
-    left out.
+    """Live stories (public_events.live_story) of each kind observed in the RARITY_DAYS
+    before `end`, a UTC date. A record without a readable start is left out.
     """
-    from .public_events import _instant
+    from .public_events import _instant, live_story
 
     until = _instant(f"{end}T00:00:00Z")
     since = until - timedelta(days=RARITY_DAYS)
     counts = Counter()
     for record in ledger.get("records", []):
         evidence = record.get("evidence") if isinstance(record, dict) else None
-        if (
-            not isinstance(evidence, dict)
-            or record.get("state") == "withdrawn"
-            or (record.get("editorial") or {}).get("synthetic")
-        ):
+        if not isinstance(evidence, dict) or not live_story(record):
             continue
         try:
             began = _instant(evidence["observation"]["start_utc"])
@@ -96,11 +90,14 @@ def rarity(count):
 
 
 def picked_kinds(ledger, start):
-    """The kinds of the weekly picks in the REPEAT_WEEKS before the week of `start`."""
+    """The kinds of the live weekly picks (public_events.live_story) in the REPEAT_WEEKS
+    before the week of `start`."""
+    from .public_events import live_story
+
     since = (datetime.fromisoformat(start) - timedelta(weeks=REPEAT_WEEKS)).date().isoformat()
     kinds = set()
     for record in ledger.get("records", []):
-        if not isinstance(record, dict) or record.get("state") == "withdrawn":
+        if not live_story(record):
             continue
         picked = ((record.get("editorial") or {}).get("weekly_spotlight") or {}).get("week_start")
         if isinstance(picked, str) and since <= picked < start:
@@ -166,7 +163,8 @@ def prose_issues(texts, *, hypotheses=(), causeless=False, numbers=(), names=Non
     numbers = [value for value in numbers if prose.finite(value)]
     allowed = {float(abs(value)) for value in numbers} | {float(round(abs(value))) for value in numbers}
     allowed |= ANY_TEXT_NUMBERS
-    listed = [re.compile(r"(?<![\w-])" + re.escape(item) + r"(?![\w-])", re.I) for item in hypotheses if item]
+    hypotheses = [item for item in hypotheses if isinstance(item, str) and item]
+    listed = [re.compile(r"(?<![\w-])" + re.escape(item) + r"(?![\w-])", re.I) for item in hypotheses]
     vocabulary = None if names is None else set(names) | prose.FIXED_VOCABULARY
     issues = []
     for text in texts:
@@ -176,7 +174,8 @@ def prose_issues(texts, *, hypotheses=(), causeless=False, numbers=(), names=Non
                 issues.append("Research prose has a dash or an ampersand")
             hedged = bool(prose.HEDGE.search(sentence))
             offered = [pattern for pattern in listed if pattern.search(sentence)]
-            if offered and not hedged:
+            # A research sentence offers a hypothesis by its whole phrase (the story checks' rule).
+            if prose.unhedged_hypotheses([sentence], hypotheses, whole=True):
                 issues.append("A listed hypothesis is stated without a hedge")
             if causeless:
                 blanked = sentence
@@ -188,7 +187,7 @@ def prose_issues(texts, *, hypotheses=(), causeless=False, numbers=(), names=Non
                     )
                     if cause:
                         issues.append(f"Unlisted cause ({cause.group().lower()})")
-                elif cause := prose._causeless_issue(blanked):
+                elif cause := prose.causeless_issue(blanked):
                     issues.append(cause.rstrip(": "))
             for value in _text_numbers(sentence):
                 if value not in allowed:
@@ -206,24 +205,15 @@ def _text_numbers(sentence):
         yield abs(float(match["n"].replace(",", "")))
     for match in prose.SPELLED.finditer(sentence):
         if match["w"].lower() not in {"a", "an"}:
-            yield float(prose._spelled_value(match["w"]))
+            yield float(prose.spelled_value(match["w"]))
 
 
 def _name_issues(sentence, vocabulary):
-    """Capitalized words outside `vocabulary`: a type, registration, operator, person, or place."""
-    words = list(re.finditer(r"[A-Za-z][A-Za-z0-9'-]*", sentence))
-    issues = []
-    for index, match in enumerate(words):
-        token = match.group()
-        if not token[0].isupper():
-            continue
-        following = words[index + 1].group() if index + 1 < len(words) else ""
-        if index == 0 and not following[:1].isupper() and not re.search(r"\d", token):
-            continue
-        parts = [part.lower() for part in re.split(r"[-']", token) if part]
-        if any(part not in vocabulary and part.removesuffix("s") not in vocabulary for part in parts):
-            issues.append(f"Unlisted name ({token})")
-    return issues
+    """Capitalized words outside `vocabulary`: a type, registration, operator, person, or place.
+    The story checks' rule (public_prose.unlisted_names), with words that carry a digit checked too."""
+    from . import public_prose as prose
+
+    return [f"Unlisted name ({token})" for token in prose.unlisted_names(sentence, vocabulary, numbered=True)]
 
 
 def nominate(report, as_of):
