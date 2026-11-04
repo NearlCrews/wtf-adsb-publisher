@@ -680,6 +680,18 @@
    {
     "type": "list",
     "value": [
+     "go_around_series",
+     {
+      "type": "list",
+      "value": [
+       "possible_go_around"
+      ]
+     }
+    ]
+   },
+   {
+    "type": "list",
+    "value": [
      "series_repeat",
      {
       "type": "list",

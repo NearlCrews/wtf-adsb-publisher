@@ -286,7 +286,7 @@ class CurationTests(unittest.TestCase):
             event["selection"] = selection.assess(event, {})
             return event
 
-        groups = [group(watched(i + 1, day)) for i, day in enumerate((0, 1, 29, 30))]
+        groups = [group(watched(i + 1, day)) for i, day in enumerate((0, 1, 59, 60))]
         self.assertEqual([row["finding_id"] for row in curation.choose(groups)["selected"]], [1, 4])
         # A vintage airframe waits 90 days instead.
         groups = [
@@ -338,7 +338,8 @@ class CurationTests(unittest.TestCase):
             ("identity_conflict", "identity_repeat", "identity_series"),
             ("seasonal_speed_record", "kind_repeat", "series_repeat"),
             ("above_rated_altitude", "kind_repeat", "series_repeat"),
-            ("winds_aloft_day", "kind_repeat", "winds_series"),
+            # A winds day has no subject airframe, so only its series rule holds it.
+            ("winds_aloft_day", "winds_series", "winds_series"),
         ):
             earlier = {
                 "addresses": ["abcdef"],
@@ -618,7 +619,8 @@ class NewCooldowns(unittest.TestCase):
     def test_unregistered_repeat_inside_90_days_is_held(self):
         log = curation.StoryLog()
         log.add(prior_story(kind="unregistered_address", address="a1b2c3", start=0))
-        row = candidate_row(kind="unregistered_address", address="a1b2c3", start=45 * 86400)
+        # identity_repeat holds the first 60 days; this rule the rest of the 90.
+        row = candidate_row(kind="unregistered_address", address="a1b2c3", start=75 * 86400)
         self.assertEqual(log.repeat(row), "unregistered_repeat")
         self.assertIn("90 days", curation.REPEAT_REASONS["unregistered_repeat"])
         self.assertIsNone(
@@ -692,6 +694,65 @@ class NewCooldowns(unittest.TestCase):
                     kind="foreign_military", address="3b0002", start=10 * 86400, evidence=other
                 )
                 self.assertIsNone(log.repeat(row))
+
+    def test_identity_cooldown_is_60_days(self):
+        self.assertEqual(curation.IDENTITY_COOLDOWN, 60 * 86400)
+        log = curation.StoryLog()
+        log.add(prior_story(kind="military", address="a1b2c3", start=0))
+        self.assertEqual(
+            log.repeat(candidate_row(kind="watch_type", address="a1b2c3", start=59 * 86400)),
+            "identity_repeat",
+        )
+        self.assertIsNone(log.repeat(candidate_row(kind="watch_type", address="a1b2c3", start=61 * 86400)))
+
+    def test_go_around_series_is_7_days(self):
+        self.assertEqual(curation.GO_AROUND_COOLDOWN, 7 * 86400)
+        self.assertEqual(
+            curation.facts(_story_event("possible_go_around", "aaaaaa"))["series"], "possible_go_around"
+        )
+        log = curation.StoryLog()
+        log.add(prior_story(kind="possible_go_around", address="aaaaaa", start=0))
+        self.assertEqual(
+            log.repeat(candidate_row(kind="possible_go_around", address="bbbbbb", start=6 * 86400)),
+            "go_around_series",
+        )
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="possible_go_around", address="bbbbbb", start=8 * 86400))
+        )
+
+    def test_a_subjectless_story_takes_no_address_repeat(self):
+        self.assertEqual(curation.SUBJECTLESS_KINDS, frozenset({"winds_aloft_day"}))
+        log = curation.StoryLog()
+        log.add(prior_story(kind="winds_aloft_day", address="aaaaaa", start=0))
+        # Only the series rule applies, in either direction.
+        self.assertIsNone(
+            log.repeat(candidate_row(kind="winds_aloft_day", address="aaaaaa", start=4 * 86400))
+        )
+        self.assertIsNone(log.repeat(candidate_row(kind="identity_conflict", address="aaaaaa", start=3600)))
+        log = curation.StoryLog()
+        log.add(prior_story(kind="identity_conflict", address="aaaaaa", start=0))
+        self.assertIsNone(log.repeat(candidate_row(kind="winds_aloft_day", address="aaaaaa", start=3600)))
+
+    def test_two_winds_days_four_days_apart_with_one_primary_both_select(self):
+        def winds(identifier, day):
+            event = finding(identifier, "winds_aloft_day", value=None, address="abcdef", day=day)
+            event["evidence"]["participants"] = [{"hex": "a00001"}, {"hex": "a00002"}]
+            event["selection"] = selection.assess(event, {})
+            return event
+
+        self.assertTrue(winds(1, 0)["selection"]["story_eligible"])
+        result = curation.choose([group(winds(1, 0)), group(winds(2, 4))])
+        self.assertEqual([row["finding_id"] for row in result["selected"]], [1, 2])
+        # A participant's own story on the same day is not held by the winds day.
+        other = finding(3, "descending_spiral", value=6, address="a00001")
+        result = curation.choose([group(winds(1, 0)), group(other)])
+        self.assertEqual(sorted(row["finding_id"] for row in result["selected"]), [1, 3])
+        # The series still holds a winds day inside three days.
+        result = curation.choose([group(winds(1, 0)), group(winds(2, 2))])
+        self.assertEqual([row["finding_id"] for row in result["selected"]], [1])
+
+    def test_the_curation_version_is_12(self):
+        self.assertEqual(curation.VERSION, 12)
 
 
 class RegistryLagHold(unittest.TestCase):

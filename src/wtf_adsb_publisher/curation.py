@@ -22,10 +22,11 @@ from .rules import (
 )
 from .telemetry import direct_value
 
-VERSION = 11
+VERSION = 12
 MAX_PER_DAY = 9
 MIN_SCORE = 65
-IDENTITY_COOLDOWN = 30 * 86400
+# One airframe takes one identity story per 60 days.
+IDENTITY_COOLDOWN = 60 * 86400
 # One airframe takes one story of a kind (kind_family) per 60 days.
 STORY_COOLDOWN = 60 * 86400
 TOPIC_COOLDOWN = 7 * 86400
@@ -46,6 +47,9 @@ UNREGISTERED_COOLDOWN = 90 * 86400
 SERIES_COOLDOWN = 7 * 86400
 IDENTITY_SERIES_COOLDOWN = 21 * 86400
 WINDS_COOLDOWN = 3 * 86400
+# A go-around reads alike on any aircraft too: one story per seven days. It is a series
+# here only (LOCAL_SERIES_KINDS), not in the shared kind registry.
+GO_AROUND_COOLDOWN = 7 * 86400
 # Registries lag new registrations: an unlisted address waits this long after its first
 # sighting, then for a check the registries answered after that week (type_hold).
 REGISTRY_LAG_SECONDS = 7 * 86400
@@ -62,6 +66,11 @@ ENVELOPE_KINDS = REGISTRY_TYPE_KINDS
 RECORD_KINDS = kinds.where(record=True)
 # The data-conflict, season-record, and rated-limit kinds (RECORD_KINDS and RATED_KINDS among them).
 SERIES_KINDS = kinds.where(series=True)
+# Kinds curation treats as a series beside the registry's SERIES_KINDS.
+LOCAL_SERIES_KINDS = frozenset({"possible_go_around"})
+# Stories about a day rather than an airframe: their primary and participants are
+# examples, not subjects, so no address-keyed repeat rule applies (subjects()).
+SUBJECTLESS_KINDS = kinds.where(subjectless=True)
 # Type-dependent kinds whose claim is a performance reading against the listed
 # type: they need a registry to corroborate the type. The identity kinds
 # publish when no registry lists the address, since the database is then the
@@ -676,7 +685,7 @@ def facts(event):
             if typecode
             else "aircraft:" + address
         )
-    series = kind if kind in SERIES_KINDS else None
+    series = kind if kind in SERIES_KINDS or kind in LOCAL_SERIES_KINDS else None
     return {
         "addresses": sorted({address, *participants(event)}),
         "type": typecode,
@@ -684,6 +693,11 @@ def facts(event):
         "subtopic": subtopic,
         "series": series,
     }
+
+
+def subjects(entry):
+    """The addresses a story or candidate is about: none for a subjectless kind."""
+    return () if entry.get("kind") in SUBJECTLESS_KINDS else entry["addresses"]
 
 
 def story_key(event, episode):
@@ -753,10 +767,11 @@ def _any(row, other, routine):
 # The repeat policy, checked in order: (reason, index, row kinds it applies to (None
 # for all), whether another story matches, and the window in seconds (None: any time)).
 # The airframe rules come before the series rules, so a same-airframe repeat of a series kind
-# (SERIES_KINDS) is held as identity_repeat (identity_conflict, within 30 days) or as
+# (SERIES_KINDS) is held as identity_repeat (identity_conflict, within 60 days) or as
 # kind_repeat (seasonal_speed_record and the certified-limit kinds, RATED_KINDS, within
 # 60 days), not as a series repeat. A watchlist or unlisted-address story is an identity
-# story, so identity_repeat holds a repeat within 30 days and its own rule one after that.
+# story, so identity_repeat holds a repeat within 60 days and its own rule one after that.
+# A subjectless story (SUBJECTLESS_KINDS) indexes no address, so only its series rule applies.
 REPEAT_RULES = (
     ("same_aircraft_day", "address", None, lambda row, other, routine: other["day"] == row["day"], None),
     ("identity_repeat", "address", None, _identity_pair, IDENTITY_COOLDOWN),
@@ -789,6 +804,7 @@ REPEAT_RULES = (
     ("first_repeat", "subtopic", FIRST_KINDS, _same_kind, None),
     ("identity_series", "series", frozenset({"identity_conflict"}), _any, IDENTITY_SERIES_COOLDOWN),
     ("winds_series", "series", frozenset({"winds_aloft_day"}), _any, WINDS_COOLDOWN),
+    ("go_around_series", "series", LOCAL_SERIES_KINDS, _any, GO_AROUND_COOLDOWN),
     (
         "series_repeat",
         "series",
@@ -816,6 +832,7 @@ REPEAT_REASONS = {
     "first_repeat": "A first sighting of this type or allocation State already had its story",
     "identity_series": f"An identity-conflict story ran within {_days(IDENTITY_SERIES_COOLDOWN)}",
     "winds_series": f"A winds-aloft story ran within {_days(WINDS_COOLDOWN)}",
+    "go_around_series": f"A go-around story ran within {_days(GO_AROUND_COOLDOWN)}",
     "series_repeat": f"A story that reads the same way on any aircraft ran within {_days(SERIES_COOLDOWN)}",
 }
 
@@ -847,7 +864,7 @@ class StoryLog:
     @staticmethod
     def _keys(entry):
         return {
-            "address": entry["addresses"],
+            "address": subjects(entry),
             **{name: [entry[name]] if entry.get(name) else [] for name in FACT_INDEXES},
         }
 
@@ -870,7 +887,7 @@ class StoryLog:
     def novelty(self, row):
         """Zero for the same aircraft and topic within seven days; eight for another topic."""
         score = 15
-        for address in row["addresses"]:
+        for address in subjects(row):
             for other in self.by_address.get(address, ()):
                 if other.get("group_key") is not None and other.get("group_key") == row.get("episode_key"):
                     continue
@@ -1306,7 +1323,7 @@ def _available(row, log, routine):
 def _select_day(available, day_held, log, routine, selected):
     """Pick one UTC date's stories from its available rows, in rank order."""
     topics = Counter(_penalty_key(entry) for entry in day_held)
-    aircraft = {address for entry in day_held for address in entry["addresses"]}
+    aircraft = {address for entry in day_held for address in subjects(entry)}
     exceptions = Counter(
         address for entry in day_held if entry.get("exceptional") for address in entry["addresses"]
     )
@@ -1329,7 +1346,7 @@ def _select_day(available, day_held, log, routine, selected):
             if row["pinned"]
             or row["exceptional"]
             or (
-                not aircraft.intersection(row["addresses"])
+                not aircraft.intersection(subjects(row))
                 and row["adjusted_score"] >= MIN_SCORE
                 and slots < MAX_PER_DAY
                 and not log.repeat(row, routine)
@@ -1350,7 +1367,7 @@ def _select_day(available, day_held, log, routine, selected):
         available = remaining
         topics[_penalty_key(winner)] += 1
         slots += 1
-        aircraft.update(winner["addresses"])
+        aircraft.update(subjects(winner))
         if winner["exceptional"]:
             exceptions.update(winner["addresses"])
         log.add(story_entry(winner))
@@ -1360,7 +1377,7 @@ def _select_day(available, day_held, log, routine, selected):
         if reason:
             row["disposition"] = reason
             row["reasons"].append(REPEAT_REASONS[reason])
-        elif aircraft.intersection(row["addresses"]):
+        elif aircraft.intersection(subjects(row)):
             row["disposition"] = "same_aircraft_day"
         else:
             row["disposition"] = "daily_limit" if row["adjusted_score"] >= MIN_SCORE else "below_threshold"
