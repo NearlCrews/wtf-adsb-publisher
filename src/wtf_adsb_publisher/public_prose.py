@@ -3850,6 +3850,9 @@ def profile_issues(text, packet, *, source=None, vocabulary=(), phrases=()):
 
 # Story fields: a headline, a dek, paragraphs and an optional deterministic SEO title.
 FIELD_LIMITS = {"headline": (40, 90), "dek": (70, 155), "paragraph": (100, 750), "seo_title": (10, 60)}
+# The fewest words a story's paragraphs make a complete story: the writer's floor, and the most a
+# thin template story of three sentences or fewer keeps in one paragraph.
+MIN_STORY_WORDS = 90
 PARAGRAPHS = (1, 5)
 FINAL_PUNCTUATION = {".", ":", ";", ","}
 DASH = re.compile("[‒-―]|\\s--\\s|(?<=\\w)--(?=\\w)")

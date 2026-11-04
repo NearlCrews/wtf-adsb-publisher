@@ -2111,7 +2111,7 @@ def _echoes(text, other, names=(), share=0.5):
 
 
 # A thin story of three sentences or fewer stays one paragraph up to this many words.
-THIN_STORY_WORDS = 120
+THIN_STORY_WORDS = public_prose.MIN_STORY_WORDS
 
 
 def _split(sentences, marker=None):

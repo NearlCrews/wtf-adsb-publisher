@@ -165,7 +165,7 @@ SCOPE_BASIS = {
 MISMATCH_HYPOTHESES = (
     "a stale registry entry",
     "a re-registration",
-    "a transponder programmed with another aircraft's address",
+    "a transponder set to the wrong address",
     "a database typo",
 )
 # Possible explanations a story may offer, always hedged in prose. A glitch story offers
@@ -182,7 +182,7 @@ HYPOTHESES = {
     "type_speed_mismatch": MISMATCH_HYPOTHESES,
     "type_altitude_mismatch": MISMATCH_HYPOTHESES,
     "winds_aloft_day": ("strong winds aloft, such as a jet stream",),
-    "aerobatic_practice": ("aerobatic practice", "training maneuvers"),
+    "aerobatic_practice": ("aerobatic practice",),
     "unregistered_address": (
         "registry lag after a new registration",
         "a registry the site does not consult",

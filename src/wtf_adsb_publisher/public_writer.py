@@ -61,8 +61,8 @@ CANDIDATE_KEYS = ("angle", "headline", "dek", "paragraphs", "facts_used")
 # The words the paragraphs are asked to total, which a passing candidate is preferred within,
 # and the floor under which a candidate goes to the retry with WORD_FLOOR. Length alone never
 # sends a story back to its template.
-STORY_WORDS = (90, 200)
-MIN_WORDS = 90
+MIN_WORDS = public_prose.MIN_STORY_WORDS
+STORY_WORDS = (MIN_WORDS, 200)
 WORD_FLOOR = "paragraphs:too_few_words"
 PUBLIC_STORY_INSTRUCTIONS = """Write the public text for one aircraft observation on a small site about
 unusual aircraft and odd ADS-B readings. Readers are aviation fans and
@@ -88,8 +88,9 @@ so never write one that is not there. Each fact has an id, a value, and a basis:
   that database a registry.
 - reference: sourced background about the type, a callsign designator, or a code.
   State it plainly; the page lists the sources. Type facts (tp.*) fill the type
-  box the page shows beside the story. When the dek uses one, prefer a type fact
-  not listed under recent_profile_facts, which a recent story of this type used.
+  box the page shows beside the story. A dek may use one, but never as the fact
+  it adds; when it does, prefer a type fact not listed under recent_profile_facts,
+  which a recent story of this type used.
   A type with no name comes as id.type_class, a class phrase,
   with its code: name it once as "type code A129, a twin-turboshaft helicopter",
   attributed to the aircraft database as a type name would be, and never use the
@@ -123,7 +124,8 @@ so never write one that is not there. Each fact has an id, a value, and a basis:
 - typical (desc.typical_fpm): the usual descent rate for the class. State it once
   beside the observed rate so the number has a reference.
 - repeat (repeat.previous): this registration had a story recently. Open with
-  what differs this time: altitude, callsign, direction, or the kind of event.
+  what differs this time: altitude, callsign, direction, or the kind of event,
+  without mentioning the earlier story or this site.
 Never repeat a type box fact (tp.*) in the paragraphs, word for word or reworded;
 the page shows the box.
 Write no number, name, date, time, year, or place that is not in the facts,
@@ -148,7 +150,8 @@ question in a headline unless it is about a TCAS advisory, whose meaning the
 story answers.
 dek: {dek[0]} to {dek[1]} characters in one or two complete sentences that add what the
 headline lacks without repeating it. The dek must carry at least one fact value the
-headline lacks: a figure, a date, or a name.
+headline lacks: a figure, a date, or a name. A type fact (tp.*) or the context line
+(ctx.kind) never counts as that fact.
 paragraphs: Write {words[0]} to {words[1]} words. Stop when the facts run out: {words[0]} words is
 a complete story. Use three paragraphs when the facts give three things to say, in
 this order: what happened, the context around it, and the aircraft's own
@@ -187,9 +190,10 @@ certified speed is an airspeed: name it as one ("a maximum operating airspeed of
 340 knots") in a sentence of its own, and never set it beside a ground speed or
 say a reading went past, over, or above it. Follow kind_note when the input has
 one: when it gives a sentence to include word for word, include it exactly once,
-as written, inside a paragraph and not as the last sentence; when it gives a fixed
-headline or a headline form, use that headline exactly, filling a form only with
-the names the facts give.
+as written, inside a paragraph and not as the last sentence; it is then the
+story's one sentence about what the data cannot show, so write no other. When it
+gives a fixed headline or a headline form, use that headline exactly, filling a
+form only with the names the facts give.
 
 Write no em or en dashes, exclamation marks, links, or Markdown. Avoid filler such
 as "worth noting", "a concrete picture", "another point of interest", "caught the
@@ -220,6 +224,17 @@ SPEED_HEDGES = {
     basis: public_prose.REQUIRED_SENTENCES["above_rated_speed"].format(airspeed_origin=origin)
     for basis, origin in public_prose.AIRSPEED_ORIGINS.items()
 }
+# The one form a listed hypothesis takes in the notes that offer one, which the hypothesis
+# hedge check accepts ("One possibility is" and "may come from" it refuses).
+HYPOTHESIS_SENTENCE = "It could be {hypothesis}."
+HYPOTHESIS_FORM = (
+    "one listed hypothesis at most, labeled as a possibility in the form "
+    f'"{HYPOTHESIS_SENTENCE.format(hypothesis="<hypothesis>")}"'
+)
+# The first operator story's label sentence, the template's own (editorial fs_label).
+OPERATOR_LABEL_SENTENCE = (
+    "A callsign is a label, so the {designator} prefix does not confirm who operates the aircraft."
+)
 GLITCH_READING = (
     "Give the reading, the readings around it, the type as the database lists it, and, when a fact gives it, "
     "what the type is certified to, a speed limit named as an airspeed in a sentence of its own."
@@ -309,8 +324,8 @@ KIND_NOTES = (
     (
         ("type_speed_mismatch", "type_altitude_mismatch"),
         f"{GLITCH_READING} Offer no cause of your own: name no error, glitch, fault, or interference. You may "
-        'offer one listed hypothesis at most, labeled as a possibility ("it could be <hypothesis>"), and point '
-        "to the facts that support it: the callsign designator, the second registry's type, or the reading. "
+        f"offer {HYPOTHESIS_FORM}, and point to the facts that support it: the callsign designator, the second "
+        "registry's type, or the reading. "
         f'You may say "{engine.MISMATCH_LINE}" tc.source names the second registry asked about this address; '
         "tc.type is the type that registry lists when it differs. State it once, as a fact attributed to the "
         "registry by name, beside the database's type. Say nothing about which is right.",
@@ -349,15 +364,18 @@ KIND_NOTES = (
         'Headline: the type and registration or identifier, then ", listed as military from <fm.country>, '
         'spotted", with nothing else. The State is fm.country. Include this sentence once, word for word, with '
         "the fm.basis value in place, where it fits, not as the story's last sentence; it names the basis, so "
-        "name the basis nowhere else: "
+        "name the basis nowhere else, and with the context line it is all the story says about what the data "
+        "cannot show, so write no other caveat: "
         f'"{public_prose.REQUIRED_SENTENCES["foreign_military"].format(fm_basis="<fm.basis>")}" The data show '
         "the airframe; write nothing about why it flew, where it was going, or what it did there.",
     ),
     (
         ("first_operator_here",),
-        "The operator is the subject: call fs.designator the designator of fs.operator. Say once that a callsign "
-        "is a label, so the designator does not confirm who operates the aircraft. Name the type and registration "
-        "as the aircraft database lists them, and claim no rarity beyond these records.",
+        "The operator is the subject: call fs.designator the designator of fs.operator. Include this sentence "
+        "once, with the fs.designator value in place, not as the story's last sentence; it is the story's one "
+        "sentence about what the data cannot show, so write no other: "
+        f'"{OPERATOR_LABEL_SENTENCE.format(designator="<fs.designator>")}" Name the type and registration as the '
+        "aircraft database lists them, and claim no rarity beyond these records.",
     ),
     (
         ("aerobatic_practice",),
@@ -368,13 +386,13 @@ KIND_NOTES = (
     (
         ("unregistered_address",),
         "The address is the subject; there is no type or registration. Say when it was first seen "
-        "(unr.first_seen) and that the registries (unr.registries) were asked again after a week. Offer one "
-        "listed hypothesis at most, as a possibility.",
+        "(unr.first_seen) and that the registries (unr.registries) were asked again after a week. Offer "
+        f"{HYPOTHESIS_FORM}",
     ),
     (
         ("racetrack_orbit",),
         "Give the legs, their length, the spacing, and the duration once (rt.legs, rt.leg_length, rt.spacing, "
-        "rt.duration). Offer one listed hypothesis at most, as a possibility; never a purpose.",
+        f"rt.duration). Offer no purpose beyond the listed hypotheses, and offer {HYPOTHESIS_FORM}",
     ),
 )
 # Guidance for an observation whose packet provenance is an archive.

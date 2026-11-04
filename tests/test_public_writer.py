@@ -847,7 +847,12 @@ class WriterTests(unittest.TestCase):
         self.assertNotIn("lightly rephrased", flat)
         # Required sentences and fixed or house headlines are followed exactly.
         self.assertIn("when it gives a sentence to include word for word, include it exactly once", flat)
-        self.assertIn("when it gives a fixed headline or a headline form, use that headline exactly", flat)
+        self.assertIn("When it gives a fixed headline or a headline form, use that headline exactly", flat)
+        self.assertIn(
+            "it is then the story's one sentence about what the data cannot show, so write no other", flat
+        )
+        self.assertIn("A type fact (tp.*) or the context line (ctx.kind) never counts as that fact.", flat)
+        self.assertIn("without mentioning the earlier story or this site", flat)
         self.assertIn("The dek must carry at least one fact value the headline lacks", flat)
         self.assertIn("Stop when the facts run out: 90 words is a complete story.", flat)
         self.assertIn("desc.typical_fpm", flat)
@@ -865,6 +870,13 @@ class WriterTests(unittest.TestCase):
             foreign,
         )
         self.assertIn('", listed as military from <fm.country>, spotted"', foreign)
+        self.assertIn("write no other caveat", foreign)
+        operator = writer.kind_note("first_operator_here")
+        self.assertIn(f'"{writer.OPERATOR_LABEL_SENTENCE.format(designator="<fs.designator>")}"', operator)
+        self.assertIn("one sentence about what the data cannot show, so write no other", operator)
+        for kind in ("unregistered_address", "racetrack_orbit"):
+            self.assertIn(writer.HYPOTHESIS_FORM, writer.kind_note(kind))
+        self.assertIn("no purpose beyond the listed hypotheses", writer.kind_note("racetrack_orbit"))
         self.assertTrue(
             public_prose.FOREIGN_MILITARY_HEADLINE.match(
                 "Airbus A400M Atlas 5401, listed as military from Germany, spotted"
@@ -875,9 +887,108 @@ class WriterTests(unittest.TestCase):
             with self.subTest(kind=kind):
                 note = writer.kind_note(kind)
                 self.assertIn("one listed hypothesis at most, labeled as a possibility", note)
+                self.assertIn(writer.HYPOTHESIS_FORM, note)
                 self.assertIn("the callsign designator, the second registry's type, or the reading", note)
                 self.assertNotIn("Offer no cause, hedged or not", note)
         self.assertIn("Offer no cause, hedged or not", writer.kind_note("outlier_gs"))
+
+    def test_each_new_note_prescribes_sentences_the_checker_accepts(self):
+        # Per kind: (headline, dek, opening paragraph, closing sentence, the note's prescribed sentences).
+        # The second paragraph is the context line, then each prescribed sentence, then the closer;
+        # the kind's required sentence goes in when it has one.
+        hypotheses = lambda kind: [  # noqa: E731
+            writer.HYPOTHESIS_SENTENCE.format(hypothesis=item) for item in story_facts.HYPOTHESES[kind]
+        ]
+        mismatch_opening = (
+            "On {date}, {reg} reported {reading}. The aircraft database lists it as a Cessna 172 Skyhawk. "
+            + writer.engine.MISMATCH_LINE
+        )
+        cases = {
+            "winds_aloft_day": (
+                None,
+                "Eastbound aircraft had a median ground speed of 560 knots against 380 knots westbound.",
+                "On 20 September 2026, the median eastbound ground speed was 560 knots, and the westbound "
+                "median was 380 knots. The comparison rests on 35 aircraft eastbound and 33 aircraft westbound.",
+                "The fastest eastbound jet in these records that day was N791TX, an Airbus A321neo by its "
+                "aircraft database record.",
+                [
+                    "The gap is consistent with strong winds aloft.",
+                    "The gap is consistent with a jet stream.",
+                ],
+            ),
+            "foreign_military": (
+                "Lockheed C-130 Hercules 130336, listed as military from Canada, spotted",
+                "The aircraft database lists 130336 as a Lockheed C-130 Hercules, seen on 20 September 2026.",
+                "The aircraft database lists 130336 as a Lockheed C-130 Hercules, and its address C2B0A1 sits "
+                "in the block Canada holds.",
+                "The airframe is listed under Canada.",
+                [""],
+            ),
+            "first_operator_here": (
+                None,
+                "Boeing 787-9 Dreamliner VH-ZNJ flew as QFA12 at 38,000 feet on 20 September 2026.",
+                "The aircraft database lists VH-ZNJ as a Boeing 787-9 Dreamliner, and on 20 September 2026 it "
+                "flew as QFA12, the first callsign in these records with QFA, the designator of Qantas.",
+                "It reported 520 knots at 38,000 feet.",
+                [writer.OPERATOR_LABEL_SENTENCE.format(designator="QFA")],
+            ),
+            "aerobatic_practice": (
+                "Extra 300 N4440QK flies an aerobatic-style pattern",
+                "The track shows 6 reversals inside 2.5 nautical miles on 20 September 2026.",
+                "The Extra 300 N4440QK, as the aircraft database lists it, flew an aerobatic-style pattern with "
+                "6 reversals and a height range of 1,800 feet inside an area 2.5 nautical miles across.",
+                "The track sat at 4,500 feet at its edges.",
+                ["The pattern is consistent with aerobatic practice.", *hypotheses("aerobatic_practice")],
+            ),
+            "unregistered_address": (
+                None,
+                "It flew as TEST12 at 6,500 feet on 20 September 2026, with a steady 160 knots.",
+                "Address A08640 first appeared on 20 September 2026, transmitting the callsign TEST12 at 6,500 "
+                "feet. Neither adsbdb nor hexdb listed it, and both were asked again after a week.",
+                "The address kept a steady 160 knots.",
+                hypotheses("unregistered_address"),
+            ),
+            "racetrack_orbit": (
+                "Boeing KC-135R Stratotanker 63-8871 flies a long racetrack",
+                "It flew 5 legs of 12.5 nautical miles on 20 September 2026 at 24,000 feet.",
+                "The aircraft database lists 63-8871 as a Boeing KC-135R Stratotanker. Its track ran 5 legs of "
+                "12.5 nautical miles each, 6 nautical miles apart, over 50 minutes at 24,000 feet.",
+                "It held 300 knots of ground speed.",
+                hypotheses("racetrack_orbit"),
+            ),
+            "type_speed_mismatch": (
+                "Cessna 172 Skyhawk N509TX reports a ground speed of 1,064 knots",
+                "The reading came on 18 September 2026 from an aircraft the database lists as a Cessna 172.",
+                mismatch_opening.format(
+                    date="18 September 2026", reg="N509TX", reading="a ground speed of 1,064 knots"
+                ),
+                "The address was A01FD0 throughout.",
+                hypotheses("type_speed_mismatch"),
+            ),
+            "type_altitude_mismatch": (
+                "Cessna 172 Skyhawk N6462QK reports an altitude of 51,000 feet",
+                "The reading came on 20 September 2026 from an aircraft the database lists as a Cessna 172.",
+                mismatch_opening.format(
+                    date="20 September 2026", reg="N6462QK", reading="an altitude of 51,000 feet"
+                ),
+                "The address was A193E0 throughout.",
+                hypotheses("type_altitude_mismatch"),
+            ),
+        }
+        for kind, (headline, dek, opening, closer, prescribed) in cases.items():
+            facts = story_fixtures.facts(story_fixtures.kind_event(kind))
+            fixed = public_prose.fixed_headline(facts)
+            context = public_prose.context_line(facts)
+            required = public_prose.required_sentence(facts) or ""
+            for sentence in prescribed:
+                with self.subTest(kind=kind, sentence=sentence):
+                    body = " ".join(part for part in (context, sentence, required, closer) if part)
+                    story = {
+                        "headline": fixed[0] if fixed else headline,
+                        "dek": dek,
+                        "paragraphs": [opening, body],
+                    }
+                    self.assertEqual(public_prose.story_issues(story, facts), [])
 
     def test_every_watchlist_entry_reaches_the_request_named_with_its_reasons(self):
         for source, category in (
