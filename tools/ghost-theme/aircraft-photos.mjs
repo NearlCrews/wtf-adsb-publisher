@@ -180,7 +180,7 @@ export const imageCreditsPage = {
   // The date of the last content change, and that content's pageDigest.
   updated: "2026-11-04T00:00:00Z",
   contentSha256:
-    "52dbe6098e386d67c9719a47b5af9c162b2b6a7a33171d2432ff642e35513e93",
+    "59c8961d542e3dd4483e5231aacf893ffbbe6cf2a63dcd9f10354dff4dcb8b97",
   title: "Aircraft photo credits",
   custom_excerpt:
     "Sources, photographers, and licenses for the representative aircraft photos.",

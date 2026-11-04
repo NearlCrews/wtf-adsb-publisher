@@ -177,7 +177,7 @@ const charted = (figure) =>
   ["track", "measurement-chart"].includes(figure?.kind);
 const lead = {};
 const photos = {};
-const classPhotos = {};
+const cardPhotos = {};
 const cards = {};
 // The altitude profile goes by its role, whichever figure leads.
 const profiles = {};
@@ -190,21 +190,22 @@ for (const event of snapshot.events) {
     (item) => item.role === "profile",
   );
   if (profile) profiles[event.id] = profile;
-  // One photo per story: the airframe photo, else the type photo.
+  // One photo of the aircraft per page: the airframe photo, else the type
+  // photo. Cards keep the type or class photo either way.
   const chosen = storyPhotos(event, {
     registration: airframeInput.get(event.id),
     type: imported ? aircraftPhoto(event) : null,
     stock: imported ? classPhoto(event) : null,
   });
-  const { typePhoto: photo, classPhoto: stock } = chosen;
+  const { typePhoto: photo, cardPhoto } = chosen;
   if (chosen.registrationPhoto)
     airframePhotos.set(event.id, chosen.registrationPhoto);
   if (photo) photos[event.id] = photo;
-  if (stock) classPhotos[event.id] = stock;
+  if (cardPhoto) cardPhotos[event.id] = cardPhoto;
   if (charted(figure)) lead[event.id] = figure;
   else if (photo) lead[event.id] = photo;
   else if (figure) lead[event.id] = figure;
-  const card = cardVisual(lead[event.id], stock);
+  const card = cardVisual(lead[event.id], cardPhoto);
   if (card) cards[event.id] = card;
   if (card && card !== event.media) journalMedia[event.id] = card;
 }
@@ -240,7 +241,7 @@ const model = siteModel(snapshot.events, {
   articles,
   lead,
   photos,
-  classPhotos,
+  cardPhotos,
   profiles,
   retired: snapshot.retired || [],
 });
@@ -959,13 +960,17 @@ for (const story of model.stories) {
       : null;
   const description = storyDescription.get(story.id);
   const card = social.get(story.id);
-  // The story's own figure card first, then the representative type photo,
+  // The story's own figure card first, then the representative type photo
+  // (the card photo, which the page may leave out for an airframe photo),
   // which shows the type rather than this aircraft, then the site card, for
-  // og:image and structured data alike. A type photo narrower than a social
-  // card's 1200 pixels is left to the site card.
+  // og:image and structured data alike. A class photo is never a social
+  // image, and a type photo narrower than a social card's 1200 pixels is
+  // left to the site card.
+  const typeImage =
+    story.cardPhoto?.kind === "aircraft-type-photo" ? story.cardPhoto : null;
   const images = [
     card && { ...card, alt: story.leadMedia?.alt || story.headline },
-    story.photo?.width >= SIZES.card.width && story.photo,
+    typeImage?.width >= SIZES.card.width && typeImage,
   ].filter(Boolean);
   const ogImage = images[0] || siteImage;
   const post = {

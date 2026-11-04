@@ -238,12 +238,11 @@ export const JOURNAL_URL = "/stories/";
 export const WITHDRAWN_ROBOTS = "noindex";
 
 // A card's image: the story's lead (a track map, chart, or type photo),
-// except that a summary card, or no figure at all, gives way to the
-// representative photo of the type's class when there is one. Article pages
-// keep their lead.
-export function cardVisual(lead, classPhoto) {
-  return classPhoto && (!lead || lead.kind === "observation-summary")
-    ? classPhoto
+// except that a summary card, or no figure at all, gives way to the card
+// photo (storyPhotos) when there is one. Article pages keep their lead.
+export function cardVisual(lead, cardPhoto) {
+  return cardPhoto && (!lead || lead.kind === "observation-summary")
+    ? cardPhoto
     : lead || null;
 }
 
@@ -256,15 +255,16 @@ export const NO_REGISTRATION_PHOTO = new Set([
   "unregistered_address",
 ]);
 
-// The photos a story may show, at most one of the aircraft: the registration
-// photo (Planespotters) unless the kind disputes the identity or the identity
-// checks found a conflict (the publisher's identity_conflict flag), else the
-// representative type photo. The class photo, for cards only, stands in for a
-// type with no photo of its own. A subjectless story names no aircraft, so it
-// shows none.
+// The photos a story may show. Its page shows at most one of the aircraft:
+// the registration photo (Planespotters) unless the kind disputes the
+// identity or the identity checks found a conflict (the publisher's
+// identity_conflict flag), else the representative type photo. Cards never
+// show a registration photo, so the card photo is the type photo, else the
+// representative photo of the type's class, whatever the page shows. A
+// subjectless story names no aircraft, so it shows none.
 export function storyPhotos(event, { registration, type, stock } = {}) {
   if (event.subjectless)
-    return { registrationPhoto: null, typePhoto: null, classPhoto: null };
+    return { registrationPhoto: null, typePhoto: null, cardPhoto: null };
   const registrationPhoto =
     registration &&
     !NO_REGISTRATION_PHOTO.has(event.kind) &&
@@ -274,13 +274,13 @@ export function storyPhotos(event, { registration, type, stock } = {}) {
   return {
     registrationPhoto,
     typePhoto: registrationPhoto ? null : type || null,
-    classPhoto: type ? null : stock || null,
+    cardPhoto: type || stock || null,
   };
 }
 
 export function storyModel(
   event,
-  { topics, html = "", leadMedia, photo, classPhoto, profileImage },
+  { topics, html = "", leadMedia, photo, cardPhoto, profileImage },
 ) {
   const story = event.story || null;
   const context = event.context || {};
@@ -367,7 +367,9 @@ export function storyModel(
     weekly: Boolean(event.weekly_spotlight),
     exceptional: Boolean(event.priority_evidence),
     leadMedia: leadMedia || null,
-    cardMedia: cardVisual(leadMedia, classPhoto),
+    cardMedia: cardVisual(leadMedia, cardPhoto),
+    // The type or class photo cards fall back to (storyPhotos).
+    cardPhoto: cardPhoto || null,
     // The altitude profile figure (media role "profile"), which the page places below the map.
     profileImage: profileImage || null,
     photo: photo || null,
@@ -505,7 +507,7 @@ export function siteModel(
     articles = {},
     lead = {},
     photos = {},
-    classPhotos = {},
+    cardPhotos = {},
     profiles = {},
     retired = [],
   },
@@ -517,7 +519,7 @@ export function siteModel(
         html: articles[event.id] || "",
         leadMedia: lead[event.id],
         photo: photos[event.id],
-        classPhoto: classPhotos[event.id],
+        cardPhoto: cardPhotos[event.id],
         profileImage: profiles[event.id],
       }),
     )

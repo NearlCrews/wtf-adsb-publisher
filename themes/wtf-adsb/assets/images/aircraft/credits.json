@@ -2772,14 +2772,14 @@
       "bytes": 87100
     },
     {
-      "id": "boeing-vc-25",
+      "id": "boeing-747-200",
       "typeCodes": ["B742"],
-      "title": "Boeing VC-25",
-      "src": "/assets/images/aircraft/boeing-vc-25-753f8f4ad691.webp",
+      "title": "Boeing 747-200",
+      "src": "/assets/images/aircraft/boeing-747-200-753f8f4ad691.webp",
       "width": 1200,
       "height": 965,
       "alt": "Representative Boeing VC-25A, the presidential 747-200, in flight over Mount Rushmore.",
-      "caption": "Representative Boeing VC-25 photo (VC-25A shown).",
+      "caption": "Representative Boeing 747-200 photo (VC-25A shown).",
       "author": "U.S. Air Force",
       "sourceTitle": "File:Air Force One over Mt. Rushmore.jpg",
       "sourceUrl": "https://commons.wikimedia.org/wiki/File:Air_Force_One_over_Mt._Rushmore.jpg",
@@ -2790,9 +2790,7 @@
       "originalSha1": "1d90a4859b412f788caa68c30d1660b963d114ed",
       "originalSha256": "2541be8a4d5e111227662378fbb0bc146c348d40a50f68c72e7725b8725c4d81",
       "sha256": "753f8f4ad691464984dfe9553f41f08c7c455b9b128e1fdf961fc7962caf73ff",
-      "bytes": 215748,
-      "wikidata": "Q645289",
-      "article": "https://en.wikipedia.org/wiki/Boeing_VC-25"
+      "bytes": 215748
     }
   ]
 }

@@ -966,7 +966,7 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
   const cards = siteModel([helicopter], {
     topics,
     lead: { [helicopter.id]: summary },
-    classPhotos: { [helicopter.id]: stock },
+    cardPhotos: { [helicopter.id]: stock },
   }).stories[0];
   assert.equal(cards.leadMedia, summary);
   assert.equal(cards.cardMedia, stock);
@@ -1000,20 +1000,24 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     assert.equal(at > section, Boolean(photo.classes), photo.id);
   }
 }
-// One photo per story. A registration photo is left out when the story is
-// about a disputed identity or the identity checks found a conflict, since it
-// may show another aircraft; the representative type photo shows only when
-// no registration photo does; a class photo stands in on cards only for a
-// type without a photo; a subjectless story shows none.
+// One photo of the aircraft per page. A registration photo is left out when
+// the story is about a disputed identity or the identity checks found a
+// conflict, since it may show another aircraft; the representative type photo
+// shows on the page only when no registration photo does. Cards never show a
+// registration photo, so the card photo (the type photo, else the class
+// photo) stays whatever the page shows. A subjectless story shows none.
 {
   const registration = { src: "https://t.plnspttrs.net/1/1_280.jpg" };
   const type = { kind: "aircraft-type-photo", src: "/assets/x.webp" };
   const stock = { kind: "aircraft-class-photo", src: "/assets/y.webp" };
   const photos = { registration, type, stock };
-  const none = { registrationPhoto: null, typePhoto: null, classPhoto: null };
+  const none = { registrationPhoto: null, typePhoto: null, cardPhoto: null };
+  // Registration plus type: the page shows the registration photo, the card
+  // keeps the type photo.
   assert.deepEqual(storyPhotos(event({ kind: "watch_type" }), photos), {
-    ...none,
     registrationPhoto: registration,
+    typePhoto: null,
+    cardPhoto: type,
   });
   for (const kind of [
     "identity_conflict",
@@ -1023,28 +1027,30 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
   ])
     assert.deepEqual(
       storyPhotos(event({ kind }), photos),
-      { ...none, typePhoto: type },
+      { ...none, typePhoto: type, cardPhoto: type },
       kind,
     );
   assert.deepEqual(
     storyPhotos({ ...event({}), identity_conflict: true }, photos),
-    { ...none, typePhoto: type },
+    { ...none, typePhoto: type, cardPhoto: type },
   );
   assert.deepEqual(storyPhotos(event({}), { type, stock }), {
     ...none,
     typePhoto: type,
+    cardPhoto: type,
   });
+  // Registration plus class photo: the card keeps the class photo.
   assert.deepEqual(storyPhotos(event({}), { registration, stock }), {
     ...none,
     registrationPhoto: registration,
-    classPhoto: stock,
+    cardPhoto: stock,
   });
   assert.deepEqual(
     storyPhotos(event({ kind: "type_speed_mismatch" }), {
       registration,
       stock,
     }),
-    { ...none, classPhoto: stock },
+    { ...none, cardPhoto: stock },
   );
   assert.deepEqual(storyPhotos(event({}), {}), none);
   assert.deepEqual(
@@ -1054,6 +1060,13 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     ),
     none,
   );
+  // A card whose page lead gave way to the airframe photo shows the card
+  // photo in place of the summary figure; a map still leads the card.
+  const summary = { kind: "observation-summary", src: "/event-media/s.svg" };
+  const map = { kind: "track", src: "/event-media/t.svg" };
+  assert.equal(cardVisual(summary, type), type);
+  assert.equal(cardVisual(undefined, type), type);
+  assert.equal(cardVisual(map, type), map);
 }
 console.log(
   "Site model checks passed: topics, hubs, thresholds, related links, breadcrumbs, prose gate, titles, descriptions, sitemaps, feed, robots, head tags, withdrawn-story pages, card class photos, story photo rules, and list page links.",
