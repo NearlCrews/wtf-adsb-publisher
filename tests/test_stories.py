@@ -43,7 +43,12 @@ class NewEvidenceValidates(unittest.TestCase):
     def test_winds_aloft_keeps_only_an_open_meteo_wind(self):
         wind = {"speed_kn": 140.0, "direction_deg": 260.0, "source": "open-meteo", "hour": "2026-11-05T12:00"}
         self.assertEqual(stories.winds_aloft({**WINDS, "wind_250_hpa": wind})["wind_250_hpa"], wind)
-        for bad in ({**wind, "source": "nws"}, {**wind, "direction_deg": 400}, {**wind, "hour": "noon"}):
+        for bad in (
+            {**wind, "source": "nws"},
+            {**wind, "direction_deg": 400},
+            {**wind, "hour": "noon"},
+            {**wind, "hour": "2026-11-04T12:00"},
+        ):
             with self.subTest(wind=bad):
                 self.assertNotIn("wind_250_hpa", stories.winds_aloft({**WINDS, "wind_250_hpa": bad}))
 
@@ -78,10 +83,23 @@ class NewEvidenceValidates(unittest.TestCase):
             {"basis": "dbFlags"},
             {"country": "Germany"},
             {"country_name": "<b>Germany</b>"},
+            {"country_name": "Ger\nmany"},
+            {"country_name": " "},
+            {"country_name": "G" * 61},
+            {"country_name": None},
             {"registration_country": "de"},
         ):
             with self.subTest(change=change):
                 self.assertIsNone(stories.foreign_military({**FOREIGN, **change}))
+
+    def test_an_accented_allocation_name_is_kept(self):
+        for name in ("Côte d’Ivoire", "São Tomé and Príncipe"):
+            with self.subTest(name=name):
+                block = {**FOREIGN, "country": "CI", "country_name": name}
+                self.assertEqual(stories.foreign_military(block), block)
+                self.assertEqual(
+                    packet("foreign_military", foreign_military=block)["foreign_military"], block
+                )
 
     def test_unregistered_block_is_accepted_and_checked(self):
         self.assertEqual(packet("unregistered_address", unregistered=UNLISTED)["unregistered"], UNLISTED)
@@ -121,19 +139,23 @@ class NewEvidenceValidates(unittest.TestCase):
             "span_nm": 1.8,
             "max_turn_rate_dps": 9.5,
             "basis": "turn_rate",
-            "legs": 4,
+            "racetrack_legs": 4,
             "leg_length_nm": 12.0,
             "axis_heading_deg": 90.0,
             "lateral_spacing_nm": 6.0,
             "line_repeat_nm": 0.4,
-            "duration_s": 3420,
             "runway_within_nm": 50.0,
         }
         summary = episode_evidence.summary(maneuver)
         self.assertEqual({key: summary[key] for key in maneuver}, maneuver)
         self.assertNotIn("basis", episode_evidence.summary({**maneuver, "basis": "rumour"}))
         pattern = stories.pattern_summary({key: value for key, value in maneuver.items() if key != "basis"})
-        self.assertEqual(pattern["legs"], 4)
+        self.assertEqual(pattern["racetrack_legs"], 4)
+        self.assertNotIn("legs", episode_evidence.METRICS)
+        self.assertNotIn("duration_s", stories.PATTERN_FIELDS)
+        self.assertEqual(
+            episode_evidence.METRICS["runway_within_nm"], ("Nearest mapped runway end, up to 50 NM", "NM")
+        )
         self.assertEqual(pattern["runway_within_nm"], 50.0)
 
     def test_new_context_tags_have_notes(self):

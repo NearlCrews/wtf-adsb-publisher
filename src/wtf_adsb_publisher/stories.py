@@ -56,12 +56,11 @@ PATTERN_FIELDS = {
     # Aerobatic-style practice and racetrack orbits (the engine's maneuver metrics).
     "span_nm",
     "max_turn_rate_dps",
-    "legs",
+    "racetrack_legs",
     "leg_length_nm",
     "axis_heading_deg",
     "lateral_spacing_nm",
     "line_repeat_nm",
-    "duration_s",
     "runway_within_nm",
 }
 SOURCES = {
@@ -197,7 +196,10 @@ OPERATOR_DESIGNATOR = re.compile(r"[A-Z]{3}")
 # or an address in a State's military allocation.
 FOREIGN_MILITARY_BASES = ("dbFlags", "military_allocation")
 COUNTRY_CODE = re.compile(r"[A-Z]{2}")
-COUNTRY_NAME = re.compile(r"[A-Za-z][A-Za-z .,'()&-]{1,59}")
+# A State's name as the pinned identity table writes it, accents and typographic
+# apostrophes included ("Côte d’Ivoire"); control characters and markup are refused.
+COUNTRY_NAME_LIMIT = 60
+UNSAFE_TEXT = re.compile(r"[\x00-\x1f\x7f<>]")
 # A winds-aloft day's per-direction counts and medians, all required, and the hour of
 # its optional modelled 250 hPa wind.
 WINDS_COUNTS = ("east_addresses", "west_addresses")
@@ -652,11 +654,12 @@ def foreign_military(raw):
         return None
     country, name, basis = raw.get("country"), raw.get("country_name"), raw.get("basis")
     registered = raw.get("registration_country")
+    name = name.strip() if isinstance(name, str) else ""
     if (
         not isinstance(country, str)
         or not COUNTRY_CODE.fullmatch(country)
-        or not isinstance(name, str)
-        or not COUNTRY_NAME.fullmatch(name)
+        or not 1 <= len(name) <= COUNTRY_NAME_LIMIT
+        or UNSAFE_TEXT.search(name)
         or not isinstance(basis, list)
         or not basis
         or len(set(basis)) != len(basis)
@@ -691,8 +694,9 @@ def _quartiles(value):
     return [low, high] if low is not None and high is not None and low <= high else None
 
 
-def _winds_wind(raw):
-    """The modelled 250 hPa wind beside a winds-aloft day: speed, direction, source, and hour."""
+def _winds_wind(raw, day):
+    """The modelled 250 hPa wind beside a winds-aloft day: speed, direction, source, and an
+    hour on that day."""
     if not isinstance(raw, dict) or raw.get("source") not in WIND_SOURCES:
         return None
     speed, direction, hour = number(raw.get("speed_kn")), number(raw.get("direction_deg")), raw.get("hour")
@@ -703,6 +707,7 @@ def _winds_wind(raw):
         or not 0 <= direction <= 360
         or not isinstance(hour, str)
         or not WINDS_HOUR.fullmatch(hour)
+        or hour[:10] != day
     ):
         return None
     return {"speed_kn": speed, "direction_deg": direction, "source": raw["source"], "hour": hour}
@@ -737,7 +742,7 @@ def winds_aloft(raw):
     ):
         return None
     block.update(asymmetry_kn=asymmetry, altitude_floor_ft=floor)
-    if wind := _winds_wind(raw.get("wind_250_hpa")):
+    if wind := _winds_wind(raw.get("wind_250_hpa"), day):
         block["wind_250_hpa"] = wind
     return block
 

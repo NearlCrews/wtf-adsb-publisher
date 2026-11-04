@@ -22,6 +22,8 @@ GENERATIONS = ("event-data", "event-pages")
 # Generations kept, the incoming one included, for readers of pages loaded
 # before a release. Each holds a card per story, so the count stays bounded.
 RETAINED_GENERATIONS = 12
+# Event fields a release may add to an event that lacked them without correcting it.
+ADDABLE_FIELDS = ("weekly_spotlight", "headline_measurements", "related")
 MAX_ARCHIVE_BYTES = 512 * 1024 * 1024
 MAX_SITE_BYTES = 2 * 1024**3
 MAX_FILES = 100000
@@ -175,9 +177,10 @@ def uncorrected(previous, incoming):
     """True when every earlier public event remains and nothing in it was corrected.
 
     Ghost's revision time and the content revision time move without a
-    correction, template prose may give way to AI prose, and weekly research
-    may be added. Any other change, such as new evidence, other research or
-    replaced AI prose, is treated as a correction, as is a withdrawal.
+    correction, template prose may give way to AI prose, and weekly research,
+    headline measurement keys, or related stories may be added. Any other
+    change, such as new evidence, other research, or replaced AI prose, is
+    treated as a correction, as is a withdrawal.
     """
 
     def source(event):
@@ -194,8 +197,8 @@ def uncorrected(previous, incoming):
         ignored = {"revised_at", "content_revised_at"}
         if source(event) == "template" and source(current) == "ai":
             ignored |= {"story", "title", "summary"}
-        if "weekly_spotlight" not in event:
-            ignored.add("weekly_spotlight")
+        # Fields an earlier release did not export yet may appear without a correction.
+        ignored |= {key for key in ADDABLE_FIELDS if key not in event}
         if without(event, ignored) != without(current, ignored):
             return False
     return True

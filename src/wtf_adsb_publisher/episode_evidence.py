@@ -24,14 +24,14 @@ CONTRACT_METRICS = {
     "median_ground_speed_kt": ("Median ground speed", "kt"),
     "max_altitude_ft": ("Highest altitude", "ft"),
     "response_rate_change_fpm": ("Vertical-rate change after the advisory", "ft/min"),
-    "span_nm": ("Largest distance across the practice area", "NM"),
+    "span_nm": ("Track span", "NM"),
     "max_turn_rate_dps": ("Highest turn rate held for 20 seconds", "deg/s"),
-    "legs": ("Long reciprocal legs", "legs"),
+    "racetrack_legs": ("Racetrack legs", "legs"),
     "axis_heading_deg": ("Racetrack axis heading", "degrees"),
-    "lateral_spacing_nm": ("Spacing between the two lines", "NM"),
-    "line_repeat_nm": ("Largest offset of a leg from its line", "NM"),
-    "duration_s": ("Racetrack duration", "s"),
-    "runway_within_nm": ("Distance from the pattern center to the nearest mapped runway", "NM"),
+    "lateral_spacing_nm": ("Spacing between the two racetrack lines", "NM"),
+    "line_repeat_nm": ("Largest leg offset from its line", "NM"),
+    # The engine caps the distance at 50 NM, also when no runway table covers the pattern.
+    "runway_within_nm": ("Nearest mapped runway end, up to 50 NM", "NM"),
 }
 # Public wording keeps every label distinct, writes nautical miles as NM and knots as kn.
 PUBLIC_LABELS = {
@@ -152,10 +152,11 @@ CONTEXT_NOTES = {
     "refuelling_like": "One aircraft is a tanker type. The data cannot show whether fuel was transferred.",
     "aerotow_like": "A glider and another aircraft climbed together within 0.2 NM, as in an aerotow; the data cannot confirm a tow.",
     "registry_gap": "The aircraft database lists no registration for this transmitting address. Registries lag new registrations, and some States publish none.",
-    "tanker_type": "The aircraft's listed type is a tanker. The data cannot show whether fuel was transferred.",
-    "military_flag": "The aircraft database flags this aircraft as military; the flag does not identify a mission or an operator.",
-    "airport_context": "The pattern was centered within 10 NM of a mapped runway, where holds and practice approaches are routine; the purpose is unconfirmed.",
-    # The engine records this as a tag from its go-around detector; older evidence keeps the flag.
+    "tanker_type": "The aircraft is a tanker type. Tankers often wait on racetrack orbits, but the data cannot show whether fuel was transferred.",
+    "military_flag": "The aircraft database marks this address as military. The purpose of the flight is not published.",
+    "airport_context": "The racetrack was centered within 10 NM of a mapped runway, where holding and practice approaches are routine.",
+    # The engine is to record this as a tag from its go-around detector; evidence saved
+    # before then keeps it as a quality flag.
     "airport_maneuver_hypothesis": LIMITATIONS["airport_maneuver_hypothesis"],
 }
 # Kinds whose headline speed or position MLAT would estimate rather than receive.
