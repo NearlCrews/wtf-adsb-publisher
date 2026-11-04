@@ -1,5 +1,5 @@
 <article class="event-card archive-entry type-{{primaryType}}" data-event-id="{{id}}">
-  <p class="archive-entry-meta">{{#if topicUrl}}<a href="{{topicUrl}}">{{topicTitle}}</a>{{/if}}{{#if typeUrl}}<a href="{{typeUrl}}">{{typeName}}</a>{{else}}{{#if typeName}}<span>{{typeName}}</span>{{/if}}{{/if}}<time datetime="{{observedStart}}">{{observedLabel}}</time>{{> "source-badge"}}</p>
+  <p class="archive-entry-meta">{{#if topicUrl}}<a href="{{topicUrl}}">{{topicTitle}}</a>{{/if}}{{#if typeUrl}}<a href="{{typeUrl}}">{{typeName}}</a>{{else}}{{#if typeName}}<span>{{typeName}}</span>{{/if}}{{/if}}<time datetime="{{observedStart}}">{{observedLabel}}</time>{{> "card-source-badge"}}</p>
   {{#if nested}}<h4><a href="{{url}}">{{headline}}</a></h4>{{else}}<h3><a href="{{url}}">{{headline}}</a></h3>{{/if}}
   <p class="archive-entry-dek">{{dek}}</p>
 </article>

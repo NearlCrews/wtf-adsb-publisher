@@ -585,6 +585,7 @@ const entry = (story, nested, hide = {}) => ({
   observedStart: story.observedStart,
   observedLabel: observedLabel(story),
   sourceBadge: story.sourceBadge,
+  plainAdsb: story.plainAdsb,
   nested,
 });
 const listView = (chunk, { nested = false, hide = {} } = {}) => ({
@@ -603,18 +604,24 @@ const visibleCrumbs = (items) => ({
     url: index === items.length - 1 ? null : item.url,
   })),
 });
+// The topics index lists every topic; the home page only those with stories,
+// and a section only while one of its topics has some.
 const topicsView = (sections, index) =>
-  sections.map((section) => ({
-    slug: section.slug,
-    title: section.title,
-    index,
-    topics: section.topics.map((topic) => ({
-      url: topic.url,
-      title: topic.title,
-      description: index ? topic.description : null,
-      countLabel: stories(topic.count),
-    })),
-  }));
+  sections
+    .map((section) => ({
+      slug: section.slug,
+      title: section.title,
+      index,
+      topics: section.topics
+        .filter((topic) => index || topic.count > 0)
+        .map((topic) => ({
+          url: topic.url,
+          title: topic.title,
+          description: index ? topic.description : null,
+          countLabel: stories(topic.count),
+        })),
+    }))
+    .filter((section) => section.topics.length);
 const guideLabels = {
   "ads-b": "ADS-B",
   mlat: "MLAT",

@@ -87,6 +87,10 @@ export function sourceBadge(code) {
     : null;
 }
 export const sourceFamily = (code) => sourceBadge(code)?.id || "";
+// Plain ADS-B, an aircraft's own broadcast under its ICAO address, is the
+// usual source, so list cards badge only the others; a story page badges
+// every source it names.
+export const plainSource = (code) => code === "adsb_icao";
 
 // Host name suffixes that never reach the public internet (public_events.py
 // PRIVATE_SUFFIXES, which check-event-query.mjs compares), without their

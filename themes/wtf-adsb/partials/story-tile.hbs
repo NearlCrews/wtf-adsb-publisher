@@ -1,6 +1,6 @@
 <article class="story-card story-tile" data-event-id="{{id}}">
   <a class="card-image" href="{{url}}" tabindex="-1" aria-hidden="true">{{#if thumb}}<img src="{{thumb.src}}" alt="" width="{{thumb.width}}" height="{{thumb.height}}" loading="lazy" decoding="async" />{{#if thumb.note}}<span class="card-image-note">{{thumb.note}}</span>{{/if}}{{else}}<span class="image-placeholder">A closer look</span>{{/if}}</a>
-  <div class="story-meta"><a href="{{topicUrl}}">{{topicTitle}}</a><time datetime="{{observedStart}}">{{observedLabel}}</time>{{> "source-badge"}}</div>
+  <div class="story-meta"><a href="{{topicUrl}}">{{topicTitle}}</a><time datetime="{{observedStart}}">{{observedLabel}}</time>{{> "card-source-badge"}}</div>
   <h3><a href="{{url}}">{{headline}}</a></h3>
   <p>{{dek}}</p>
 </article>

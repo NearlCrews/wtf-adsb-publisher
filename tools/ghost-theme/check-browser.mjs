@@ -884,10 +884,11 @@ try {
     await record.locator(".record-limits li:last-child a").getAttribute("href"),
     "/field-guide/#kind-above-rated-altitude",
   );
-  // Source badges: the reception source beside the topic on a story page
-  // and in the meta line of every archive entry, home tile, and search
-  // card. A badge reads as [the short label a reader sees, the text a screen
-  // reader announces in its place, the title shown on hover].
+  // Source badges: the reception source beside the topic on a story page,
+  // and in the meta line of an archive entry, home tile, or search card
+  // whose readings came some other way than plain ADS-B (adsb_icao), the
+  // usual source. A badge reads as [the short label a reader sees, the text
+  // a screen reader announces in its place, the title shown on hover].
   const badge = (selector) =>
     parts.page
       .locator(selector)
@@ -917,20 +918,61 @@ try {
     "Reception source: ADS-B, ICAO address",
     "ADS-B, ICAO address",
   ]);
-  await parts.page.goto(fixtureSite.base + "/stories/");
-  assert.equal(
-    await parts.page.locator(".archive-entry .source-badge").count(),
-    await parts.page.locator(".archive-entry").count(),
+  const plainIds = new Set(
+    fixture.events
+      .filter((event) => event.source === "adsb_icao")
+      .map((event) => event.id),
   );
+  // Each card of a list is badged unless its readings are plain ADS-B.
+  const badgedCards = async (selector) => {
+    const cards = await parts.page
+      .locator(selector)
+      .evaluateAll((nodes) =>
+        nodes.map((node) => [
+          node.dataset.eventId,
+          Boolean(node.querySelector(".source-badge")),
+        ]),
+      );
+    assert.ok(
+      cards.some(([id]) => plainIds.has(id)),
+      selector,
+    );
+    for (const [id, badged] of cards)
+      assert.equal(badged, !plainIds.has(id), `${selector} ${id}`);
+  };
+  await parts.page.goto(fixtureSite.base + "/stories/");
+  await badgedCards(".archive-entry");
   assert.deepEqual(
     await badge(`.archive-entry[data-event-id="${mlatId}"] .source-badge`),
     mlatBadge,
   );
+  // The home page lists only the topics with stories, which the topics
+  // index lists among the rest, and shows the weekly block only when last
+  // week has a pick: the main fixture's week has one, the older one's none.
+  const topicLinks = (selector) =>
+    parts.page
+      .locator(selector)
+      .evaluateAll((nodes) =>
+        nodes.map((node) => [
+          node.querySelector("a").getAttribute("href"),
+          node.querySelector(".topic-count").textContent,
+        ]),
+      );
+  await parts.page.goto(fixtureSite.base + "/topics/");
+  const indexTopics = await topicLinks(".topic-sections li");
+  const storied = indexTopics.filter(([, count]) => !count.startsWith("0 "));
+  assert.ok(storied.length > 0 && storied.length < indexTopics.length);
   await parts.page.goto(fixtureSite.base + "/");
-  assert.equal(
-    await parts.page.locator(".story-tile .source-badge").count(),
-    await parts.page.locator(".story-tile").count(),
+  assert.deepEqual(
+    await topicLinks(".home-topics .topic-sections li"),
+    storied,
   );
+  assert.equal(await parts.page.locator(".weekly-spotlight").count(), 1);
+  await parts.page.goto(olderSite.base + "/");
+  assert.equal(await parts.page.locator(".weekly-spotlight").count(), 0);
+  assert.equal(await parts.page.locator("[data-weekly-static]").count(), 0);
+  await parts.page.goto(fixtureSite.base + "/");
+  await badgedCards(".story-tile");
   assert.deepEqual(
     await badge(`.story-tile[data-event-id="${mlatId}"] .source-badge`),
     mlatBadge,

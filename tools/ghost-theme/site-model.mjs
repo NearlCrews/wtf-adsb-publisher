@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   DEFAULT_PAGE_SIZE,
   dateLabel,
+  plainSource,
   sourceBadge,
 } from "../../themes/wtf-adsb/assets/js/event-query.mjs";
 import { ORIGIN, SITE_NAME } from "./site-settings.mjs";
@@ -392,6 +393,8 @@ export function storyModel(
     // The readings' reception source as a badge, or null for a source the
     // badge does not name.
     sourceBadge: sourceBadge(event.source),
+    // Whether list cards leave the badge off (plainSource).
+    plainAdsb: plainSource(event.source),
     weekly: Boolean(event.weekly_spotlight),
     exceptional: Boolean(event.priority_evidence),
     leadMedia: leadMedia || null,

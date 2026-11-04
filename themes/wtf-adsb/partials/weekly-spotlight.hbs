@@ -1,8 +1,7 @@
 <section class="wrap weekly-spotlight" aria-labelledby="weekly-title"{{#if weekly}} data-weekly-static data-valid-from="{{weekly.validFrom}}" data-valid-until="{{weekly.validUntil}}"{{/if}}>
   <header class="weekly-heading"><div><p class="eyebrow">A closer look</p><h2 id="weekly-title" data-weekly-title>{{#if weekly}}Weekly spotlight{{else}}Most Interesting Last Week{{/if}}</h2></div><a href="{{@site.url}}/weekly/">Earlier weekly picks</a></header>
   {{#if weekly}}
-    {{#unless weekly.pick}}<p class="weekly-period">{{weekly.weekLabel}}</p>{{/unless}}
-    <div data-weekly-current>{{#with weekly.pick}}{{> "weekly-card"}}{{else}}<p>No researched pick is ready for last week yet.</p>{{/with}}</div>
+    <div data-weekly-current>{{#with weekly.pick}}{{> "weekly-card"}}{{/with}}</div>
     <p data-weekly-expired hidden>No researched pick for last week is available in this snapshot. Earlier picks are in the weekly archive.</p>
   {{else}}
     {{> "weekly-current"}}

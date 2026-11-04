@@ -367,7 +367,7 @@ place, and country) as the same, so a later story never de-indexes an earlier
 one and a template about another aircraft is not new prose. Story pages carry
 breadcrumbs, a topic, and type eyebrow with the reception-source badge (its
 long label as the title; cards and tiles carry the same badge beside their
-date), the observed and published dates, the lead visual, the story prose, "About the {type}" with sourced profile facts,
+date unless the readings are plain ADS-B, the usual source), the observed and published dates, the lead visual, the story prose, "About the {type}" with sourced profile facts,
 the evidence card, "More about this aircraft", and related stories.
 "More about this aircraft" lists the event's `related` links: its earlier
 stories with their dates, then the airframe's other stories not already
@@ -674,8 +674,8 @@ snapshots offered 25 a page; links that name it still work.
 
 The default build shows six explicitly synthetic observations across five
 event types. The journal's chart and search sit on `/stories/`, above the plain
-list of every story; the home page shows the latest stories, the weekly pick,
-topics, aircraft, and the chart. The Dreamlifter background is the sample type
+list of every story; the home page shows the latest stories, the weekly pick
+when last week has one, the topics that have stories, aircraft, and the chart. The Dreamlifter background is the sample type
 profile, shown with the cargo example.
 
 The chart, filters, and numbered pages use one snapshot. The initial range is the

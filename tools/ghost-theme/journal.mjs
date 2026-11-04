@@ -15,6 +15,7 @@ import {
   prepareRecords,
   queryPage,
   QUERY_VERSION,
+  plainSource,
   searchRecord,
   sourceBadge,
   SOURCES,
@@ -659,6 +660,7 @@ export function createJournal(
       },
       type: types.find((t) => t.id === event.primary_type),
       sourceBadge: sourceBadge(event.source),
+      plainAdsb: plainSource(event.source),
       day: dateLabel(event.observed_start),
       time: timeLabel(event.observed_start),
     };

@@ -32,6 +32,5 @@ export function weeklyView(snapshot, media = {}) {
     picks,
     validFrom: `${iso(monday)}T00:00:00Z`,
     validUntil: `${iso(monday + 7 * DAY)}T00:00:00Z`,
-    weekLabel: `${dateLabel(week)} – ${dateLabel(iso(monday - DAY))} UTC`,
   };
 }

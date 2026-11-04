@@ -21,6 +21,7 @@ import {
   queryPage,
   queryParams,
   searchRecord,
+  plainSource,
   sourceBadge,
   SOURCES,
   timeline,
@@ -618,6 +619,11 @@ assert.deepEqual(sourceBadge("adsb_icao_nt"), {
 });
 for (const code of [undefined, "", "constructor", "__proto__"])
   assert.equal(sourceBadge(code), null);
+// List cards leave the badge off plain ADS-B only, the usual source.
+assert.deepEqual(
+  SOURCES.flatMap((family) => Object.keys(family.codes)).filter(plainSource),
+  ["adsb_icao"],
+);
 // The journal refuses a reference link to every host the exporter refuses.
 assert.deepEqual(
   PRIVATE_HOST_SUFFIXES.map((suffix) => `.${suffix}`),
@@ -681,6 +687,7 @@ assert.deepEqual(journal.card(snapshot.events[0], true).sourceBadge, {
   label: "MLAT",
   title: "Multilateration (MLAT)",
 });
+assert.equal(journal.card(snapshot.events[0], true).plainAdsb, false);
 assert.deepEqual(
   journal.context().sources,
   SOURCES.map(({ id, label }) => ({ id, label })),

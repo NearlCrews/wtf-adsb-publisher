@@ -1,6 +1,6 @@
 <article class="event-card event-entry type-{{primary_type}}{{#if lead}} event-lead{{/if}}{{#if media}} has-event-visual{{/if}}" data-event-id="{{id}}">
   <header class="event-entry-heading">
-    <div class="event-meta"><span class="event-type"><span aria-hidden="true">{{type.icon}}</span> {{type.label}}</span><time datetime="{{observed_start}}">Observation start · {{day}} · {{time}}</time>{{> "source-badge"}}</div>
+    <div class="event-meta"><span class="event-type"><span aria-hidden="true">{{type.icon}}</span> {{type.label}}</span><time datetime="{{observed_start}}">Observation start · {{day}} · {{time}}</time>{{> "card-source-badge"}}</div>
     <h3><a href="{{article_path}}">{{title}}</a></h3>
     <p class="event-identity-line"><span><span class="event-inline-label">Tail</span> <strong>{{details.registration}}</strong></span><span>{{details.typeName}}</span>{{#if details.distinctCallsign}}<span><span class="event-inline-label">Callsign</span> {{details.distinctCallsign}}</span>{{/if}}</p>
     {{#if details.aircraftNote}}<p class="event-identity-source">{{details.aircraftNote}}</p>{{/if}}
