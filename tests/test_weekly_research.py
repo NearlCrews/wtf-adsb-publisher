@@ -209,9 +209,19 @@ class WeeklyResearchTests(unittest.TestCase):
         ):
             with self.subTest(rule=rule), self.assertRaisesRegex(ValueError, rule):
                 worker.dossier(response(scopes=["event", "event"], texts=[event, text]), mismatch, NOW)
-        # The headline readings may be quoted.
+        # The headline readings may be quoted, and a reading given as text is no number.
         quoted = event + " This one reported a ground speed of 70 knots."
-        worker.dossier(response(scopes=["event", "event"], texts=[event, quoted]), self.event, NOW)
+        grounded = deepcopy(self.event)
+        grounded["measurements"].append(
+            {"key": "alt_baro", "label": "Pressure altitude", "value": "ground", "unit": "ft"}
+        )
+        self.assertIn("alt_baro", grounded["headline_measurements"])
+        for subject in (self.event, grounded):
+            worker.dossier(response(scopes=["event", "event"], texts=[event, quoted]), subject, NOW)
+        # The type sentence keeps the dash and ampersand rule too.
+        typed = "This synthetic aircraft type \u2014 built by its maker for several decades \u2014 is described by the second source."
+        with self.assertRaisesRegex(ValueError, "dash or an ampersand"):
+            worker.dossier(response(scopes=["event", "type"], texts=[event, typed]), self.event, NOW)
 
     def test_candidates_carry_the_rarity_of_their_kind(self):
         start = worker.weekly.week_start(self.event["observed_start"]).isoformat()
@@ -658,6 +668,34 @@ class WeeklyResearchTests(unittest.TestCase):
             run_weekly.run(config, count=1, researcher=researcher, at="2026-10-06T15:00:00Z")
         self.assertEqual(researcher.call_count, 2)
         self.assertEqual([call.args[1]["id"] for call in researcher.call_args_list], [self.event["id"]] * 2)
+
+    def test_a_failing_fresh_kind_rotates_to_a_demoted_recent_kind(self):
+        config = self.config()
+        fresh = worker.candidates(self.ledger, self.snapshot, "2026-09-28")[0]
+        recent = deepcopy(fresh)
+        recent["event"].update(id="recent-kind", kind="tcas_ra")
+        ranked = worker.weekly.rank([recent, fresh], picked={"tcas_ra"})
+        self.assertEqual([row["event"]["id"] for row in ranked], [fresh["event"]["id"], "recent-kind"])
+        researcher = Mock(side_effect=ValueError("unusable research"))
+        with patch.object(worker, "candidates", return_value=ranked):
+            run_weekly.run(config, count=1, researcher=researcher, at=NOW)
+            run_weekly.run(config, count=1, researcher=researcher, at="2026-10-06T15:00:00Z")
+        self.assertEqual(
+            [call.args[1]["id"] for call in researcher.call_args_list], [fresh["event"]["id"], "recent-kind"]
+        )
+
+    def test_instructions_name_the_refused_words_and_the_hedge(self):
+        for instructions in (worker.INSTRUCTIONS, worker.EXPLAINER_INSTRUCTIONS):
+            flat = " ".join(instructions.split())
+            for words in (
+                "decode or decoding",
+                "glitch",
+                "multipath",
+                '"could" or "may"',
+                '"possible explanations include" is not enough',
+            ):
+                self.assertIn(words, flat)
+        self.assertIn("Write every heading in sentence case", " ".join(worker.EXPLAINER_INSTRUCTIONS.split()))
 
     def test_research_connections_close_after_success(self):
         opened = []

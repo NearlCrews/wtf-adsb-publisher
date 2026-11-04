@@ -20,7 +20,7 @@ SCOPES = {
 
 # The weekly pick favors kinds the site seldom covers: a kind with n stories observed in
 # the RARITY_DAYS before the week ends has rarity 1 / (1 + n). A kind picked in the
-# REPEAT_WEEKS before a week is passed over while another candidate remains.
+# REPEAT_WEEKS before a week ranks after every other candidate.
 RARITY_DAYS = 90
 REPEAT_WEEKS = 4
 # Researched prose that reaches a page writes no em or en dash and no ampersand.
@@ -114,7 +114,7 @@ def rank(candidates, *, picked=frozenset()):
 
     Each row carries its kind's `rarity` and the curation `score`; evidence, depth, and the
     type's recent coverage settle the remaining ties. A candidate of a `picked` kind
-    (picked_kinds) is left out unless no other candidate remains.
+    (picked_kinds) follows every other candidate.
     """
     from .public_events import _instant
 
@@ -132,7 +132,9 @@ def rank(candidates, *, picked=frozenset()):
             row["event"]["id"],
         ),
     )
-    return [row for row in ranked if row["event"]["kind"] not in picked] or ranked
+    # A stable sort, so a demoted row keeps its order and is still the pick when nothing
+    # else remains, and a failing candidate still rotates to the next one.
+    return sorted(ranked, key=lambda row: row["event"]["kind"] in picked)
 
 
 def explains(key, kind, address):
@@ -160,6 +162,8 @@ def prose_issues(texts, *, hypotheses=(), causeless=False, numbers=(), names=Non
     """
     from . import public_prose as prose
 
+    # A reading may be text, such as an altitude of "ground"; only numbers can be quoted as one.
+    numbers = [value for value in numbers if prose.finite(value)]
     allowed = {float(abs(value)) for value in numbers} | {float(round(abs(value))) for value in numbers}
     allowed |= ANY_TEXT_NUMBERS
     listed = [re.compile(r"(?<![\w-])" + re.escape(item) + r"(?![\w-])", re.I) for item in hypotheses if item]

@@ -87,9 +87,12 @@ sections with scope "event" that say what this kind of event is, how such readin
 are reported, and why the given readings make this instance stand out from the
 usual case. In these sections and the reason, state no number other than the given
 readings. When the event is causeless, never say what caused, produced, or explains
-its readings. Offer an explanation from hypotheses only with a hedge such as "could"
-or "may". Write reason as one sentence that gives readers a concrete fact from these
-sections, so they know what they will learn about this kind of event.
+its readings, and never use the words error, glitch, fault, decode or decoding,
+corrupt, interference, multipath, misread, garbled, or bad data. Name each listed
+hypothesis only in a sentence that says it "could" or "may" apply; a phrase such as
+"possible explanations include" is not enough. Write reason as one sentence that gives
+readers a concrete fact from these sections, so they know what they will learn about
+this kind of event.
 
 You may add one section with scope "type" that gives the aircraft type in at most
 one sentence; the publisher keeps only its first sentence. Leave it out when the
@@ -480,9 +483,16 @@ def dossier(response, event, at):
             texts,
             hypotheses=story_facts.HYPOTHESES.get(event["kind"], ()),
             causeless=brief["causeless"],
-            numbers=[item["value"] for item in brief["measurements"]],
+            numbers=[item["value"] for item in brief["measurements"] if public_prose.finite(item["value"])],
         ):
             raise ValueError("Weekly research prose fails its checks: " + "; ".join(issues[:6]))
+    # Every saved section, the type sentence among them, writes no em or en dash and no ampersand.
+    if any(
+        weekly.DASH_OR_AMPERSAND.search(str(section[key]))
+        for section in sections
+        for key in ("heading", "text")
+    ):
+        raise ValueError("Weekly research prose has a dash or an ampersand")
     research = {
         "week_start": weekly.week_start(event["observed_start"]).isoformat(),
         "evidence_version": event["evidence_version"],
@@ -508,12 +518,14 @@ sections that explain how ICAO 24-bit aircraft addresses are allocated to States
 assigned to registered aircraft, how a registry entry can disagree with an aircraft's
 own broadcasts, and how each listed explanation could produce such a disagreement.
 Treat every listed explanation as a possibility, never as the cause of any story, and
-name one only in a sentence with a hedge such as "could" or "may". Use the story count
-and the registry names exactly as given, and state no other number except the 24 of a
-24-bit address. Never call a reading an error, a glitch, or a fault, and never say a
-registry or database is wrong. Name no aircraft type, registration, operator, person,
-or place other than the allocation State. Write reason as one sentence that gives
-readers a concrete fact from the sections.
+name each one only in a sentence that says it "could" or "may" apply; a phrase such as
+"possible explanations include" is not enough. Use the story count and the registry
+names exactly as given, and state no other number except the 24 of a 24-bit address.
+Never use the words error, glitch, fault, decode or decoding, corrupt, interference,
+multipath, misread, garbled, or bad data, and never say a registry or database is
+wrong. Name no aircraft type, registration, operator, person, or place other than the
+allocation State. Write every heading in sentence case. Write reason as one sentence
+that gives readers a concrete fact from the sections.
 
 Use your web search tool before writing. You have ONE search call: write a query that
 finds official pages from aviation authorities, registries, or standards bodies about

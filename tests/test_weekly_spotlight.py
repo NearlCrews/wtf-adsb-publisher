@@ -626,7 +626,7 @@ class RankTests(unittest.TestCase):
         ]
         self.assertEqual([row["event"]["id"] for row in weekly.rank(rows)], ["interesting", "newer", "older"])
 
-    def test_a_kind_picked_in_the_last_four_weeks_waits_while_another_remains(self):
+    def test_a_kind_picked_in_the_last_four_weeks_ranks_after_the_others(self):
         first_week = [
             ranked("tcas_ra", 40, "2026-09-22T12:00:00Z", "tcas-1", 0.5),
             ranked("circling", 30, "2026-09-23T12:00:00Z", "circling-1", 0.25),
@@ -648,7 +648,10 @@ class RankTests(unittest.TestCase):
         ]
         picked = weekly.picked_kinds(ledger, "2026-09-28")
         self.assertEqual(picked, {"tcas_ra"})
-        self.assertEqual([row["event"]["id"] for row in weekly.rank(second_week, picked=picked)], ["spiral"])
+        # The repeated kind follows every other candidate; it is demoted, not dropped.
+        self.assertEqual(
+            [row["event"]["id"] for row in weekly.rank(second_week, picked=picked)], ["spiral", "tcas-2"]
+        )
         # With no other candidate, the repeated kind is still the week's pick.
         self.assertEqual(weekly.rank(second_week[:1], picked=picked)[0]["event"]["id"], "tcas-2")
         # The fourth week after the pick still passes it over, the fifth may pick it again,
