@@ -571,5 +571,73 @@ class WeeklyTests(unittest.TestCase):
         self.assertEqual(parsed.markers, 0)
 
 
+def ranked(kind, interest, observed, identifier, rarity):
+    """A weekly candidate row as weekly_research.candidates() builds it."""
+    return {
+        "event": {"kind": kind, "observed_start": observed, "id": identifier},
+        "score": {"interest": interest, "exceptional": False, "evidence": 30, "depth": 10},
+        "recent_picks": 0,
+        "recent_observations": 0,
+        "rarity": rarity,
+    }
+
+
+def kind_ledger(*rows):
+    """Ledger records reduced to what the rarity count reads: state, kind, and start."""
+    return {
+        "records": [
+            {
+                "state": state,
+                "evidence": {"kind": kind, "observation": {"start_utc": start}},
+                "editorial": {"synthetic": synthetic},
+            }
+            for kind, start, state, synthetic in rows
+        ]
+    }
+
+
+class RankTests(unittest.TestCase):
+    def test_a_rare_kind_outranks_three_stories_of_a_more_interesting_kind(self):
+        week = [
+            ("tcas_ra", "2026-09-29T12:00:00Z"),
+            ("descending_spiral", "2026-09-29T13:00:00Z"),
+            ("descending_spiral", "2026-09-30T13:00:00Z"),
+            ("descending_spiral", "2026-10-01T13:00:00Z"),
+        ]
+        counts = weekly.kind_counts(
+            kind_ledger(*((kind, start, "approved", False) for kind, start in week)), "2026-10-05"
+        )
+        self.assertEqual(counts, {"tcas_ra": 1, "descending_spiral": 3})
+        self.assertEqual(weekly.rarity(counts["tcas_ra"]), 0.5)
+        self.assertEqual(weekly.rarity(counts["descending_spiral"]), 0.25)
+        interest = {kind: curation.INTEREST[kind] for kind in counts}
+        self.assertLess(interest["tcas_ra"], interest["descending_spiral"])
+        rows = [
+            ranked(kind, interest[kind], start, f"event-{index}", weekly.rarity(counts[kind]))
+            for index, (kind, start) in enumerate(reversed(week))
+        ]
+        self.assertEqual(weekly.rank(rows)[0]["event"]["kind"], "tcas_ra")
+
+    def test_interest_then_recency_order_candidates_of_equal_rarity(self):
+        rows = [
+            ranked("circling", 30, "2026-09-29T12:00:00Z", "older", 0.5),
+            ranked("circling", 30, "2026-10-01T12:00:00Z", "newer", 0.5),
+            ranked("racetrack_orbit", 35, "2026-09-28T12:00:00Z", "interesting", 0.5),
+        ]
+        self.assertEqual([row["event"]["id"] for row in weekly.rank(rows)], ["interesting", "newer", "older"])
+
+    def test_rarity_counts_live_stories_in_the_ninety_days_before_the_week_ends(self):
+        ledger = kind_ledger(
+            ("tcas_ra", "2026-07-07T00:00:00Z", "approved", False),
+            ("tcas_ra", "2026-07-06T23:59:59Z", "approved", False),
+            ("tcas_ra", "2026-10-04T23:59:59Z", "pending", False),
+            ("tcas_ra", "2026-10-05T00:00:00Z", "approved", False),
+            ("tcas_ra", "2026-09-30T00:00:00Z", "withdrawn", False),
+            ("tcas_ra", "2026-09-30T00:00:00Z", "approved", True),
+        )
+        ledger["records"].append({"state": "approved", "evidence": {"kind": "tcas_ra"}, "editorial": {}})
+        self.assertEqual(weekly.kind_counts(ledger, "2026-10-05"), {"tcas_ra": 2})
+
+
 if __name__ == "__main__":
     unittest.main()

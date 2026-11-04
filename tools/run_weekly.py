@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Research missing weekly features; the normal publisher releases completed dossiers.
+"""Research missing weekly features and due explainers; the normal publisher releases them.
 
---plan lists each week's state, top candidate and reserved research cost without
-any request or write. --carry-over-from LEDGER --no-research attaches a retired
-ledger's dossier to a week's top candidate of the same type (and the same
-airframe, date and observation facts when the dossier is about the airframe or
-its record), rebinding its evidence version. It makes no request and never reads
-the API key.
+--plan lists each week's state, top candidate and reserved research cost, and
+each explainer's state, without any request or write. --carry-over-from LEDGER
+--no-research attaches a retired ledger's dossier to a week's top candidate of
+the same type (and the same airframe, date and observation facts when the
+dossier is about the airframe or its record), rebinding its evidence version.
+It makes no request and never reads the API key.
 """
 
 import argparse
@@ -29,8 +29,9 @@ from wtf_adsb_publisher import editorial, explain, plugins, rules, weekly_spotli
 from wtf_adsb_publisher import public_events as public
 from wtf_adsb_publisher import weekly_research as weekly
 
-# Sections about one aircraft or its flight bind a dossier to that airframe and date.
-AIRFRAME_SCOPES = frozenset({"interpretation", "airframe_history"})
+# Sections about one aircraft, its flight, or its kind of event bind a dossier to that
+# airframe, date, and observation.
+AIRFRAME_SCOPES = frozenset({"interpretation", "airframe_history", "event_background"})
 # The research prompt forbids calling the sighting a "match"; an older reason that
 # does is replaced when its dossier is carried over.
 MATCH_PHRASE = re.compile(r"\bmatch(?:es|ed|ing)?\b", re.I)
@@ -308,8 +309,21 @@ def plan(config, *, count=13, at=None, carry_over=None):
                 if carry_over:
                     entry["carry_over"] = basis
         weeks.append(entry)
+    explainers = []
+    for key in weekly_spotlight.EXPLAINERS:
+        entry = {"key": key}
+        if key in ledger.get("explainers", {}):
+            entry["state"] = "written"
+        elif (brief := weekly.explainer_brief(ledger, key)) is None:
+            entry["state"] = "waiting_for_stories"
+        else:
+            cost = weekly.request_reservation(len(weekly.explainer_request_data(key, brief)))
+            entry.update(state="research", stories=brief["stories"], reserved_usd=round(cost, 6))
+            reserved += cost
+        explainers.append(entry)
     return {
         "weeks": weeks,
+        "explainers": explainers,
         "research_weeks": sum(entry["state"] == "research" for entry in weeks),
         "reserved_usd": round(reserved, 6),
         "requests": 0,
@@ -404,19 +418,110 @@ def recover(path, event, check_private):
     return receipt
 
 
-def run(config, *, count=13, researcher=None, at=None, budget=None):
-    """Research the requested weeks' picks; AI_ENABLED, the budget store's kill switch and cap apply.
+def explainer_file(directory, key):
+    return directory / f"{key.replace(':', '-')}.json"
+
+
+def recover_explainer(path, key, brief, check_private):
+    """A saved explainer receipt, or one rebuilt from its saved raw response, checked again."""
+    raw_path = path.with_suffix(".response.json")
+    if path.exists():
+        receipt = public.read_json(path)
+    elif raw_path.exists():
+        receipt = public.read_json(raw_path)
+        receipt["page"] = weekly.explainer(receipt["response"], key, brief, receipt["at"])
+    else:
+        return None
+    weekly_spotlight.validate_explainer(receipt["page"], as_of=public.now_utc())
+    check_private(json.dumps(receipt["page"], ensure_ascii=False).encode())
+    return receipt
+
+
+def write_explainers(config, status, *, writer, at, check_private, budget):
+    """Write each one-off explainer once its stories exist; returns (written, failed).
+
+    A saved receipt is used before any paid request, and a failed attempt waits
+    weekly.RETRY_SECONDS. A busy writer or an exhausted budget ends the pass. `writer`
+    None loads the configured writer plugin when an explainer is due.
+    """
+    state = Path(config["state_dir"])
+    directory, ledger_path = state / "weekly", state / "ledger.json"
+    written = failed = 0
+    explainers = status.setdefault("explainers", {})
+    for key in weekly_spotlight.EXPLAINERS:
+        with public.ledger_lock(ledger_path):
+            ledger = public._validate_ledger(public.read_json(ledger_path))
+        brief = weekly.explainer_brief(ledger, key)
+        if brief is None:
+            continue
+        previous, path = explainers.get(key, {}), explainer_file(directory, key)
+        try:
+            receipt = recover_explainer(path, key, brief, check_private)
+        except (OSError, ValueError, TypeError, KeyError):
+            receipt = None
+        last_attempt = previous.get("last_attempt")
+        if (
+            receipt is None
+            and last_attempt
+            and (public._instant(at) - public._instant(last_attempt)).total_seconds() < weekly.RETRY_SECONDS
+        ):
+            continue
+        details = {
+            "last_attempt": at,
+            "attempts": previous.get("attempts", 0) + 1,
+            "stories": brief["stories"],
+        }
+        try:
+            explainers[key] = {**details, "status": "researching"}
+            public.write_json_atomic(directory / "status.json", status, private=True)
+            if receipt is None:
+                writer = writer or partial(weekly.one_off, requester=plugins.load("writer", config).send)
+                receipt, outcome = writer(
+                    config["budget_database"],
+                    key,
+                    brief,
+                    key_file=config["weekly_key_file"],
+                    save_response=lambda value, path=path: public.write_json_atomic(
+                        path.with_suffix(".response.json"), value, private=True
+                    ),
+                    **({"budget": budget} if budget is not None else {}),
+                )
+            if receipt is None:
+                explainers[key] = {**previous, "status": outcome}
+                break
+            page = weekly_spotlight.validate_explainer(receipt["page"], as_of=public.now_utc())
+            check_private(json.dumps(page, ensure_ascii=False).encode())
+            public.write_json_atomic(path, receipt, private=True)
+            with public.ledger_lock(ledger_path):
+                current = public.read_json(ledger_path)
+                public._validate_ledger(current)
+                if weekly.add_explainer(current, page):
+                    public.write_json_atomic(ledger_path, current, private=True)
+            explainers[key] = {**details, "status": "written", "written_at": page["written_at"]}
+            written += 1
+        except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as error:
+            explainers[key] = {**details, "status": "research_failed", "error_type": type(error).__name__}
+            failed += 1
+        public.write_json_atomic(directory / "status.json", status, private=True)
+    return written, failed
+
+
+def run(config, *, count=13, researcher=None, explainer=None, at=None, budget=None):
+    """Research the requested weeks' picks and any due explainer; AI_ENABLED, the budget
+    store's kill switch and cap apply.
 
     `budget` is a one-time RunBudget (--max-spend) in place of the daily cap.
     """
-    result = {"attached": 0, "existing": 0, "waiting": 0, "failed": 0}
+    result = {"attached": 0, "existing": 0, "waiting": 0, "failed": 0, "explainers": 0}
     if not explain.writing_enabled():
         return {**result, "paused": 1}
     explain.check_budget()
     if explain.journal_paused(config["budget_database"]):
         return {**result, "paused": 1}
     if researcher is None:
-        researcher = partial(weekly.research, requester=plugins.load("writer", config).send)
+        send = plugins.load("writer", config).send
+        researcher = partial(weekly.research, requester=send)
+        explainer = explainer or partial(weekly.one_off, requester=send)
     at = public.utc(at or public.now_utc())
     state = Path(config["state_dir"])
     directory = state / "weekly"
@@ -427,6 +532,7 @@ def run(config, *, count=13, researcher=None, at=None, budget=None):
     requested = requested_weeks(config, at, count)
     # This lock prevents simultaneous researchers. Network requests never hold
     # the publication ledger lock, so ordinary stories continue to publish.
+    stopped = False
     with public.ledger_lock(status_path):
         status = public.read_json(status_path) if status_path.exists() else {"weeks": {}}
         # Keep the current homepage feature ahead of a historical retry backlog.
@@ -506,6 +612,7 @@ def run(config, *, count=13, researcher=None, at=None, budget=None):
                     # A busy writer or exhausted budget is not a failed topic.
                     status["weeks"][start] = {**previous, "status": outcome}
                     result["waiting"] += 1
+                    stopped = True
                     break
                 research = receipt["research"]
                 weekly_spotlight.validate_research(research, event, as_of=public.now_utc())
@@ -531,6 +638,12 @@ def run(config, *, count=13, researcher=None, at=None, budget=None):
                 }
                 result["failed"] += 1
             public.write_json_atomic(status_path, status, private=True)
+        if not stopped:
+            written, failed = write_explainers(
+                config, status, writer=explainer, at=at, check_private=check_private, budget=budget
+            )
+            result["explainers"] += written
+            result["failed"] += failed
         status.update(last_run=public.now_utc(), result=result)
         public.write_json_atomic(status_path, status, private=True)
     return result

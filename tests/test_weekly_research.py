@@ -16,12 +16,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tools"))
 import run_weekly
+import story_fixtures
+from test_public_events import editorial as story_editorial
+from test_public_events import story_path
 from test_weekly_spotlight import NOW, fixture
 
 from wtf_adsb_publisher import budget_store as app
-from wtf_adsb_publisher import curation, explain
+from wtf_adsb_publisher import curation, explain, reference, stories, story_facts
 from wtf_adsb_publisher import public_events as public
 from wtf_adsb_publisher import weekly_research as worker
+from wtf_adsb_publisher import weekly_spotlight as weekly
+
+EXPLAINER = "explainer:canadian-addresses"
 
 
 def ordinary():
@@ -36,23 +42,34 @@ def ordinary():
     return ledger, snapshot
 
 
-def response():
+TEXTS = [
+    "This synthetic source explains the design and engineering of an aircraft type without identifying a particular airframe or its flight purpose.",
+    "The second synthetic source supplies historical background for this aircraft type and its variants. Its descriptions do not establish what any crew was doing during this observation.",
+    "A third synthetic section repeats type background that the dossier must leave out, since the type gets one section.",
+]
+
+
+def response(scopes=None, texts=None, count=2):
+    """A recorded research response; `scopes` gives each section the scope the current schema asks for."""
     urls = ["https://www.navy.mil/aircraft/e6/", "https://www.boeing.com/history/e6/"]
-    raw = {
-        "sections": [
-            {
-                "heading": "Design background",
-                "text": "This synthetic source explains the design and engineering of an aircraft type without identifying a particular airframe or its flight purpose.",
-                "sources": [urls[0]],
-            },
-            {
-                "heading": "Type history",
-                "text": "The second synthetic source supplies historical background for this type. Its descriptions do not establish what any crew was doing during this observation.",
-                "sources": [urls[1]],
-            },
-        ],
-        "sources": [{"url": url, "title": f"Synthetic source {index}"} for index, url in enumerate(urls)],
-    }
+    headings = ["Design background", "Type history", "More history"]
+    texts = texts or TEXTS
+    sections = [
+        {"heading": headings[index], "text": texts[index], "sources": [urls[min(index, 1)]]}
+        for index in range(count)
+    ]
+    for section, scope in zip(sections, scopes or (), strict=False):
+        section["scope"] = scope
+    return recorded(
+        {
+            "sections": sections,
+            "sources": [{"url": url, "title": f"Synthetic source {index}"} for index, url in enumerate(urls)],
+        },
+        urls,
+    )
+
+
+def recorded(raw, urls):
     return {
         "status": "completed",
         "usage": {"input_tokens": 1000, "output_tokens": 500},
@@ -102,7 +119,7 @@ class WeeklyResearchTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 worker.weeks(NOW, count)
 
-    def test_request_contains_only_type_and_has_hard_tool_limit(self):
+    def test_request_contains_only_type_and_event_kind_and_has_hard_tool_limit(self):
         encoded = worker.request_data({**self.event, "private": "secret", "receiver": [1, 2]})
         body = json.loads(encoded)
         # Weekly research uses the public model, as type research does.
@@ -111,9 +128,80 @@ class WeeklyResearchTests(unittest.TestCase):
         self.assertEqual(body["tool_choice"], "required")
         self.assertFalse(body["store"])
         data = json.loads(body["input"])
-        self.assertEqual(set(data), {"aircraft_type"})
-        self.assertNotIn(self.event["aircraft"]["registration"], body["input"])
-        self.assertNotIn("secret", body["input"])
+        self.assertEqual(set(data), {"aircraft_type", "event"})
+        # The event is its kind and headline readings: no identity, time, or place.
+        self.assertEqual(
+            data["event"],
+            {
+                "kind": "watch_type",
+                "kind_name": "Watched type",
+                "measurements": [{"label": "Ground speed", "value": 70.0, "unit": "kn"}],
+            },
+        )
+        for private in (
+            self.event["aircraft"]["registration"],
+            self.event["aircraft"]["icao_address"],
+            self.event["observed_start"],
+            self.event["title"],
+            "secret",
+        ):
+            self.assertNotIn(private, body["input"])
+
+    def test_instructions_explain_the_event_and_give_the_type_one_sentence(self):
+        paragraphs = [" ".join(paragraph.split()) for paragraph in worker.INSTRUCTIONS.split("\n\n")]
+        self.assertIn("explain the event", paragraphs[0].lower())
+        self.assertIn("at most one sentence", paragraphs[1])
+        # The fact and source rules stay.
+        for rule in ("ONE search call", "Paraphrase; do not quote", "Never fill gaps", "serial comma"):
+            self.assertIn(rule, worker.INSTRUCTIONS)
+        self.assertNotRegex(worker.INSTRUCTIONS, "[\u2014&]")
+        schema = worker.SCHEMA["properties"]["sections"]["items"]
+        self.assertEqual(schema["properties"]["scope"]["enum"], ["event", "type"])
+        self.assertIn("scope", schema["required"])
+
+    def test_event_sections_lead_and_the_type_keeps_one_sentence(self):
+        data = response(
+            scopes=["event", "type"],
+            texts=[
+                "A synthetic explanation of this kind of observation: how the reported readings arise and why these readings stand apart from the usual case.",
+                "This synthetic aircraft type first flew decades ago and is described by its maker. A second sentence about its history must not reach the dossier.",
+            ],
+        )
+        result = worker.dossier(data, self.event, NOW)
+        self.assertEqual(
+            [section["scope"] for section in result["sections"]], ["event_background", "type_background"]
+        )
+        self.assertEqual(
+            result["sections"][1]["text"],
+            "This synthetic aircraft type first flew decades ago and is described by its maker.",
+        )
+        self.assertEqual(
+            [source["applies_to"] for source in result["sources"]],
+            [
+                "Background on this kind of event; not this airframe or flight.",
+                "Aircraft type background; not this airframe or flight.",
+            ],
+        )
+        self.assertIn("this kind of event", result["limitations"][0])
+        with self.assertRaisesRegex(ValueError, "explain the event"):
+            worker.dossier(response(scopes=["type", "type"]), self.event, NOW)
+        self.assertEqual(
+            [
+                section["heading"]
+                for section in worker.dossier(
+                    response(scopes=["event", "type", "type"], count=3), self.event, NOW
+                )["sections"]
+            ],
+            ["Design background", "Type history"],
+        )
+
+    def test_candidates_carry_the_rarity_of_their_kind(self):
+        start = worker.weekly.week_start(self.event["observed_start"]).isoformat()
+        ranked = worker.candidates(self.ledger, self.snapshot, start)
+        self.assertEqual([row["rarity"] for row in ranked], [0.5])
+        with patch.object(worker.weekly, "rank", side_effect=lambda rows: list(rows)) as rank:
+            worker.candidates(self.ledger, self.snapshot, start)
+        rank.assert_called_once()
 
     def test_unconsulted_and_private_sources_rejected(self):
         for url in (
@@ -569,6 +657,256 @@ class WeeklyResearchTests(unittest.TestCase):
         for db in opened:
             with self.assertRaises(sqlite3.ProgrammingError):
                 db.execute("SELECT 1")
+
+
+def canada(address):
+    """The allocation lookup for these tests: Canada's block, and the United States elsewhere."""
+    if 0xC00000 <= int(address, 16) <= 0xC3FFFF:
+        return {"country": "CA", "name": "Canada"}
+    return {"country": "US", "name": "United States"}
+
+
+def add_mismatches(ledger, addresses, *, state="approved", first=0):
+    """Mismatch stories, alternating speed and altitude, one per address."""
+    for index, address in enumerate(addresses, first):
+        kind = ("type_speed_mismatch", "type_altitude_mismatch")[index % 2]
+        raw = story_fixtures.kind_event(kind)
+        raw["hex"] = raw["evidence"]["aircraft"]["hex"] = address
+        identifier = public.put_event(
+            ledger,
+            f"mismatch-{index}",
+            stories.evidence_packet(raw),
+            story_editorial(path=story_path(f"mismatch-{index}")),
+            at=NOW,
+        )
+        if state != "pending":
+            public.set_review_state(ledger, identifier, state, at=NOW)
+    return ledger
+
+
+BRIEF = {
+    "stories": 3,
+    "registries": ["adsbdb", "hexdb"],
+    "hypotheses": list(story_facts.MISMATCH_HYPOTHESES),
+}
+
+
+def explainer_response():
+    """A recorded explainer response: two consulted official pages, two sections, and a reason."""
+    urls = [
+        "https://www.icao.int/airnavigation/aircraft-addresses/",
+        "https://www.canada.ca/en/transport-canada/aircraft-registry.html",
+    ]
+    return recorded(
+        {
+            "reason": "ICAO assigns each State a block of 24-bit aircraft addresses, and Canada's registry ties one to each registered airframe.",
+            "sections": [
+                {
+                    "heading": "How an address reaches an airframe",
+                    "text": "This synthetic section explains that ICAO gives each State a block of 24-bit addresses and that the national registry assigns one to each registered aircraft.",
+                    "sources": ["source-1"],
+                },
+                {
+                    "heading": "When the registry and the broadcasts disagree",
+                    "text": "This synthetic section explains how a stale registry entry, a re-registration, a transponder set to the wrong address, or a database typo can each pair an address with the wrong type.",
+                    "sources": ["source-2"],
+                },
+            ],
+            "sources": [
+                {"id": f"source-{index}", "url": url, "title": f"Synthetic page {index}"}
+                for index, url in enumerate(urls, 1)
+            ],
+        },
+        urls,
+    )
+
+
+class ExplainerTests(unittest.TestCase):
+    def setUp(self):
+        self.enterContext(patch.object(reference, "allocation", side_effect=canada))
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.path = Path(self.directory.name)
+        self.db = self.path / "journal.sqlite3"
+        app.initialize(self.db)
+        self.key = self.path / "key"
+        self.key.write_text("synthetic-test-key")
+        network = self.enterContext(patch.object(explain, "urlopen", Mock(side_effect=AssertionError)))
+        self.addCleanup(lambda: self.assertFalse(network.called))
+
+    def page(self):
+        return worker.explainer(explainer_response(), EXPLAINER, BRIEF, NOW)
+
+    def test_explainer_waits_for_three_canadian_mismatch_stories(self):
+        ledger = add_mismatches(public.new_ledger("2026-09-01"), ["c01234", "c3fffe", "a01236"])
+        add_mismatches(ledger, ["c01237"], state="withdrawn", first=3)
+        self.assertIsNone(worker.explainer_brief(ledger, EXPLAINER))
+        add_mismatches(ledger, ["c20000"], state="pending", first=4)
+        self.assertEqual(worker.explainer_brief(ledger, EXPLAINER), BRIEF)
+        self.assertTrue(worker.add_explainer(ledger, self.page()))
+        self.assertFalse(worker.add_explainer(ledger, self.page()))
+        self.assertIsNone(worker.explainer_brief(ledger, EXPLAINER))
+        public._validate_ledger(ledger)
+
+    def test_one_off_sends_only_the_facts_and_writes_one_page(self):
+        requester = Mock(return_value=explainer_response())
+        receipt, outcome = worker.one_off(self.db, EXPLAINER, BRIEF, key_file=self.key, requester=requester)
+        self.assertEqual(outcome, "researched")
+        body = json.loads(requester.call_args.args[0])
+        self.assertEqual((body["max_tool_calls"], body["tool_choice"]), (1, "required"))
+        data = json.loads(body["input"])
+        self.assertEqual(data["stories"], 3)
+        self.assertEqual(data["registries"], ["adsbdb", "hexdb"])
+        self.assertEqual(data["hypotheses"], list(story_facts.MISMATCH_HYPOTHESES))
+        self.assertEqual(data["allocation"], "Canada")
+        self.assertIn(worker.EXPLAINER_INSTRUCTIONS, body["instructions"])
+        self.assertIn("explain the event", worker.EXPLAINER_INSTRUCTIONS)
+        self.assertNotRegex(worker.EXPLAINER_INSTRUCTIONS, "[\u2014&]")
+        page = receipt["page"]
+        self.assertEqual(page["key"], EXPLAINER)
+        self.assertEqual(page["path"], "/explainers/canadian-addresses/")
+        self.assertEqual(page["facts"], BRIEF)
+        self.assertEqual(len(page["sections"]), 2)
+        self.assertTrue(page["summary"].startswith("ICAO assigns"))
+        self.assertEqual(weekly.validate_explainer(page, as_of=receipt["at"]), page)
+        for change in (
+            lambda item: item.update(path="/explainers/other/"),
+            lambda item: item.update(key="explainer:other"),
+            lambda item: item["facts"].update(stories=2),
+            lambda item: item["facts"].update(registries=["opensky"]),
+            lambda item: item["sections"].pop(),
+            lambda item: item.update(written_at="2027-01-01T00:00:00Z"),
+        ):
+            broken = deepcopy(page)
+            change(broken)
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                weekly.validate_explainer(broken, as_of=receipt["at"])
+
+    def test_run_writes_the_explainer_once_and_records_its_key(self):
+        ledger, snapshot = ordinary()
+        add_mismatches(ledger, ["c01234", "c01235", "c01236"])
+        public.write_json_atomic(self.path / "ledger.json", ledger, private=True)
+        public.write_json_atomic(self.path / "snapshot.json", snapshot, private=True)
+        config = {
+            "state_dir": str(self.path),
+            "budget_database": str(self.db),
+            "weekly_key_file": str(self.key),
+        }
+        researcher = Mock(
+            return_value=({"research": worker.dossier(response(), snapshot["events"][0], NOW)}, "researched")
+        )
+        writer = Mock(return_value=({"page": self.page()}, "researched"))
+        planned = run_weekly.plan(config, count=1, at=NOW)["explainers"]
+        self.assertEqual([(entry["key"], entry["state"]) for entry in planned], [(EXPLAINER, "research")])
+        self.assertGreater(planned[0]["reserved_usd"], 0)
+        first = run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
+        second = run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
+        self.assertEqual(run_weekly.plan(config, count=1, at=NOW)["explainers"][0]["state"], "written")
+        self.assertEqual((first["explainers"], second["explainers"]), (1, 0))
+        writer.assert_called_once()
+        self.assertEqual(writer.call_args.args[1:], (EXPLAINER, BRIEF))
+        saved = public.read_json(self.path / "ledger.json")
+        self.assertEqual(list(saved["explainers"]), [EXPLAINER])
+        status = public.read_json(self.path / "weekly/status.json")
+        self.assertEqual(status["explainers"][EXPLAINER]["status"], "written")
+
+    def test_crash_after_the_raw_explainer_response_recovers_without_spending(self):
+        ledger, snapshot = ordinary()
+        add_mismatches(ledger, ["c01234", "c01235", "c01236"])
+        public.write_json_atomic(self.path / "ledger.json", ledger, private=True)
+        public.write_json_atomic(self.path / "snapshot.json", snapshot, private=True)
+        config = {
+            "state_dir": str(self.path),
+            "budget_database": str(self.db),
+            "weekly_key_file": str(self.key),
+        }
+        directory = self.path / "weekly"
+        directory.mkdir()
+        public.write_json_atomic(
+            directory / "status.json",
+            {"weeks": {}, "explainers": {EXPLAINER: {"status": "researching", "last_attempt": NOW}}},
+            private=True,
+        )
+        public.write_json_atomic(
+            run_weekly.explainer_file(directory, EXPLAINER).with_suffix(".response.json"),
+            {"response": explainer_response(), "at": NOW},
+            private=True,
+        )
+        researcher = Mock(
+            return_value=({"research": worker.dossier(response(), snapshot["events"][0], NOW)}, "researched")
+        )
+        writer = Mock(side_effect=AssertionError("Duplicate paid call"))
+        result = run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
+        self.assertEqual(result["explainers"], 1)
+        writer.assert_not_called()
+        self.assertEqual(public.read_json(self.path / "ledger.json")["explainers"][EXPLAINER], self.page())
+
+    def test_failed_explainer_waits_a_day_and_leaves_the_ledger(self):
+        ledger, snapshot = ordinary()
+        add_mismatches(ledger, ["c01234", "c01235", "c01236"])
+        public.write_json_atomic(self.path / "ledger.json", ledger, private=True)
+        public.write_json_atomic(self.path / "snapshot.json", snapshot, private=True)
+        config = {
+            "state_dir": str(self.path),
+            "budget_database": str(self.db),
+            "weekly_key_file": str(self.key),
+        }
+        researcher = Mock(
+            return_value=({"research": worker.dossier(response(), snapshot["events"][0], NOW)}, "researched")
+        )
+        writer = Mock(side_effect=ValueError("unusable explainer"))
+        self.assertEqual(
+            run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)["failed"], 1
+        )
+        run_weekly.run(config, count=1, researcher=researcher, explainer=writer, at=NOW)
+        writer.assert_called_once()
+        self.assertNotIn("explainers", public.read_json(self.path / "ledger.json"))
+
+    def test_export_links_canadian_mismatch_stories_to_the_explainer(self):
+        ledger = add_mismatches(public.new_ledger("2026-09-01"), ["c01234", "c01235", "a01236"])
+        plain = public.export_snapshot(ledger, mode="review", as_of=NOW)
+        self.assertNotIn("explainers", plain)
+        self.assertFalse(any("related" in event for event in plain["events"]))
+        page = self.page()
+        worker.add_explainer(ledger, page)
+        snapshot = public.export_snapshot(ledger, mode="review", as_of=NOW)
+        self.assertEqual(snapshot["explainers"], [page])
+        link = {"path": page["path"], "title": page["title"], "observed_start": None}
+        related = {event["aircraft"]["icao_address"]: event.get("related") for event in snapshot["events"]}
+        self.assertEqual(related, {"C01234": [link], "C01235": [link], "A01236": None})
+
+        def resigned(change):
+            copy = deepcopy(snapshot)
+            change(copy)
+            copy["snapshot_id"] = public._digest(
+                {key: value for key, value in copy.items() if key != "snapshot_id"}
+            )
+            return copy
+
+        public.validate_snapshot(resigned(lambda copy: None))
+        for change in (
+            lambda copy: copy.pop("explainers"),
+            lambda copy: copy["explainers"][0].update(title="Another title"),
+            lambda copy: copy["events"][0]["related"][0].update(title="Another title"),
+            lambda copy: copy["events"][0]["related"][0].update(path="/explainers/other/"),
+            lambda copy: copy.update(explainers=[]),
+        ):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                public.validate_snapshot(resigned(change))
+        story = {
+            "path": story_path("older"),
+            "title": "Older story",
+            "observed_start": "2026-09-01T00:00:00Z",
+        }
+        self.assertEqual(public._related([story, link], story_path("own"), pages=True), [story, link])
+        for raw in ([link, story], [link]):
+            with self.assertRaises(ValueError):
+                public._related(raw, story_path("own"))
+        with self.assertRaises(ValueError):
+            public._related([link, story], story_path("own"), pages=True)
+        ledger["explainers"][EXPLAINER]["title"] = "Another title"
+        with self.assertRaises(ValueError):
+            public._validate_ledger(ledger)
 
 
 if __name__ == "__main__":

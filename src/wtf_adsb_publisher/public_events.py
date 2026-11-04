@@ -654,18 +654,31 @@ def article_slug(path):
 RELATED_FIELDS = (("path", "article_path"), ("title", "title"), ("observed_start", "observed_start"))
 
 
-def _related(raw, own_path, limit=KEPT_RELATED):
+# An explainer page (weekly_spotlight.EXPLAINERS) that a related list can link to.
+EXPLAINER_PATH = re.compile(r"/explainers/[a-z0-9]+(?:-[a-z0-9]+)*/")
+
+
+def _related(raw, own_path, limit=KEPT_RELATED, *, pages=False):
     """Other stories of the same registration, newest first, as the theme lists them.
 
     Each is {"path", "title", "observed_start"}; none is the event's own page. The list
     sits outside the evidence and content versions, so a change in it is no revision. A
     record keeps up to KEPT_RELATED; an export lists up to MAX_RELATED (export_snapshot).
+    With `pages`, as in a snapshot, explainer pages follow the stories, each with a null
+    observed_start.
     """
     if not isinstance(raw, list) or not 1 <= len(raw) <= limit:
         raise ValueError("Invalid related stories")
     result = []
     for item in raw:
         require_keys(item, ("path", "title", "observed_start"))
+        if pages and item["observed_start"] is None:
+            if not isinstance(item["path"], str) or not EXPLAINER_PATH.fullmatch(public_path(item["path"])):
+                raise ValueError("Invalid related page")
+            result.append({"path": item["path"], "title": _text(item["title"], 160), "observed_start": None})
+            continue
+        if result and result[-1]["observed_start"] is None:
+            raise ValueError("Related pages follow the related stories")
         result.append(
             {
                 "path": _article_path(item["path"]),
@@ -676,9 +689,8 @@ def _related(raw, own_path, limit=KEPT_RELATED):
     paths = [item["path"] for item in result]
     if own_path in paths or len(set(paths)) != len(paths):
         raise ValueError("Invalid related stories")
-    if [item["observed_start"] for item in result] != sorted(
-        (item["observed_start"] for item in result), key=lambda value: -_instant(value).timestamp()
-    ):
+    started = [item["observed_start"] for item in result if item["observed_start"] is not None]
+    if started != sorted(started, key=lambda value: -_instant(value).timestamp()):
         raise ValueError("Related stories must be newest first")
     return result
 
@@ -1751,6 +1763,21 @@ def _validate_header(ledger):
     _date(ledger.get("available_from"))
     if not isinstance(ledger.get("records"), list):
         raise ValueError("Invalid ledger records")
+    if "explainers" in ledger:
+        _explainers(ledger)
+
+
+def _explainers(ledger):
+    """The ledger's explainer pages, validated, in path order; none when it has none."""
+    from .weekly_spotlight import validate_explainer
+
+    pages = ledger.get("explainers", {})
+    if not isinstance(pages, dict) or ("explainers" in ledger and not pages):
+        raise ValueError("Invalid explainer pages")
+    for key, page in pages.items():
+        if not isinstance(page, dict) or page.get("key") != key or validate_explainer(page) != page:
+            raise ValueError("Invalid explainer page")
+    return sorted(deepcopy(list(pages.values())), key=lambda page: page["path"])
 
 
 def validate_record(record):
@@ -2037,14 +2064,22 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
     # A related story links only to a page this export lists, so no link leads to a story
     # that is unpublished, withdrawn, or not yet released, and each link carries that
     # page's current headline and start, not the ones saved when this story was written.
+    # Each explainer that covers a story follows its stories in the list.
+    from .weekly_spotlight import explains
+
+    explainers = _explainers(ledger)
     listed = {event["article_path"]: event for event in events}
     for event in events:
         targets = [listed[item["path"]] for item in event.pop("related", ()) if item["path"] in listed]
         targets.sort(key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["article_path"]))
-        if targets:
-            event["related"] = [
-                {key: target[field] for key, field in RELATED_FIELDS} for target in targets[:MAX_RELATED]
-            ]
+        address = event["aircraft"].get("icao_address")
+        pages = [page for page in explainers if explains(page["key"], event["kind"], address)]
+        related = [
+            {key: target[field] for key, field in RELATED_FIELDS}
+            for target in targets[: MAX_RELATED - len(pages)]
+        ] + [{"path": page["path"], "title": page["title"], "observed_start": None} for page in pages]
+        if related:
+            event["related"] = related
     # Stable UUID tie-breaks do not change when prose or publication times change.
     events.sort(key=lambda item: (-_instant(item["observed_start"]).timestamp(), item["id"]))
     days = _daily_counts(events, ledger["available_from"], as_of)
@@ -2061,6 +2096,8 @@ def export_snapshot(ledger, *, mode, as_of=None, inventory=None):
         "search": _search(events),
         "retired": _retired_list(retired),
     }
+    if explainers:
+        snapshot["explainers"] = explainers
     snapshot["snapshot_id"] = _digest(snapshot)
     return validate_snapshot(snapshot)
 
@@ -2714,7 +2751,7 @@ def _snapshot_event(event, mode, status, as_of):
         raise ValueError("Only an event with the identity conflict limitation carries the flag")
     if (
         "related" in event
-        and _related(event["related"], event["article_path"], MAX_RELATED) != event["related"]
+        and _related(event["related"], event["article_path"], MAX_RELATED, pages=True) != event["related"]
     ):
         raise ValueError("Related stories must be normalized")
     if not isinstance(event["source"], str) or event["source"] not in POSITION_SOURCES:
@@ -2795,6 +2832,7 @@ def validate_snapshot(snapshot):
             "retired",
             "snapshot_id",
         ),
+        ("explainers",),
     )
     if type(snapshot["schema_version"]) is not int or snapshot["schema_version"] != VERSION:
         raise ValueError("Unsupported snapshot version")
@@ -2823,9 +2861,21 @@ def validate_snapshot(snapshot):
         ids.add(event["id"])
         paths.add(_article_path(event["article_path"]))
         _snapshot_event(event, mode, snapshot["publication_status"], as_of)
+    explainers = snapshot.get("explainers")
+    if explainers is not None:
+        if not isinstance(explainers, list):
+            raise ValueError("Invalid explainer pages")
+        keyed = {page.get("key"): page for page in explainers if isinstance(page, dict)}
+        if len(keyed) != len(explainers) or _explainers({"explainers": keyed}) != explainers:
+            raise ValueError("Explainer pages must be valid, distinct, and in path order")
+    pages = {page["path"]: page for page in explainers or ()}
     listed = {event["article_path"]: event for event in snapshot["events"]}
     for event in snapshot["events"]:
         for item in event.get("related", ()):
+            if item["observed_start"] is None:
+                if pages.get(item["path"], {}).get("title") != item["title"]:
+                    raise ValueError("A related page must be an explainer in the same snapshot, as it lists")
+                continue
             target = listed.get(item["path"])
             if target is None or any(item[key] != target[field] for key, field in RELATED_FIELDS):
                 raise ValueError("A related story must be an event in the same snapshot, as it lists")
