@@ -1946,6 +1946,8 @@ class LiveStoryTests(unittest.TestCase):
         public.put_event(ledger, "episode-a", packet(), editorial(title="A revised headline"), at=NOW)
         self.assertEqual(record["state"], "pending")
         self.assertTrue(public.live_story(record))
+        # An approved record with no page is not a story either.
+        self.assertFalse(public.live_story({**record, "editorial": {}}))
         public.set_review_state(ledger, record["id"], "withdrawn", at=NOW)
         self.assertFalse(public.live_story(record))
         # Never approved, synthetic, or without a page: not a story.
@@ -1958,7 +1960,6 @@ class LiveStoryTests(unittest.TestCase):
             add(ledger, key="episode-c", metadata=editorial(path=story_path("synthetic"), synthetic=True)),
         )
         self.assertFalse(public.live_story(synthetic))
-        self.assertFalse(public.live_story({**synthetic, "editorial": {}}))
         self.assertFalse(public.live_story(None))
 
     def test_a_migrated_frozen_record_without_a_release_time_is_live(self):
