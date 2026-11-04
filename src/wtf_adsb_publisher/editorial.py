@@ -4914,8 +4914,8 @@ FOREIGN_STATE = Angle(
     "Which State's military the listing names and where the listing comes from.",
     headlines=FOREIGN_HEADLINES,
     deks=(
-        "{ident} is listed as military by {fm_basis}; the address block is allocated to {fm_country_the}. It "
-        "reported {alt}[ and {gs}] on {day_month}.",
+        "{ident} is listed as military by {fm_basis}; the address block is allocated to {fm_country_the}.[ It "
+        "reported {alt} on {day_month}.]",
         "The military listing comes from {fm_basis}, and the address block is allocated to {fm_country_the}.[ It "
         "flew near {place} on {day_month}.]",
     ),
