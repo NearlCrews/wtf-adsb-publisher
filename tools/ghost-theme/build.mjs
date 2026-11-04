@@ -939,12 +939,9 @@ for (const story of model.stories) {
   // a map keeps its own size; a type photo that does not lead joins "About
   // the type". Cards, feeds, and social images keep the story's lead.
   // The altitude profile sits below the map, or takes its place when there
-  // is none. A subjectless page shows no map: its lead is the day summary.
+  // is none. A subjectless page's lead is the day summary the media step drew.
   const airframe = airframePhotos.get(story.id);
-  const pageLead =
-    story.subjectless && story.leadMedia?.kind === "track"
-      ? null
-      : story.leadMedia;
+  const pageLead = story.leadMedia;
   const profile = profileFigure(story.profileImage);
   const map = charted(pageLead) ? pageLead : null;
   const visual = map || profile || (airframe ? null : pageLead);
@@ -959,7 +956,6 @@ for (const story of model.stories) {
   const sources = story.profile.sources;
   const typeBackground =
     typeName &&
-    !story.subjectless &&
     !story.typeInBody &&
     (story.profile.facts.length || typePhoto)
       ? {
@@ -1037,7 +1033,6 @@ for (const story of model.stories) {
     feature_media: visual ? { ...visual, event_id: story.id } : undefined,
     feature_image_caption: caption,
     profile_image: map && profile ? profile : undefined,
-    subjectless: story.subjectless,
     airframe_photo: airframe
       ? airframeFigure(airframe, story.registration)
       : undefined,

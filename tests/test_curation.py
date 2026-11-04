@@ -804,6 +804,31 @@ class NewCooldowns(unittest.TestCase):
         log.add(prior_story(kind="watch_type", address="a00001", start=0))
         self.assertEqual(log.repeat(row, frozenset({"C172"})), "routine_type")
 
+    def test_the_window_tables_cover_every_series_and_address_kind(self):
+        for kind in curation.SERIES_KINDS | curation.LOCAL_SERIES_KINDS:
+            with self.subTest(kind=kind):
+                reason, seconds = curation._series_window(kind)
+                self.assertIn(reason, curation.REPEAT_REASONS)
+                self.assertIn(f"{seconds // 86400} days", curation.REPEAT_REASONS[reason])
+        self.assertEqual(curation._series_window("seasonal_speed_record"), ("series_repeat", 7 * 86400))
+        for kind, (reason, seconds) in curation.ADDRESS_WINDOWS.items():
+            with self.subTest(kind=kind):
+                self.assertIn(f"{seconds // 86400} days", curation.REPEAT_REASONS[reason])
+
+    def test_facts_name_the_subjects_once(self):
+        winds = curation.facts({"hex": "aaaaaa", "kind": "winds_aloft_day", "evidence": {}})
+        self.assertEqual((winds["addresses"], winds["subjects"]), (["aaaaaa"], []))
+        spiral = curation.facts({"hex": "aaaaaa", "kind": "descending_spiral", "evidence": {}})
+        self.assertEqual(spiral["subjects"], ["aaaaaa"])
+        self.assertEqual(curation.subjects({"kind": "winds_aloft_day", "addresses": ["aaaaaa"]}), ())
+        row = candidate_row(kind="descending_spiral", address="aaaaaa", start=0)
+        self.assertEqual(
+            curation.story_entry({**row, "story_key": "k", "exceptional": False, "routine_type": False})[
+                "subjects"
+            ],
+            ["aaaaaa"],
+        )
+
     def test_the_curation_version_is_12(self):
         self.assertEqual(curation.VERSION, 12)
 

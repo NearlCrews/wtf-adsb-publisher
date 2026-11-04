@@ -33,15 +33,11 @@
           >{{{feature_image_caption}}}</figcaption>{{/if}}</figure>
     {{/if}}{{/if}}
     {{#if profile_image}}{{> "event-visual" profile_image article=true}}{{/if}}
-    {{#unless subjectless}}
-      {{#if airframe_photo}}{{> "airframe-photo" airframe_photo}}{{/if}}
-      {{#if type_background_first}}{{#if type_background}}{{> "type-background" type_background}}{{/if}}{{/if}}
-    {{/unless}}
+    {{#if airframe_photo}}{{> "airframe-photo" airframe_photo}}{{/if}}
+    {{#if type_background_first}}{{#if type_background}}{{> "type-background" type_background}}{{/if}}{{/if}}
     <div class="gh-content prose">{{content}}</div>
-    {{#unless subjectless}}
-      {{#unless type_background_first}}{{#if type_background}}{{> "type-background" type_background}}{{/if}}{{/unless}}
-      {{#if aircraft_related}}{{> "aircraft-related" aircraft_related}}{{/if}}
-    {{/unless}}
+    {{#unless type_background_first}}{{#if type_background}}{{> "type-background" type_background}}{{/if}}{{/unless}}
+    {{#if aircraft_related}}{{> "aircraft-related" aircraft_related}}{{/if}}
     {{#if related}}{{> "related-stories" related}}{{/if}}
     <footer class="article-end column"><span class="eyebrow">Explore the journal.</span><a
         class="text-link"

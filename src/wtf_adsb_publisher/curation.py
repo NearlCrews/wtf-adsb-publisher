@@ -274,6 +274,14 @@ def stale_check(event, now=None):
     return (time.time() if now is None else now) - first > STALE_CHECK_SECONDS
 
 
+def _rechecked(event):
+    """Whether the registries answered an unlisted address's check at least REGISTRY_LAG_SECONDS
+    after the finding's first sighting (its type_check.checked_at)."""
+    first = number(event.get("first_seen"))
+    checked = number(_mapping(_mapping(event.get("evidence")).get("type_check")).get("checked_at"))
+    return first is not None and checked is not None and checked - first >= REGISTRY_LAG_SECONDS
+
+
 def _registry_hold(event, now):
     """registry_lag and type_check_stale for an unlisted-address finding (type_hold)."""
     first = number(event.get("first_seen"))
@@ -285,8 +293,7 @@ def _registry_hold(event, now):
             f"The address was first seen less than {REGISTRY_LAG_SECONDS // 86400} days ago; "
             "registries lag new entries",
         )
-    checked = number(_mapping(_mapping(event.get("evidence")).get("type_check")).get("checked_at"))
-    if checked is None or checked < first + REGISTRY_LAG_SECONDS:
+    if not _rechecked(event):
         return (
             "type_check_stale",
             "The registry check predates the week after the first sighting; selection waits for a fresh one",
@@ -325,15 +332,6 @@ def type_hold(event, *, now=None):
     return None
 
 
-def _direct_speed(aircraft):
-    """Whether a saved aircraft's own direct ADS-B source supplied its ground speed.
-
-    A snapshot names its source in "type"; an MLAT or TIS-B solution listed for
-    "gs" is a position-derived speed, never evidence against the listed type.
-    """
-    return direct_value(aircraft, "gs") is not None
-
-
 def _registry_gates(event, evidence):
     """registry_lists_address and registry_unchecked for an unlisted-address finding (gates)."""
     check = _mapping(evidence.get("type_check"))
@@ -346,13 +344,7 @@ def _registry_gates(event, evidence):
                 + ", so the finding's premise does not hold",
             )
         ]
-    checked, first = number(check.get("checked_at")), number(event.get("first_seen"))
-    if (
-        type_check_state(evidence) not in SETTLED
-        or checked is None
-        or first is None
-        or checked - first < REGISTRY_LAG_SECONDS
-    ):
+    if type_check_state(evidence) not in SETTLED or not _rechecked(event):
         return [
             (
                 "registry_unchecked",
@@ -383,7 +375,9 @@ def gates(event, *, now=None):
     reading_implausible: an identity story about the listed type
     (PLAUSIBILITY_KINDS) whose saved aircraft reports a ground speed
     rules.speed_plausible refuses, when its own direct ADS-B source supplied
-    that speed (_direct_speed), or a pressure altitude more than
+    that speed (telemetry.direct_value: an MLAT or TIS-B solution listed for "gs"
+    is a position-derived speed, never evidence against the listed type), or a
+    pressure altitude more than
     CEILING_MARGIN_FT above the type envelope's ceiling. Without a known
     envelope the envelope's cap and ceiling are skipped, while the absolute
     speed bound and a rated limit from reference.limits still apply; a missing
@@ -460,7 +454,7 @@ def gates(event, *, now=None):
         aircraft = _mapping(evidence.get("aircraft"))
         gs, alt = number(aircraft.get("gs")), number(aircraft.get("alt_baro"))
         ceiling = number((type_envelope(aircraft) or {}).get("ceiling_ft"))
-        if gs is not None and _direct_speed(aircraft) and not speed_plausible(aircraft, gs):
+        if gs is not None and direct_value(aircraft, "gs") is not None and not speed_plausible(aircraft, gs):
             found.append(
                 (
                     "reading_implausible",
@@ -706,8 +700,11 @@ def facts(event):
             else "aircraft:" + address
         )
     series = kind if kind in SERIES_KINDS or kind in LOCAL_SERIES_KINDS else None
+    addresses = sorted({address, *participants(event)})
     return {
-        "addresses": sorted({address, *participants(event)}),
+        "addresses": addresses,
+        # The addresses the story is about: none for a subjectless kind (subjects()).
+        "subjects": [] if kind in SUBJECTLESS_KINDS else addresses,
         "type": typecode,
         "variant": variant,
         "subtopic": subtopic,
@@ -716,7 +713,10 @@ def facts(event):
 
 
 def subjects(entry):
-    """The addresses a story or candidate is about: none for a subjectless kind."""
+    """The addresses a story or candidate is about: none for a subjectless kind. facts() and
+    story_entry() give them; an entry built without them works them out from its kind."""
+    if "subjects" in entry:
+        return entry["subjects"]
     return () if entry.get("kind") in SUBJECTLESS_KINDS else entry["addresses"]
 
 
@@ -784,8 +784,31 @@ def _any(row, other, routine):
     return True
 
 
+# Per-kind windows for one airframe's later story of the same kind: (reason, seconds).
+ADDRESS_WINDOWS = {
+    "watchlist_match": ("watchlist_repeat", WATCHLIST_COOLDOWN),
+    "unregistered_address": ("unregistered_repeat", UNREGISTERED_COOLDOWN),
+}
+# Per-kind windows for a series (SERIES_KINDS and LOCAL_SERIES_KINDS): (reason, seconds); any
+# other series kind takes SERIES_COOLDOWN.
+SERIES_WINDOWS = {
+    "identity_conflict": ("identity_series", IDENTITY_SERIES_COOLDOWN),
+    "winds_aloft_day": ("winds_series", WINDS_COOLDOWN),
+    "possible_go_around": ("go_around_series", GO_AROUND_COOLDOWN),
+}
+
+
+def _address_window(kind):
+    return ADDRESS_WINDOWS[kind]
+
+
+def _series_window(kind):
+    return SERIES_WINDOWS.get(kind, ("series_repeat", SERIES_COOLDOWN))
+
+
 # The repeat policy, checked in order: (reason, index, row kinds it applies to (None
 # for all), whether another story matches, and the window in seconds (None: any time)).
+# A table rule's window is a function of the row's kind giving (reason, seconds).
 # The airframe rules come before the series rules, so a same-airframe repeat of a series kind
 # (SERIES_KINDS) is held as identity_repeat (identity_conflict, within 60 days) or as
 # kind_repeat (seasonal_speed_record and the certified-limit kinds, RATED_KINDS, within
@@ -795,14 +818,7 @@ def _any(row, other, routine):
 REPEAT_RULES = (
     ("same_aircraft_day", "address", None, lambda row, other, routine: other["day"] == row["day"], None),
     ("identity_repeat", "address", None, _identity_pair, IDENTITY_COOLDOWN),
-    ("watchlist_repeat", "address", frozenset({"watchlist_match"}), _same_kind, WATCHLIST_COOLDOWN),
-    (
-        "unregistered_repeat",
-        "address",
-        frozenset({"unregistered_address"}),
-        _same_kind,
-        UNREGISTERED_COOLDOWN,
-    ),
+    ("address_window", "address", frozenset(ADDRESS_WINDOWS), _same_kind, _address_window),
     ("kind_repeat", "address", None, _kind_pair, STORY_COOLDOWN),
     ("vintage_repeat", "address", IDENTITY_KINDS, _vintage_pair, VINTAGE_COOLDOWN),
     ("routine_type", "type", TYPE_IDENTITY_KINDS, _routine_pair, ROUTINE_COOLDOWN),
@@ -822,16 +838,7 @@ REPEAT_RULES = (
     ),
     # A second "first" of one type, allocation State, or operator would be false.
     ("first_repeat", "subtopic", FIRST_KINDS, _same_kind, None),
-    ("identity_series", "series", frozenset({"identity_conflict"}), _any, IDENTITY_SERIES_COOLDOWN),
-    ("winds_series", "series", frozenset({"winds_aloft_day"}), _any, WINDS_COOLDOWN),
-    ("go_around_series", "series", LOCAL_SERIES_KINDS, _any, GO_AROUND_COOLDOWN),
-    (
-        "series_repeat",
-        "series",
-        SERIES_KINDS - {"identity_conflict", "winds_aloft_day"},
-        _any,
-        SERIES_COOLDOWN,
-    ),
+    ("series", "series", SERIES_KINDS | LOCAL_SERIES_KINDS, _any, _series_window),
 )
 
 
@@ -894,6 +901,8 @@ class StoryLog:
         for reason, index, rule_kinds, matches, window in REPEAT_RULES:
             if rule_kinds is not None and row["kind"] not in rule_kinds:
                 continue
+            if callable(window):
+                reason, window = window(row["kind"])
             for key in keys[index]:
                 for other in self.indexes[index].get(key, ()):
                     if (
@@ -1244,6 +1253,7 @@ def story_entry(row):
         "id": None,
         "episode_key": row["story_key"],
         "addresses": list(row["addresses"]),
+        "subjects": list(subjects(row)),
         "kind": row["kind"],
         "start": row["start"],
         "day": row["day"],
@@ -1345,7 +1355,7 @@ def _select_day(available, day_held, log, routine, selected):
     topics = Counter(_penalty_key(entry) for entry in day_held)
     aircraft = {address for entry in day_held for address in subjects(entry)}
     exceptions = Counter(
-        address for entry in day_held if entry.get("exceptional") for address in entry["addresses"]
+        address for entry in day_held if entry.get("exceptional") for address in subjects(entry)
     )
     slots = len(day_held)
     while available:
@@ -1353,7 +1363,7 @@ def _select_day(available, day_held, log, routine, selected):
             if (
                 row["exceptional"]
                 and not row["pinned"]
-                and any(exceptions[address] >= EXCEPTIONAL_PER_AIRCRAFT for address in row["addresses"])
+                and any(exceptions[address] >= EXCEPTIONAL_PER_AIRCRAFT for address in subjects(row))
             ):
                 row["exceptional"] = False
                 row["novelty"] = row["ordinary_novelty"]
@@ -1389,7 +1399,7 @@ def _select_day(available, day_held, log, routine, selected):
         slots += 1
         aircraft.update(subjects(winner))
         if winner["exceptional"]:
-            exceptions.update(winner["addresses"])
+            exceptions.update(subjects(winner))
         log.add(story_entry(winner))
     for row in available:
         _adjust(row, topics)

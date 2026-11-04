@@ -538,23 +538,12 @@
    {
     "type": "list",
     "value": [
-     "watchlist_repeat",
+     "address_window",
      {
       "type": "list",
       "value": [
+       "unregistered_address",
        "watchlist_match"
-      ]
-     }
-    ]
-   },
-   {
-    "type": "list",
-    "value": [
-     "unregistered_repeat",
-     {
-      "type": "list",
-      "value": [
-       "unregistered_address"
       ]
      }
     ]
@@ -655,49 +644,16 @@
    {
     "type": "list",
     "value": [
-     "identity_series",
-     {
-      "type": "list",
-      "value": [
-       "identity_conflict"
-      ]
-     }
-    ]
-   },
-   {
-    "type": "list",
-    "value": [
-     "winds_series",
-     {
-      "type": "list",
-      "value": [
-       "winds_aloft_day"
-      ]
-     }
-    ]
-   },
-   {
-    "type": "list",
-    "value": [
-     "go_around_series",
-     {
-      "type": "list",
-      "value": [
-       "possible_go_around"
-      ]
-     }
-    ]
-   },
-   {
-    "type": "list",
-    "value": [
-     "series_repeat",
+     "series",
      {
       "type": "list",
       "value": [
        "above_rated_altitude",
        "above_rated_speed",
-       "seasonal_speed_record"
+       "identity_conflict",
+       "possible_go_around",
+       "seasonal_speed_record",
+       "winds_aloft_day"
       ]
      }
     ]
