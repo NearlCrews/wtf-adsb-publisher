@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
-    "gscan": "6.6.1",
+    "gscan": "6.7.0",
     "node": "24.22.1"
   },
   "overrides": {
