@@ -60,7 +60,7 @@ revises an article. An export always writes `headline_measurements` and
   registration. It is false for a subjectless story, a kind about disputed
   identifiers (`public_events.IDENTITY_DISPUTED_KINDS`), and an event whose
   identity checks found a conflict; the validator requires it to follow those
-  rules.
+  rules. The theme shows no type or class photo for an event whose flag is false.
 
 A snapshot with an explainer page lists it under the top-level `explainers` key,
 in path order: its key, path, title, summary, sections, sources, limitations,

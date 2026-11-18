@@ -392,7 +392,9 @@ rules in one place. A story gets an airframe photo only when its event's
 identity (`identity_conflict`, `type_speed_mismatch`, `type_altitude_mismatch`,
 and `unregistered_address`) or a conflict the identity checks found, since the
 photo of the listed registration may show another aircraft, and a snapshot
-without the flag shows none. A subjectless story, such as a winds
+without the flag shows none. A story whose flag is false shows no type or
+class photo either, on its page or its card, because either would picture the
+aircraft the story doubts; its summary figure leads. A subjectless story, such as a winds
 aloft day, gets no photo at all: its page shows no type box, map, or "More
 about this aircraft" list, its day summary card leads, and the evidence block
 still lists the winds numbers.
@@ -897,7 +899,7 @@ stay `no-cache`. See [production operations](../../docs/operations.md).
 
 ## Weekly spotlight
 
-The homepage places **Most Interesting Last Week** after the latest stories,
+The homepage places **Most interesting last week** after the latest stories,
 with one researched pick from the previous completed Monday–Sunday UTC week.
 The pick links to its existing article. `/weekly/` lists earlier picks; the
 event remains counted once.

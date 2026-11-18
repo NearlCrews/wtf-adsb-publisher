@@ -1886,9 +1886,14 @@ class WhatTheDataSupport(unittest.TestCase):
                 self.assertNotIn("flags it as military", prose)
                 self.assertNotIn("carries the military flag", prose)
         state = editorial.FOREIGN_STATE
+        for headline in state.headlines:
+            self.assertIn("listed as military from {fm_country_the}, spotted", headline)
+        self.assertEqual(editorial.with_the("United Kingdom"), "the United Kingdom")
+        self.assertEqual(editorial.with_the("Kuwait"), "Kuwait")
         for dek in state.deks:
             self.assertRegex(dek, r"(?:listed as military by|military listing comes from) \{fm_basis\}")
-            self.assertIn("is allocated to {fm_country_the}", dek)
+            self.assertIn("allocated to {fm_country_the}", dek)
+            self.assertLessEqual(dek.count("address block"), 1)
         for opener in state.openers:
             self.assertNotIn("{fm_basis}", opener)
 

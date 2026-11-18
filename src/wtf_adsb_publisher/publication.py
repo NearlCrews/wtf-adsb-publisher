@@ -174,6 +174,17 @@ def _value(value):
     return escape(text)
 
 
+def _reading(item):
+    """A measurement's value and unit. A category code names its unit in its label, and a
+    duration of ten seconds or more reads in whole seconds."""
+    value, unit = item["value"], item["unit"]
+    if unit == "category":
+        unit = None
+    elif unit == "s" and isinstance(value, float) and abs(value) >= 10:
+        value = round(value)
+    return _value(value) + (f" <small>{escape(unit)}</small>" if unit else "")
+
+
 def _participant_row(item):
     """One escaped row per other aircraft: identity, source and its own measurements."""
     names = [item.get(field) for field in ("registration", "callsign", "type_code") if item.get(field)]
@@ -184,8 +195,7 @@ def _participant_row(item):
         details.append("ICAO address " + escape(item["icao_address"]))
     details.append("Source: " + escape(SOURCE_LABELS[item["source"]]))
     for measurement in item["measurements"]:
-        unit = f" <small>{escape(measurement['unit'])}</small>" if measurement["unit"] else ""
-        details.append(escape(measurement["label"]) + ": " + _value(measurement["value"]) + unit)
+        details.append(escape(measurement["label"]) + ": " + _reading(measurement))
     return PARTICIPANT_ROLES[item["role"]], "<br>".join(details)
 
 
@@ -962,8 +972,7 @@ def _event_card(event, *, display_review=True):
     for items in groups.values():
         rows = []
         for item in items:
-            unit = f" <small>{escape(item['unit'])}</small>" if item["unit"] else ""
-            rows.append((item["label"], _value(item["value"]) + unit))
+            rows.append((item["label"], _reading(item)))
         output.append(
             '<div class="record-measurements-group">'
             + _record_table(measurement_scope(items[0]), rows)

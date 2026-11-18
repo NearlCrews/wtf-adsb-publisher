@@ -16,7 +16,7 @@ import { ORIGIN, SITE_NAME } from "./site-settings.mjs";
 // its archive pages at that size match the static ones.
 export const PER_PAGE = DEFAULT_PAGE_SIZE;
 // The home page's latest stories and the weekly archive's picks per page.
-export const HOME_LATEST = 8;
+export const HOME_LATEST = 9;
 export const WEEKLY_PER_PAGE = 10;
 // The site name (site_name in publisher.json).
 export const BRAND = SITE_NAME;
@@ -254,9 +254,12 @@ export function cardVisual(lead, cardPhoto) {
 // flag shows none), else the representative type photo. Cards never
 // show a registration photo, so the card photo is the type photo, else the
 // representative photo of the type's class, whatever the page shows. A
-// subjectless story names no aircraft, so it shows none.
+// subjectless story names no aircraft, so it shows none. Neither does a
+// story the publisher marks registration_photo false: its identifiers
+// disagree, so a photo of the listed type or its class would show the
+// aircraft the story doubts.
 export function storyPhotos(event, { registration, type, stock } = {}) {
-  if (event.subjectless)
+  if (event.subjectless || event.registration_photo === false)
     return { registrationPhoto: null, typePhoto: null, cardPhoto: null };
   const registrationPhoto =
     registration && event.registration_photo === true ? registration : null;

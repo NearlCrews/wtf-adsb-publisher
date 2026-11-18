@@ -63,7 +63,7 @@ try {
       if (javaScriptEnabled) {
         assert.equal(
           await page.locator("#weekly-title").innerText(),
-          "Most Interesting Last Week",
+          "Most interesting last week",
         );
         const link = page.locator(".weekly-card .text-link");
         await link.focus();

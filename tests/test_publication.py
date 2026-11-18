@@ -461,6 +461,16 @@ def formation_event(**changes):
 
 
 class EvidenceBlockTests(unittest.TestCase):
+    def test_a_reading_drops_a_category_unit_and_rounds_a_long_duration(self):
+        def reading(value, unit):
+            return publication._reading({"value": value, "unit": unit})
+
+        self.assertEqual(reading(8.0, "category"), "8")
+        self.assertEqual(reading(283.198, "s"), "283 <small>s</small>")
+        self.assertEqual(reading(4.25, "s"), "4.25 <small>s</small>")
+        self.assertEqual(reading(97.3, "kn"), "97.3 <small>kn</small>")
+        self.assertEqual(reading(24, None), "24")
+
     def test_key_facts_follow_the_headline_list_with_a_meaning_each(self):
         from wtf_adsb_publisher import stories
 

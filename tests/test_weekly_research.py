@@ -86,6 +86,19 @@ def recorded(raw, urls):
 
 
 class WeeklyResearchTests(unittest.TestCase):
+    def test_the_brief_gives_a_whole_reading_as_an_integer(self):
+        event = {
+            "kind": "speed_difference",
+            "headline_measurements": ["alt_baro", "gs"],
+            "measurements": [
+                {"key": "alt_baro", "label": "Pressure altitude", "value": 32000.0, "unit": "ft"},
+                {"key": "gs", "label": "Ground speed", "value": 363.6, "unit": "kn"},
+            ],
+        }
+        values = [item["value"] for item in worker.event_brief(event)["measurements"]]
+        self.assertEqual(values, [32000, 363.6])
+        self.assertIs(type(values[0]), int)
+
     def setUp(self):
         self.ledger, self.snapshot = ordinary()
         self.event = self.snapshot["events"][0]

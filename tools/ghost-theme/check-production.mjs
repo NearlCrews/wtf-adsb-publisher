@@ -1344,7 +1344,7 @@ print(json.dumps({'review':json.dumps(review),'published':json.dumps(export(ledg
       );
       if (route === "/") {
         assert.equal(await page.locator(".weekly-card").count(), 1);
-        assert.equal(await page.locator(".home-latest .story-tile").count(), 8);
+        assert.equal(await page.locator(".home-latest .story-tile").count(), 9);
         // Both families load, and the preloaded body font is fetched once.
         assert.deepEqual(
           await page.evaluate(async () => {

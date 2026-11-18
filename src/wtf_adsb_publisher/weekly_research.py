@@ -302,6 +302,10 @@ def causeless(kind):
     return public_prose.is_causeless(kind)
 
 
+def _whole(value):
+    return int(value) if isinstance(value, float) and value.is_integer() else value
+
+
 def event_brief(event):
     """The kind of event and its headline readings: no identity, time, place, or prose."""
     measured = {item["key"]: item for item in event.get("measurements", ())}
@@ -309,8 +313,13 @@ def event_brief(event):
         "kind": event["kind"],
         "kind_name": story_facts.KIND_TITLES.get(event["kind"], event["kind"].replace("_", " ")),
         "causeless": causeless(event["kind"]),
+        # A whole reading goes as an integer, so the researcher never repeats "32000.0 ft".
         "measurements": [
-            {name: measured[key][name] for name in ("label", "value", "unit")}
+            {
+                "label": measured[key]["label"],
+                "value": _whole(measured[key]["value"]),
+                "unit": measured[key]["unit"],
+            }
             for key in event.get("headline_measurements", ())
             if key in measured
         ],

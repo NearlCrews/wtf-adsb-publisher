@@ -4910,9 +4910,9 @@ WINDS_ANGLES = (WINDS_GAP, WINDS_MEDIANS, WINDS_EXAMPLE)
 # record shows the airframe and its track, never a mission. Every angle's headline takes the house
 # form (public_prose.FOREIGN_MILITARY_HEADLINE).
 FOREIGN_HEADLINES = (
-    "{type} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
-    "{type_short} {ident}, listed as military from {fm_country}, spotted[ near {place}]",
-    "[{type} ]{ident}, listed as military from {fm_country}, spotted[ near {place}]",
+    "{type} {ident}, listed as military from {fm_country_the}, spotted[ near {place}]",
+    "{type_short} {ident}, listed as military from {fm_country_the}, spotted[ near {place}]",
+    "[{type} ]{ident}, listed as military from {fm_country_the}, spotted[ near {place}]",
 )
 FOREIGN_STATE = Angle(
     "state_and_basis",
@@ -4921,7 +4921,7 @@ FOREIGN_STATE = Angle(
     deks=(
         "{ident} is listed as military by {fm_basis}; the address block is allocated to {fm_country_the}.[ It "
         "reported {alt} on {day_month}.]",
-        "The military listing comes from {fm_basis}, and the address block is allocated to {fm_country_the}.[ It "
+        "The military listing comes from {fm_basis}; {ident} broadcasts an address allocated to {fm_country_the}.[ It "
         "flew near {place} on {day_month}.]",
     ),
     openers=(

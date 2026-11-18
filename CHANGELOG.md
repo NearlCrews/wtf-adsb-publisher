@@ -104,6 +104,33 @@ versions, and evidence contract versions are tracked separately.
   explains every kind of story, and the home page hides empty topics and a
   missing weekly pick.
 
+### Fixed
+
+- Twelve type designators seen in published stories now have curated names:
+  A345, AC95, B773, BE22, BK17, C212, C27J, D11, G200, GC1, LNCE, and U16. A
+  story no longer takes its headline from the database's raw description, as
+  in "A-340-500" or "Cessna 212 Aviocar".
+- A foreign military headline writes "the" before a State name that takes it:
+  "listed as military from the United Kingdom". The summary no longer says
+  "address block" twice when the listing's basis names the block.
+- The story writer gives dates day first, "12 November 2026", as the template
+  prose and the page already do.
+- The evidence table shows a category code without the word "category" as its
+  unit and a duration of ten seconds or more in whole seconds.
+- The weekly researcher receives a whole reading as an integer, so a pick's
+  reason no longer repeats "32000.0 ft".
+- A story whose identifiers disagree (`registration_photo` false) shows no
+  type or class photo on its page or card. A helicopter no longer illustrates
+  a story about a 43,000 ft reading that the listed helicopter cannot produce.
+- Theme 0.7.1: the home page lists nine latest stories, which fills its three
+  columns; the weekly heading reads "Most interesting last week", in sentence
+  case like the other headings; and the navigation fits one row on a phone.
+- A public address whose path has a `home` segment, such as a reference link
+  ending `/English/home/default.aspx`, no longer counts as a private home
+  directory in the shared wire check. A home directory is still refused as a
+  path of its own, in a `file:` address, or in a query value.
+  `wire.PrivacyError`, a `ValueError`, marks refused field names and text.
+
 ## 0.1.0 (2026-11-01)
 
 The first public release. The package identifies itself as 0.1.0, plugins

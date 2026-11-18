@@ -1489,7 +1489,8 @@ figcaption {
   }
 
   .site-navigation .nav {
-    gap: 26px;
+    gap: 0 10px;
+    justify-content: space-between;
   }
 
   .header-controls {

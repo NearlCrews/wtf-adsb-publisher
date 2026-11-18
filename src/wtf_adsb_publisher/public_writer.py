@@ -175,6 +175,7 @@ stories it has run: no "the site's", "threshold", "flag", or "flagged".
 facts_used: the id of every fact the text relies on.
 
 Use the serial comma in every list of three or more: "bizjets, tags, and links".
+Write a date day first, "12 November 2026" or "12 November", never "November 12, 2026".
 
 Do not define ADS-B, ground speed, squawk, or MLAT. Never mention a receiver,
 antenna, station location, distance, or direction from where the data was
@@ -362,7 +363,8 @@ KIND_NOTES = (
     (
         ("foreign_military",),
         'Headline: the type and registration or identifier, then ", listed as military from <fm.country>, '
-        'spotted", with nothing else. The State is fm.country. Include this sentence once, word for word, with '
+        'spotted", with nothing else. The State is fm.country; write "the" before a name that takes it, as in '
+        '"from the United Kingdom". Include this sentence once, word for word, with '
         "the fm.basis value in place, where it fits, not as the story's last sentence; it names the basis, so "
         "name the basis nowhere else, and with the context line it is all the story says about what the data "
         "cannot show, so write no other caveat: "

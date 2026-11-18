@@ -599,7 +599,7 @@ def check_weekly(container, key, scratch):
     require(not leaks(responses.values()), "A native weekly response exposes private metadata")
     home = homepage_box(responses["/"]["body"])
     require(len(cards(home)) == 1, "The native homepage did not render exactly one current weekly pick")
-    require("Most Interesting Last Week" in home, "The native homepage lost its current-week heading")
+    require("Most interesting last week" in home, "The native homepage lost its current-week heading")
     require(
         " ".join(literal.split()) in rendered_text(home),
         "Native weekly text changed Unicode, quotes, backslashes, or braces",

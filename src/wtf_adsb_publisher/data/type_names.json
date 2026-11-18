@@ -1,14 +1,15 @@
 {
  "schema_version": 1,
  "dataset_version": "type-names-v1",
- "prepared_on": "2026-10-24",
+ "prepared_on": "2026-11-18",
  "notes": [
   "Display names, short names, URL slugs and category words for ICAO Doc 8643 type designators. Names are curated public type designations; they are not database values.",
   "Coverage: the 200 designators with the most aircraft-days in this collection's daily table (2026-06-01 to 2026-10-05), every rules.WATCH_TYPES code, every designator behind a curated notable variant, and the designators of aircraft whose database year is 1951 or earlier.",
   "Codes that share a slug name one type (for example E75L and E75S, both the Embraer 175). Group designators name categories, never types, and get no type page.",
   "short_slug drops the manufacturer and is used only to keep long story slugs within 80 characters.",
   "same_as is the English Wikipedia article for the type, for designators in published stories and in rules.WATCH_TYPES. Each title was resolved through the MediaWiki API with redirects followed, checked to be a plain article (not a redirect or disambiguation page) with a Wikidata item, and fetched with HTTP 200. Where Wikipedia redirects a variant name to its family article (Boeing 757-200, C-5M Super Galaxy, Citation CJ4), same_as names that family article. The field is absent when no article clearly matched.",
-  "2026-10-24: 246 designators seen in this collection since 2026-06-01 were added, with names checked against ICAO Doc 8643 and the Mictronics aircraft descriptions. Categories added: fighter, turboprop trainer, gyroplane."
+  "2026-10-24: 246 designators seen in this collection since 2026-06-01 were added, with names checked against ICAO Doc 8643 and the Mictronics aircraft descriptions. Categories added: fighter, turboprop trainer, gyroplane.",
+  "2026-11-18: 12 designators seen in this collection since 2026-10-24 were added, with names checked against ICAO Doc 8643 and the Mictronics aircraft descriptions."
  ],
  "sources": [
   {
@@ -49,6 +50,7 @@
   "A337": {"name": "Airbus BelugaXL", "short": "BelugaXL", "slug": "airbus-belugaxl", "category": "outsize cargo freighter", "manufacturer": "Airbus", "aliases": ["A330-743L", "BelugaXL"], "short_slug": "belugaxl", "same_as": "https://en.wikipedia.org/wiki/Airbus_BelugaXL"},
   "A339": {"name": "Airbus A330-900", "short": "A330-900", "slug": "airbus-a330-900", "category": "airliner", "manufacturer": "Airbus", "aliases": ["A330", "A330neo", "Airbus A330"], "short_slug": "a330-900"},
   "A343": {"name": "Airbus A340-300", "short": "A340-300", "slug": "airbus-a340-300", "category": "airliner", "manufacturer": "Airbus", "aliases": ["A340", "Airbus A340"], "short_slug": "a340-300"},
+  "A345": {"name": "Airbus A340-500", "short": "A340-500", "slug": "airbus-a340-500", "category": "airliner", "manufacturer": "Airbus", "aliases": ["A-340-500", "A340", "Airbus A340"], "short_slug": "a340-500"},
   "A346": {"name": "Airbus A340-600", "short": "A340-600", "slug": "airbus-a340-600", "category": "airliner", "manufacturer": "Airbus", "aliases": ["A340", "Airbus A340"], "short_slug": "a340-600"},
   "A359": {"name": "Airbus A350-900", "short": "A350-900", "slug": "airbus-a350-900", "category": "airliner", "manufacturer": "Airbus", "aliases": ["A350", "Airbus A350"], "short_slug": "a350-900"},
   "A35K": {"name": "Airbus A350-1000", "short": "A350-1000", "slug": "airbus-a350-1000", "category": "airliner", "manufacturer": "Airbus", "aliases": ["A350", "Airbus A350"], "short_slug": "a350-1000"},
@@ -62,6 +64,7 @@
   "AC50": {"name": "Aero Commander 500", "short": "Commander 500", "slug": "aero-commander-500", "category": "light aircraft", "manufacturer": "Aero Commander", "aliases": ["Rockwell Commander 500"], "short_slug": "500"},
   "AC68": {"name": "Aero Commander 680", "short": "Commander 680", "slug": "aero-commander-680", "category": "light aircraft", "manufacturer": "Aero Commander", "aliases": ["Commander 680F", "Commander 680FP", "Super Commander", "U-9"], "short_slug": "680"},
   "AC90": {"name": "Rockwell Turbo Commander 690", "short": "Turbo Commander", "slug": "rockwell-commander-690", "category": "turboprop", "manufacturer": "Rockwell", "aliases": ["Commander 690", "Gulfstream Jetprop Commander", "Jetprop Commander 840", "Jetprop Commander 900"], "short_slug": "commander-690"},
+  "AC95": {"name": "Rockwell 695 Jetprop Commander", "short": "Jetprop Commander", "slug": "rockwell-695-jetprop-commander", "category": "turboprop", "manufacturer": "Rockwell", "aliases": ["Commander 695", "Gulfstream Jetprop Commander 1000", "Jetprop Commander 1000", "Jetprop Commander 980"], "short_slug": "695-jetprop-commander"},
   "ACRO": {"name": "EAA Acro Sport", "short": "Acro Sport", "slug": "eaa-acro-sport", "category": "biplane", "manufacturer": "EAA", "aliases": ["Acro Sport I", "Super Acro Sport"], "short_slug": "acro-sport"},
   "AEST": {"name": "Piper Aerostar", "short": "Aerostar", "slug": "piper-aerostar", "category": "light aircraft", "manufacturer": "Piper", "aliases": ["Aerostar 600", "Ted Smith Aerostar"], "short_slug": "aerostar"},
   "AG10": {"name": "Cirrus SR10", "short": "SR10", "slug": "cirrus-sr10", "category": "light aircraft", "manufacturer": "Cirrus", "aliases": ["AG100", "CAIGA AG100", "SR-10"], "short_slug": "sr10"},
@@ -127,6 +130,7 @@
   "B763": {"name": "Boeing 767-300", "short": "767-300", "slug": "boeing-767-300", "category": "airliner", "manufacturer": "Boeing", "aliases": ["767", "767-300ER", "Boeing 767"], "short_slug": "767-300"},
   "B764": {"name": "Boeing 767-400", "short": "767-400", "slug": "boeing-767-400", "category": "airliner", "manufacturer": "Boeing", "aliases": ["767", "767-400ER", "Boeing 767"], "short_slug": "767-400"},
   "B772": {"name": "Boeing 777-200", "short": "777-200", "slug": "boeing-777-200", "category": "airliner", "manufacturer": "Boeing", "aliases": ["777", "777-200ER", "Boeing 777"], "short_slug": "777-200"},
+  "B773": {"name": "Boeing 777-300", "short": "777-300", "slug": "boeing-777-300", "category": "airliner", "manufacturer": "Boeing", "aliases": ["777", "Boeing 777"], "short_slug": "777-300"},
   "B77L": {"name": "Boeing 777-200LR", "short": "777-200LR", "slug": "boeing-777-200lr", "category": "airliner", "manufacturer": "Boeing", "aliases": ["777", "777F", "Boeing 777", "Boeing 777F"], "short_slug": "777-200lr"},
   "B77W": {"name": "Boeing 777-300ER", "short": "777-300ER", "slug": "boeing-777-300er", "category": "airliner", "manufacturer": "Boeing", "aliases": ["777", "Boeing 777"], "short_slug": "777-300er"},
   "B788": {"name": "Boeing 787-8 Dreamliner", "short": "787-8", "slug": "boeing-787-8", "category": "airliner", "manufacturer": "Boeing", "aliases": ["787", "Boeing 787", "Dreamliner"], "short_slug": "787-8"},
@@ -141,6 +145,7 @@
   "BE18": {"name": "Beechcraft Model 18", "short": "Beech 18", "slug": "beechcraft-model-18", "category": "vintage twin", "manufacturer": "Beechcraft", "aliases": ["Beech 18", "C-45 Expeditor", "Expeditor", "Twin Beech"], "short_slug": "model-18"},
   "BE19": {"name": "Beechcraft Musketeer Sport", "short": "Musketeer Sport", "slug": "beechcraft-musketeer-sport", "category": "light aircraft", "manufacturer": "Beechcraft", "aliases": ["Beech 19", "Beechcraft Sport", "Sport"], "short_slug": "musketeer-sport"},
   "BE20": {"name": "Beechcraft King Air 200", "short": "King Air 200", "slug": "beechcraft-king-air-200", "category": "turboprop", "manufacturer": "Beechcraft", "aliases": ["Beech 200", "C-12", "King Air 250", "Super King Air 200"], "short_slug": "king-air-200"},
+  "BE22": {"name": "Beechcraft Denali", "short": "Denali", "slug": "beechcraft-220-denali", "category": "turboprop", "manufacturer": "Beechcraft", "aliases": ["Beechcraft 220 Denali", "Cessna Denali", "Model 220"], "short_slug": "220-denali"},
   "BE23": {"name": "Beechcraft Musketeer", "short": "Musketeer", "slug": "beechcraft-musketeer", "category": "light aircraft", "manufacturer": "Beechcraft", "aliases": ["Beech 23", "Musketeer", "Sundowner"], "short_slug": "musketeer"},
   "BE24": {"name": "Beechcraft Sierra", "short": "Sierra", "slug": "beechcraft-sierra", "category": "light aircraft", "manufacturer": "Beechcraft", "aliases": ["Beech 24", "Musketeer Super", "Sierra"], "short_slug": "sierra"},
   "BE30": {"name": "Beechcraft King Air 300", "short": "King Air 300", "slug": "beechcraft-king-air-300", "category": "turboprop", "manufacturer": "Beechcraft", "aliases": ["Super King Air 300"], "short_slug": "king-air-300"},
@@ -160,6 +165,7 @@
   "BE99": {"name": "Beechcraft 99", "short": "Beech 99", "slug": "beechcraft-99", "category": "turboprop", "manufacturer": "Beechcraft", "aliases": ["Beech 99 Airliner"], "short_slug": "99"},
   "BE9L": {"name": "Beechcraft King Air 90", "short": "King Air 90", "slug": "beechcraft-king-air-90", "category": "turboprop", "manufacturer": "Beechcraft", "aliases": ["Beech 90 King Air", "C90"], "short_slug": "king-air-90"},
   "BE9T": {"name": "Beechcraft King Air F90", "short": "King Air F90", "slug": "beechcraft-king-air-f90", "category": "turboprop", "manufacturer": "Beechcraft", "aliases": ["Beech F90", "F90", "King Air F90"], "short_slug": "king-air-f90"},
+  "BK17": {"name": "MBB-Kawasaki BK 117", "short": "BK 117", "slug": "mbb-kawasaki-bk-117", "category": "helicopter", "manufacturer": "MBB-Kawasaki", "aliases": ["BK-117", "BK117", "Eurocopter BK117"], "short_slug": "bk-117"},
   "BL17": {"name": "Bellanca Viking", "short": "Viking", "slug": "bellanca-viking", "category": "light aircraft", "manufacturer": "Bellanca", "aliases": ["Bellanca 17-30", "Super Viking", "Turbo Viking"], "short_slug": "viking"},
   "BL8": {"name": "American Champion Decathlon", "short": "Decathlon", "slug": "american-champion-decathlon", "category": "light aircraft", "manufacturer": "American Champion", "aliases": ["8KCAB", "Bellanca Decathlon", "Scout", "Super Decathlon"], "short_slug": "decathlon"},
   "BLCF": {"name": "Boeing 747-400 Dreamlifter", "short": "Dreamlifter", "slug": "boeing-747-dreamlifter", "category": "outsize cargo freighter", "manufacturer": "Boeing", "aliases": ["747 Dreamlifter", "747-400LCF", "Dreamlifter", "Large Cargo Freighter"], "short_slug": "747-dreamlifter", "same_as": "https://en.wikipedia.org/wiki/Boeing_Dreamlifter"},
@@ -187,11 +193,13 @@
   "C207": {"name": "Cessna 207 Skywagon", "short": "Cessna 207", "slug": "cessna-207", "category": "light aircraft", "manufacturer": "Cessna", "aliases": ["Skywagon 207", "Stationair 7", "Stationair 8", "T207"], "short_slug": "207"},
   "C208": {"name": "Cessna 208 Caravan", "short": "Caravan", "slug": "cessna-208-caravan", "category": "turboprop", "manufacturer": "Cessna", "aliases": ["Cessna 208", "Grand Caravan"], "short_slug": "208-caravan"},
   "C210": {"name": "Cessna 210 Centurion", "short": "Cessna 210", "slug": "cessna-210", "category": "light aircraft", "manufacturer": "Cessna", "aliases": ["Centurion"], "short_slug": "210"},
+  "C212": {"name": "CASA C-212 Aviocar", "short": "C-212", "slug": "casa-c-212-aviocar", "category": "turboprop", "manufacturer": "CASA", "aliases": ["Aviocar", "C-212", "C212"], "short_slug": "c-212-aviocar"},
   "C240": {"name": "Cessna T240 TTx", "short": "TTx", "slug": "cessna-t240", "category": "light aircraft", "manufacturer": "Cessna", "aliases": ["Corvalis TTx", "T240", "TTx"], "short_slug": "t240"},
   "C25A": {"name": "Cessna Citation CJ2", "short": "Citation CJ2", "slug": "cessna-citation-cj2", "category": "business jet", "manufacturer": "Cessna", "aliases": ["CJ2", "Citation CJ2"], "short_slug": "citation-cj2"},
   "C25B": {"name": "Cessna Citation CJ3", "short": "Citation CJ3", "slug": "cessna-citation-cj3", "category": "business jet", "manufacturer": "Cessna", "aliases": ["CJ3", "Citation CJ3"], "short_slug": "citation-cj3"},
   "C25C": {"name": "Cessna Citation CJ4", "short": "Citation CJ4", "slug": "cessna-citation-cj4", "category": "business jet", "manufacturer": "Cessna", "aliases": ["CJ4", "Citation CJ4"], "short_slug": "citation-cj4", "same_as": "https://en.wikipedia.org/wiki/Cessna_CitationJet/M2"},
   "C25M": {"name": "Cessna Citation M2", "short": "Citation M2", "slug": "cessna-citation-m2", "category": "business jet", "manufacturer": "Cessna", "aliases": ["Citation M2"], "short_slug": "citation-m2"},
+  "C27J": {"name": "Alenia C-27J Spartan", "short": "C-27J", "slug": "alenia-c-27j-spartan", "category": "military transport", "manufacturer": "Alenia", "aliases": ["C-27J", "Leonardo C-27J Spartan", "Spartan"], "short_slug": "c-27j-spartan"},
   "C303": {"name": "Cessna T303 Crusader", "short": "Crusader", "slug": "cessna-t303", "category": "light aircraft", "manufacturer": "Cessna", "aliases": ["Cessna 303", "Crusader", "T303"], "short_slug": "t303"},
   "C30J": {"name": "Lockheed Martin C-130J Super Hercules", "short": "C-130J", "slug": "lockheed-martin-c-130j", "category": "military transport", "manufacturer": "Lockheed Martin", "aliases": ["C-130J", "C-130J-30", "KC-130J", "Super Hercules"], "short_slug": "c-130j"},
   "C310": {"name": "Cessna 310", "short": "Cessna 310", "slug": "cessna-310", "category": "light aircraft", "manufacturer": "Cessna", "aliases": [], "short_slug": "310"},
@@ -253,6 +261,7 @@
   "CRUZ": {"name": "CSA PS-28 Cruiser", "short": "PS-28 Cruiser", "slug": "csa-ps-28-cruiser", "category": "light-sport aircraft", "manufacturer": "CSA", "aliases": ["SportCruiser"], "short_slug": "ps-28-cruiser"},
   "CTAH": {"name": "Rainbow Cheetah", "short": "Cheetah", "slug": "rainbow-cheetah", "category": "light-sport aircraft", "manufacturer": "Rainbow", "aliases": ["BushCat", "Cheetah", "Skyreach BushCat"], "short_slug": "cheetah"},
   "CVLP": {"name": "Convair Convairliner", "short": "Convairliner", "slug": "convair-convairliner", "category": "piston airliner", "manufacturer": "Convair", "aliases": ["Convair 240", "Convair 340", "Convair 440"], "short_slug": "convairliner"},
+  "D11": {"name": "Jodel D.11", "short": "Jodel D.11", "slug": "jodel-d11", "category": "light aircraft", "manufacturer": "Jodel", "aliases": ["D.11", "D.112", "D.117", "D.120", "D11"], "short_slug": "d11"},
   "D328": {"name": "Dornier 328", "short": "Do 328", "slug": "dornier-328", "category": "turboprop", "manufacturer": "Dornier", "aliases": ["C-146 Wolfhound", "Do 328", "Fairchild Dornier 328"], "short_slug": "328"},
   "DA40": {"name": "Diamond DA40", "short": "DA40", "slug": "diamond-da40", "category": "light aircraft", "manufacturer": "Diamond", "aliases": ["DA-40", "Diamond Star"], "short_slug": "da40"},
   "DA42": {"name": "Diamond DA42 Twin Star", "short": "DA42", "slug": "diamond-da42", "category": "light aircraft", "manufacturer": "Diamond", "aliases": ["DA-42", "DA42 NG", "Twin Star"], "short_slug": "da42"},
@@ -331,6 +340,7 @@
   "FOX": {"name": "Kitfox", "short": "Kitfox", "slug": "kitfox", "category": "kit aircraft", "manufacturer": "Kitfox", "aliases": ["Denney Kitfox", "Kitfox IV", "Skyfox"]},
   "G150": {"name": "Gulfstream G150", "short": "G150", "slug": "gulfstream-g150", "category": "business jet", "manufacturer": "Gulfstream", "aliases": ["G150"], "short_slug": "g150"},
   "G164": {"name": "Grumman G-164 Ag Cat", "short": "Ag Cat", "slug": "grumman-g-164", "category": "biplane", "manufacturer": "Grumman", "aliases": ["Ag-Cat", "G-164", "Super Ag-Cat"], "short_slug": "g-164"},
+  "G200": {"name": "Akrotech Giles G-200", "short": "Giles G-200", "slug": "akrotech-g-200", "category": "kit aircraft", "manufacturer": "Akrotech", "aliases": ["G-200", "Giles 200", "Giles G-200"], "short_slug": "g-200"},
   "G202": {"name": "Giles G-202", "short": "G-202", "slug": "giles-g-202", "category": "kit aircraft", "manufacturer": "Giles", "aliases": ["Akrotech G-202", "G-202"], "short_slug": "g-202"},
   "G280": {"name": "Gulfstream G280", "short": "G280", "slug": "gulfstream-g280", "category": "business jet", "manufacturer": "Gulfstream", "aliases": ["G280"], "short_slug": "g280"},
   "G2T1": {"name": "Great Lakes 2T-1 Sport Trainer", "short": "Great Lakes 2T-1", "slug": "great-lakes-2t-1", "category": "biplane", "manufacturer": "Great Lakes", "aliases": ["2T-1A", "Sport Trainer", "Waco Classic 2T-1"], "short_slug": "2t-1"},
@@ -344,6 +354,7 @@
   "GALX": {"name": "Gulfstream G200", "short": "G200", "slug": "gulfstream-g200", "category": "business jet", "manufacturer": "Gulfstream", "aliases": ["G200", "IAI Galaxy"], "short_slug": "g200"},
   "GAZL": {"name": "Aerospatiale SA341 Gazelle", "short": "Gazelle", "slug": "aerospatiale-sa341", "category": "helicopter", "manufacturer": "Aerospatiale", "aliases": ["SA341", "SA342", "Soko Partizan", "Westland Gazelle"], "short_slug": "sa341"},
   "GB1": {"name": "Game Composites GB1 GameBird", "short": "GameBird", "slug": "game-composites-gb1", "category": "light aircraft", "manufacturer": "Game Composites", "aliases": ["GB-1", "GB1", "GameBird"], "short_slug": "gb1"},
+  "GC1": {"name": "Globe GC-1 Swift", "short": "Globe Swift", "slug": "globe-swift", "category": "light aircraft", "manufacturer": "Globe", "aliases": ["GC-1", "GC-1B", "Swift", "Temco Swift"], "short_slug": "swift"},
   "GL5T": {"name": "Bombardier Global 5000", "short": "Global 5000", "slug": "bombardier-global-5000", "category": "business jet", "manufacturer": "Bombardier", "aliases": ["Global 5500"], "short_slug": "global-5000"},
   "GL7T": {"name": "Bombardier Global 7500", "short": "Global 7500", "slug": "bombardier-global-7500", "category": "business jet", "manufacturer": "Bombardier", "aliases": ["Global 7500", "Global 8000"], "short_slug": "global-7500"},
   "GLAS": {"name": "Glasair", "short": "Glasair", "slug": "glasair", "category": "kit aircraft", "manufacturer": "Glasair", "aliases": ["Glasair II", "Glasair III", "Stoddard-Hamilton Glasair"]},
@@ -394,6 +405,7 @@
   "LJ75": {"name": "Learjet 75", "short": "Learjet 75", "slug": "learjet-75", "category": "business jet", "manufacturer": "Learjet", "aliases": ["Learjet 70"], "short_slug": "75"},
   "LNC2": {"name": "Lancair 320", "short": "Lancair 320", "slug": "lancair-320", "category": "kit aircraft", "manufacturer": "Lancair", "aliases": ["Lancair 200", "Lancair 235", "Lancair 360"], "short_slug": "320"},
   "LNC4": {"name": "Lancair IV", "short": "Lancair IV", "slug": "lancair-iv", "category": "kit aircraft", "manufacturer": "Lancair", "aliases": ["LX-7", "Lancair 4", "Lancair IV-P"], "short_slug": "iv"},
+  "LNCE": {"name": "Lancair ES", "short": "Lancair ES", "slug": "lancair-es", "category": "kit aircraft", "manufacturer": "Lancair", "aliases": ["Lancair Super ES", "Super ES"], "short_slug": "es"},
   "LNP4": {"name": "Lancair Propjet", "short": "Propjet", "slug": "lancair-propjet", "category": "kit aircraft", "manufacturer": "Lancair", "aliases": ["LX-7", "Lancair IV-P Propjet", "Lancair IV-PT"], "short_slug": "propjet"},
   "M200": {"name": "Meyers 200", "short": "Meyers 200", "slug": "meyers-200", "category": "light aircraft", "manufacturer": "Meyers", "aliases": ["Aero Commander 200", "Commander 200"], "short_slug": "200"},
   "M20P": {"name": "Mooney M20", "short": "Mooney M20", "slug": "mooney-m20", "category": "light aircraft", "manufacturer": "Mooney", "aliases": ["M-20", "M20"], "short_slug": "m20", "same_as": "https://en.wikipedia.org/wiki/Mooney_M20"},
@@ -536,6 +548,7 @@
   "TRF1": {"name": "Team Rocket F1 Rocket", "short": "F1 Rocket", "slug": "team-rocket-f1", "category": "kit aircraft", "manufacturer": "Team Rocket", "aliases": ["F-1", "F1 Rocket", "F1 Rocket EVO"], "short_slug": "f1"},
   "TUCR": {"name": "Flying Legend Tucano Replica", "short": "Tucano Replica", "slug": "flying-legend-tucano-replica", "category": "kit aircraft", "manufacturer": "Flying Legend", "aliases": ["Tucano Replica"], "short_slug": "tucano-replica"},
   "TWEN": {"name": "Tecnam P2010", "short": "P2010", "slug": "tecnam-p2010", "category": "light aircraft", "manufacturer": "Tecnam", "aliases": ["P.2010", "P2010", "Twenty-Ten"], "short_slug": "p2010"},
+  "U16": {"name": "Grumman HU-16 Albatross", "short": "Albatross", "slug": "grumman-albatross", "category": "amphibian", "manufacturer": "Grumman", "aliases": ["Albatross", "HU-16", "SA-16", "UF-1"], "short_slug": "albatross"},
   "U2": {"name": "Lockheed U-2", "short": "U-2", "slug": "lockheed-u-2", "category": "high-altitude reconnaissance aircraft", "manufacturer": "Lockheed", "aliases": ["Dragon Lady", "U-2", "U-2S"], "short_slug": "u-2", "same_as": "https://en.wikipedia.org/wiki/Lockheed_U-2"},
   "UH1": {"name": "Bell UH-1 Iroquois", "short": "UH-1", "slug": "bell-uh-1-iroquois", "category": "helicopter", "manufacturer": "Bell", "aliases": ["Bell 204", "Bell 205", "Huey", "Iroquois", "UH-1H"], "short_slug": "uh-1-iroquois"},
   "V22": {"name": "Bell Boeing V-22 Osprey", "short": "V-22", "slug": "bell-boeing-v-22-osprey", "category": "tiltrotor", "manufacturer": "Bell Boeing", "aliases": ["Bell/Boeing MV-22B Osprey", "CV-22", "MV-22B", "Osprey", "V-22"], "short_slug": "v-22-osprey", "same_as": "https://en.wikipedia.org/wiki/Bell%E2%80%93Boeing_V-22_Osprey"},
@@ -553,5 +566,5 @@
   "YK52": {"name": "Yakovlev Yak-52", "short": "Yak-52", "slug": "yakovlev-yak-52", "category": "vintage trainer", "manufacturer": "Yakovlev", "aliases": ["Aerostar Yak-52", "Iak-52", "Yak-52TW"], "short_slug": "yak-52"},
   "Z42": {"name": "Zlin Z-42", "short": "Z-42", "slug": "zlin-z-42", "category": "light aircraft", "manufacturer": "Zlin", "aliases": ["Moravan Z-142", "Z-142", "Z-242"], "short_slug": "z-42"}
  },
- "content_sha256": "681e19da7823d5e68ec7d4c6f2a2b3e9ebf193d5ddbc4ed52a1a7a8397177573"
+ "content_sha256": "49bb8f537b966f554203b80b6ba41f1cbad31c02f418ebe2ef70d28150a0c147"
 }
