@@ -1021,6 +1021,20 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
       null,
       type_code,
     );
+  // A named variant's photo wins over its designator's: the E-4B and the
+  // VC-25A share B742.
+  const jumbo = (name, slug) => ({
+    ...event({ type: { code: "B742", name, slug } }),
+    synthetic: false,
+  });
+  assert.match(
+    aircraftPhoto(jumbo("Boeing E-4B", "boeing-e-4b")).src,
+    /\/boeing-e-4b-[0-9a-f]{12}\.webp$/,
+  );
+  assert.match(
+    aircraftPhoto(jumbo("Boeing VC-25A", "boeing-vc-25a")).src,
+    /\/boeing-747-200-[0-9a-f]{12}\.webp$/,
+  );
   const summary = { kind: "observation-summary", src: "/event-media/a.svg" };
   const track = { kind: "track", src: "/event-media/b.svg" };
   const chart = { kind: "measurement-chart", src: "/event-media/c.svg" };

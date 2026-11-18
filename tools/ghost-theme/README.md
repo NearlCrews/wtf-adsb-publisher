@@ -563,13 +563,17 @@ published snapshot. It resolves each Wikipedia article to its Wikidata item
 and takes the item's image (P18), preferred rank first. A code under `files`
 skips Wikidata and uses the Commons file named there, for a type whose Wikidata
 image fails the checks below; `titles` names a type that the story engine's
-type table does not. Commons must list the file as CC0, public domain, CC BY,
+type table does not. An entry under `variants` gives a named variant its own
+photo: the key is the slug of the type name stories give it (`boeing-e-4b`),
+with the Commons file and the title. A story whose type has that slug shows
+the variant's photo in place of its designator's, as the E-4B does under B742,
+whose own photo shows the VC-25A. Commons must list the file as CC0, public domain, CC BY,
 or CC BY-SA, with no restriction flag and a plain author credit; GFDL alone, the Open Government Licence, NC, and ND are
 skipped. The file must be a landscape JPEG at least 700 pixels wide whose name,
 description, and categories do not mark a drawing, cockpit, model, or wreck. The
 original is downloaded once into `artifacts/ghost-theme/type-photo-cache/`,
 checked against Commons' SHA-1, resized to 1200 pixels by the pinned Chromium,
-and stored as a simple WebP with no metadata. Codes and classes that already
+and stored as a simple WebP with no metadata. Codes, classes, and variants that already
 have a photo are skipped, so a second run changes nothing. Requests go one at a time, a
 second apart, with the User-Agent `WTF-ADSB/1.0 (+<origin>/about/)`, where the
 origin is `SITE_ORIGIN` (the project page when it is unset).

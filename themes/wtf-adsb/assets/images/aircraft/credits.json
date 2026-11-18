@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "checkedAt": "2026-11-04",
+  "checkedAt": "2026-11-18",
   "scope": "Representative aircraft-type photographs. Pictured aircraft identities and flights are not verified matches to observation cards.",
   "licenseNotice": "These files retain their individual licenses below; the theme code license does not apply to third-party photographs.",
   "typeDesignatorSource": "https://www.faa.gov/documentLibrary/media/Order/JO_7360.1G_Aircraft_Type_Designators_FINAL.pdf",
@@ -700,7 +700,7 @@
     },
     {
       "id": "boeing-767",
-      "typeCodes": ["B763"],
+      "typeCodes": ["B762", "B763"],
       "title": "Boeing 767",
       "src": "/assets/images/aircraft/boeing-767-2bf5e6258a70.webp",
       "width": 1200,
@@ -2791,6 +2791,28 @@
       "originalSha256": "2541be8a4d5e111227662378fbb0bc146c348d40a50f68c72e7725b8725c4d81",
       "sha256": "753f8f4ad691464984dfe9553f41f08c7c455b9b128e1fdf961fc7962caf73ff",
       "bytes": 215748
+    },
+    {
+      "id": "boeing-e-4b",
+      "typeCodes": [],
+      "variants": ["boeing-e-4b"],
+      "title": "Boeing E-4B",
+      "src": "/assets/images/aircraft/boeing-e-4b-b83bf63ac541.webp",
+      "width": 1200,
+      "height": 796,
+      "alt": "Representative Boeing E-4B in white and blue United States of America markings, in flight above scattered cloud.",
+      "caption": "Representative Boeing E-4B photo.",
+      "author": "Staff Sgt. Michael Haggerty",
+      "sourceTitle": "File:E-4B Nightwatch.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:E-4B_Nightwatch.jpg",
+      "originalUrl": "https://upload.wikimedia.org/wikipedia/commons/3/33/E-4B_Nightwatch.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/File:E-4B_Nightwatch.jpg#Licensing",
+      "changes": "Resized and converted to WebP; embedded camera metadata removed. No crop or generated content.",
+      "originalSha1": "4b8625293c3a53be589ce4cd297b38756eceff8a",
+      "originalSha256": "b535e027cd4956c8338b0fc8e82478fefe10953ec4d9a21c508c22f131b28101",
+      "sha256": "b83bf63ac541bb0edb49921aa7de548de748710a6e23fd83e51d85fded425b27",
+      "bytes": 86806
     }
   ]
 }

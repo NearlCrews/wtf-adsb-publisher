@@ -1685,6 +1685,17 @@ figcaption {
   }
 }
 
+/* On a 360 px phone the navigation links still share one row. */
+@media (max-width: 380px) {
+  .site-navigation .nav {
+    gap: 0 6px;
+  }
+
+  .site-navigation .nav a {
+    font-size: 13px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

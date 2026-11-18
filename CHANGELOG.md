@@ -121,7 +121,15 @@ versions, and evidence contract versions are tracked separately.
   reason no longer repeats "32000.0 ft".
 - Theme 0.7.1: the home page lists nine latest stories, which fills its three
   columns; the weekly heading reads "Most interesting last week", in sentence
-  case like the other headings; and the navigation fits one row on a phone.
+  case like the other headings; and the navigation fits one row on a phone,
+  down to a width of 360 px.
+- A named variant can have its own representative photo, keyed by the slug of
+  its type name under `variants` in `type-photo-sources.json`. An E-4B story
+  now shows an E-4B; the VC-25A keeps the 747-200 photo they shared under
+  B742. The 767-200 (B762) shows the 767 photo, which pictures a 767-200, in
+  place of the airliner class photo.
+- The type researcher is told to write dates day first, so a new type fact
+  reads "15 September 1991".
 - A public address whose path has a `home` segment, such as a reference link
   ending `/English/home/default.aspx`, no longer counts as a private home
   directory in the shared wire check. A home directory is still refused as a

@@ -18,6 +18,14 @@ const typePhotos = aircraftPhotos.filter((photo) => !photo.classes);
 const photosByType = new Map(
   typePhotos.flatMap((photo) => photo.typeCodes.map((code) => [code, photo])),
 );
+// A photo of one named variant, by the slug of the type name a story gives
+// (the event's context.type.slug). It wins over the designator's photo: the
+// E-4B and the VC-25A both fly under B742.
+const photosByVariant = new Map(
+  typePhotos.flatMap((photo) =>
+    (photo.variants || []).map((slug) => [slug, photo]),
+  ),
+);
 
 // Canonical JSON (sorted keys, compact, ASCII), the form whose SHA-256 the
 // story engine's pinned data files record (reference.canonical_hash).
@@ -149,7 +157,9 @@ const figure = (photo, kind) => ({
 // the social image and, when no map or chart exists, the lead visual.
 export function aircraftPhoto(event) {
   if (event.synthetic !== false || event.media) return null;
-  const photo = photosByType.get(event.aircraft?.type_code);
+  const photo =
+    photosByVariant.get(event.context?.type?.slug) ||
+    photosByType.get(event.aircraft?.type_code);
   return photo ? figure(photo, "aircraft-type-photo") : null;
 }
 
@@ -178,9 +188,9 @@ export const imageCreditsPage = {
   slug: "image-credits",
   url: CREDITS_PATH,
   // The date of the last content change, and that content's pageDigest.
-  updated: "2026-11-04T00:00:00Z",
+  updated: "2026-11-18T00:00:00Z",
   contentSha256:
-    "59c8961d542e3dd4483e5231aacf893ffbbe6cf2a63dcd9f10354dff4dcb8b97",
+    "758e494b420219f5fb7d36558094a0f52071dcae49e0a651c16da19d212a9ee2",
   title: "Aircraft photo credits",
   custom_excerpt:
     "Sources, photographers, and licenses for the representative aircraft photos.",

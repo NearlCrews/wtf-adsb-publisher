@@ -110,6 +110,7 @@ destination, or cause of this observation.
 The type is a database match, not independently confirmed aircraft identity.
 Distinguish variants; do not attribute a variant's equipment to the whole type.
 Use dated historical facts; avoid transient fleet totals or operating status.
+Write a date day first, "15 September 1991", never "September 15, 1991".
 No sensationalism, military threat speculation, or claims about who was aboard.
 Each section must have at least 80 characters and only plain text, without
 Markdown or inline citation markers. Do not call the sighting a match and do not

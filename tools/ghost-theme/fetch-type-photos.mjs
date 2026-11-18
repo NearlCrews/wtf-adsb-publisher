@@ -11,11 +11,12 @@
 // to its Wikidata item, reads the item's image and the Commons file's license
 // and credit, and keeps only JPEG photographs under CC0, public domain, CC BY
 // or CC BY-SA. A code under "files" skips Wikidata and uses that Commons file;
-// each entry under "classes" names the file for one class photo. Both pass the
-// same checks. The original is downloaded once and checked against Commons'
+// each entry under "classes" names the file for one class photo, and each
+// under "variants" the file for one named variant, keyed by the slug of the
+// type name stories give it. All pass the same checks. The original is downloaded once and checked against Commons'
 // SHA-1; the pinned Chromium resizes it to 1200 px and encodes a WebP with no
-// metadata beside credits.json, which gains the credit record. A code or
-// class that already has a photo is left alone, so a second run changes
+// metadata beside credits.json, which gains the credit record. A code,
+// class, or variant that already has a photo is left alone, so a second run changes
 // nothing. Requests go one at a time, a second apart, with a descriptive
 // User-Agent; --dry-run reads the APIs and reports without downloading
 // anything.
@@ -472,6 +473,19 @@ async function main() {
         file: spec.file,
       });
   }
+  // A named variant's photo, keyed by the slug of the type name stories give.
+  for (const [key, spec] of Object.entries(sources.variants || {})) {
+    if (!spec.title || !spec.file)
+      throw new Error(`Variant ${key} needs a title and a file`);
+    if (!ids.has(key))
+      named.push({
+        id: key,
+        codes: [],
+        variants: [key],
+        title: spec.title,
+        file: spec.file,
+      });
+  }
   const images = await itemImages([...items.keys()]);
   const info = await fileInfo([
     ...new Set([
@@ -485,7 +499,11 @@ async function main() {
     if (result.record) chosen.push({ ...item, record: result.record });
     else
       skipped.push({
-        ...(item.classes ? { class: item.id } : { codes: item.codes }),
+        ...(item.classes
+          ? { class: item.id }
+          : item.variants
+            ? { variant: item.id }
+            : { codes: item.codes }),
         reason: `${item.file}: ${result.reason}`,
       });
   }
@@ -545,6 +563,7 @@ async function main() {
             classes: item.classes,
             ...(item.categories && { categories: item.categories }),
           }),
+          ...(item.variants && { variants: item.variants }),
           title: item.title,
           src,
           width: encoded.width,
@@ -579,6 +598,7 @@ async function main() {
           id,
           typeCodes: entry.typeCodes,
           ...(entry.classes && { classes: entry.classes }),
+          ...(entry.variants && { variants: entry.variants }),
           reviewed: Boolean(reviewed.alt),
         });
       }
@@ -598,7 +618,11 @@ async function main() {
     added,
     wouldAdd: dryRun
       ? chosen.map((item) => ({
-          ...(item.classes ? { class: item.id } : { codes: item.codes }),
+          ...(item.classes
+            ? { class: item.id }
+            : item.variants
+              ? { variant: item.id }
+              : { codes: item.codes }),
           file: item.record.sourceTitle,
           license: item.record.license,
           author: item.record.author,

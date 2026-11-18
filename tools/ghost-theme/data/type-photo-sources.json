@@ -4,6 +4,7 @@
     "Input for fetch-type-photos.mjs. Type codes whose type_names.json entry carries a same_as article use that article unless articles names one for the code; the codes under articles name the English Wikipedia article for a type that has none there, or a variant or family article whose Wikidata image is usable when the type's own is not. Each was resolved through the MediaWiki API with redirects followed and checked to have a Wikidata item. A family article stands in for a variant (Boeing 737 Next Generation for the 737-800).",
     "files names a Commons file for a type whose Wikidata image is unusable, or whose usual aircraft here is one variant (B742, the designator the VC-25A flies under, shows the VC-25A); the tool skips Wikidata for that code and applies the same license, size and content checks. titles gives the photo's title for a code that the type table does not name.",
     "classes lists the representative photo for each class of aircraft, which cards show when a type has no photo: its Commons file, title, the ICAO Doc 8643 descriptions it covers and, for jets, the type_names.json categories that tell a business jet from an airliner. A photo that lists the type's category wins over one that lists descriptions only.",
+    "variants lists the photo of a named variant that shares its designator with another aircraft: the slug of the type name stories give it, its Commons file and its title. A story whose type name has that slug shows the variant's photo in place of the designator's (the E-4B flies under B742, whose photo shows the VC-25A).",
     "skip lists codes that get no type photo, with the reason. rejected lists Commons files a visual check found unsuitable. authors gives the credit line for a file whose Commons author field is not a plain name. descriptions gives reviewed alt text and, optionally, the variant or model pictured (shown) or a full caption for files that passed the visual check."
   ],
   "articles": {
@@ -23,6 +24,7 @@
     "B737": "https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
     "B738": "https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
     "B744": "https://en.wikipedia.org/wiki/Boeing_747-400",
+    "B762": "https://en.wikipedia.org/wiki/Boeing_767",
     "B763": "https://en.wikipedia.org/wiki/Boeing_767",
     "BE17": "https://en.wikipedia.org/wiki/Beechcraft_Model_17_Staggerwing",
     "BE18": "https://en.wikipedia.org/wiki/Beechcraft_Model_18",
@@ -149,6 +151,9 @@
     },
     "File:Aero L-39 Albatros Jet Trainer.jpg": {
       "alt": "Representative Aero L-39 Albatros jet trainer in flight with its landing gear down."
+    },
+    "File:E-4B Nightwatch.jpg": {
+      "alt": "Representative Boeing E-4B in white and blue United States of America markings, in flight above scattered cloud."
     },
     "File:Air Force One over Mt. Rushmore.jpg": {
       "alt": "Representative Boeing VC-25A, the presidential 747-200, in flight over Mount Rushmore.",
@@ -553,6 +558,12 @@
       "file": "File:Discus 296.jpg",
       "classes": ["L0-", "L1M", "L1P"],
       "categories": ["glider", "motor glider"]
+    }
+  },
+  "variants": {
+    "boeing-e-4b": {
+      "title": "Boeing E-4B",
+      "file": "File:E-4B Nightwatch.jpg"
     }
   }
 }

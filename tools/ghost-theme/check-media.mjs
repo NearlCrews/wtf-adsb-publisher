@@ -449,6 +449,19 @@ print(len(png), len(first))
       .sort(),
     aircraftPhotos.map((photo) => path.basename(photo.src)).sort(),
   );
+  // A variant photo names the slug of a type name and no type code, and no
+  // two claim the same slug.
+  const variants = new Set();
+  for (const photo of aircraftPhotos.filter((item) => item.variants)) {
+    assert.deepEqual(photo.typeCodes, [], photo.id);
+    assert.equal(photo.classes, undefined, photo.id);
+    assert.ok(photo.variants.length, photo.id);
+    for (const slug of photo.variants) {
+      assert.match(slug, /^[a-z0-9]+(?:-[a-z0-9]+)*$/, photo.id);
+      assert.ok(!variants.has(slug), `${slug} has two photos`);
+      variants.add(slug);
+    }
+  }
   // Class photos name ICAO descriptions (landplane, two jet engines: "L2J")
   // and, optionally, type-table categories, but no type code. Their alt text
   // says the photo is not the story's aircraft, and the caption names the
