@@ -254,12 +254,9 @@ export function cardVisual(lead, cardPhoto) {
 // flag shows none), else the representative type photo. Cards never
 // show a registration photo, so the card photo is the type photo, else the
 // representative photo of the type's class, whatever the page shows. A
-// subjectless story names no aircraft, so it shows none. Neither does a
-// story the publisher marks registration_photo false: its identifiers
-// disagree, so a photo of the listed type or its class would show the
-// aircraft the story doubts.
+// subjectless story names no aircraft, so it shows none.
 export function storyPhotos(event, { registration, type, stock } = {}) {
-  if (event.subjectless || event.registration_photo === false)
+  if (event.subjectless)
     return { registrationPhoto: null, typePhoto: null, cardPhoto: null };
   const registrationPhoto =
     registration && event.registration_photo === true ? registration : null;

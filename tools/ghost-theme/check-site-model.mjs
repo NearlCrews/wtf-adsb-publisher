@@ -1087,17 +1087,14 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
     typePhoto: null,
     cardPhoto: type,
   });
-  // The publisher's registration_photo flag decides. False, for a disputed
-  // identity or an identity conflict, shows no photo of the listed aircraft
-  // or its type; a snapshot without the flag shows the type photo only.
-  assert.deepEqual(
-    storyPhotos({ ...event({}), registration_photo: false }, photos),
-    none,
-  );
-  assert.deepEqual(
-    storyPhotos({ ...event({}), registration_photo: undefined }, photos),
-    { ...none, typePhoto: type, cardPhoto: type },
-  );
+  // The publisher's registration_photo flag decides: false for a disputed
+  // identity or an identity conflict, and a snapshot without it shows none.
+  for (const flag of [false, undefined])
+    assert.deepEqual(
+      storyPhotos({ ...event({}), registration_photo: flag }, photos),
+      { ...none, typePhoto: type, cardPhoto: type },
+      String(flag),
+    );
   assert.deepEqual(storyPhotos(event({}), { type, stock }), {
     ...none,
     typePhoto: type,
@@ -1114,7 +1111,7 @@ assert.match(jsonLd([{ a: "<b>" }]), /\\u003cb>/);
       { ...event({ kind: "type_speed_mismatch" }), registration_photo: false },
       { registration, stock },
     ),
-    none,
+    { ...none, cardPhoto: stock },
   );
   assert.deepEqual(storyPhotos(event({}), {}), none);
   assert.deepEqual(

@@ -119,9 +119,6 @@ versions, and evidence contract versions are tracked separately.
   unit and a duration of ten seconds or more in whole seconds.
 - The weekly researcher receives a whole reading as an integer, so a pick's
   reason no longer repeats "32000.0 ft".
-- A story whose identifiers disagree (`registration_photo` false) shows no
-  type or class photo on its page or card. A helicopter no longer illustrates
-  a story about a 43,000 ft reading that the listed helicopter cannot produce.
 - Theme 0.7.1: the home page lists nine latest stories, which fills its three
   columns; the weekly heading reads "Most interesting last week", in sentence
   case like the other headings; and the navigation fits one row on a phone.
